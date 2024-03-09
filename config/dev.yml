@@ -1,0 +1,11 @@
+storage:
+  path: "./storage/storage.db"
+logger:
+  level: debug
+  handler_type: pretty
+profiler:
+  enabled: true
+  address: 0.0.0.0:6060
+metrics:
+  enabled: true
+  address: 0.0.0.0:9099

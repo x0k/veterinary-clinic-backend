@@ -1,0 +1,20 @@
+#!/bin/bash -e
+
+all:
+    NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/backend-notion-token) \
+        TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
+        go run cmd/app/*.go --config config/dev.yml
+
+build:
+    CGO_ENABLED=1 go build -o bin/app cmd/app/*.go
+
+run:
+    NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/backend-notion-token) \
+        TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
+        ./bin/app --config config/dev.yml
+
+test:
+    go test ./...
+
+lint:
+    golangci-lint run ./...
