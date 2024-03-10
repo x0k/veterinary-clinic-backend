@@ -1,4 +1,4 @@
-package notion
+package models
 
 type ClinicServiceProperty string
 
@@ -24,8 +24,8 @@ const (
 type ClinicRecordStatus string
 
 const (
-	Awaits    ClinicRecordStatus = "Ожидает"
-	InWork    ClinicRecordStatus = "В работе"
-	Done      ClinicRecordStatus = "Выполнено"
-	NotAppear ClinicRecordStatus = "Не пришел"
+	ClinicRecordAwaits    ClinicRecordStatus = "Ожидает"
+	ClinicRecordInWork    ClinicRecordStatus = "В работе"
+	ClinicRecordDone      ClinicRecordStatus = "Выполнено"
+	ClinicRecordNotAppear ClinicRecordStatus = "Не пришел"
 )

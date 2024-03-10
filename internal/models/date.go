@@ -1,4 +1,4 @@
-package date
+package models
 
 import (
 	"math"
@@ -115,22 +115,21 @@ func TimePeriodDurationInMinutes(period TimePeriod) int {
 	return (period.End.Hours-period.Start.Hours)*60 + (period.End.Minutes - period.Start.Minutes)
 }
 
-// hh:mm
-type JsonTime string
-
-// yyyy-mm-dd
-type JsonDate string
-
-type JsonDateTime string
-
-func JsonDateToGoTime(date JsonDate) (time.Time, error) {
-	return time.Parse(time.DateOnly, string(date))
-}
-
-func JsonDateTimeToGoTime(date JsonDateTime) (time.Time, error) {
-	return time.Parse(time.DateTime, string(date))
-}
-
-func GoTimeToJsonDate(t time.Time) JsonDate {
-	return JsonDate(t.Format(time.DateOnly))
+func DateToDateTimePeriod(d Date) DateTimePeriod {
+	return DateTimePeriod{
+		Start: DateTime{
+			Date: d,
+			Time: Time{
+				Hours:   0,
+				Minutes: 0,
+			},
+		},
+		End: DateTime{
+			Date: d,
+			Time: Time{
+				Hours:   23,
+				Minutes: 59,
+			},
+		},
+	}
 }
