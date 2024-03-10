@@ -3,6 +3,8 @@ package date
 import (
 	"math"
 	"time"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/period"
 )
 
 type Time struct {
@@ -83,17 +85,12 @@ func GoTimeToDateTime(t time.Time) DateTime {
 	}
 }
 
+func DateToGoTime(d Date) time.Time {
+	return time.Date(d.Year, time.Month(d.Month), d.Day, 0, 0, 0, 0, time.UTC)
+}
+
 func DateTimeToGoTime(dt DateTime) time.Time {
-	return time.Date(
-		dt.Year,
-		time.Month(dt.Month),
-		dt.Day,
-		dt.Hours,
-		dt.Minutes,
-		0,
-		0,
-		time.UTC,
-	)
+	return time.Date(dt.Year, time.Month(dt.Month), dt.Day, dt.Hours, dt.Minutes, 0, 0, time.UTC)
 }
 
 func MakeDateTimeShifter(shift DateTime) func(DateTime) DateTime {
@@ -104,4 +101,36 @@ func MakeDateTimeShifter(shift DateTime) func(DateTime) DateTime {
 			Add(time.Duration(shift.Minutes) * time.Minute)
 		return GoTimeToDateTime(t)
 	}
+}
+
+type TimePeriod = period.Period[Time]
+
+type DateTimePeriod = period.Period[DateTime]
+
+var TimePeriodApi = period.NewApi(CompareTime)
+
+var DateTimePeriodApi = period.NewApi(CompareDateTime)
+
+func TimePeriodDurationInMinutes(period TimePeriod) int {
+	return (period.End.Hours-period.Start.Hours)*60 + (period.End.Minutes - period.Start.Minutes)
+}
+
+// hh:mm
+type JsonTime string
+
+// yyyy-mm-dd
+type JsonDate string
+
+type JsonDateTime string
+
+func JsonDateToGoTime(date JsonDate) (time.Time, error) {
+	return time.Parse(time.DateOnly, string(date))
+}
+
+func JsonDateTimeToGoTime(date JsonDateTime) (time.Time, error) {
+	return time.Parse(time.DateTime, string(date))
+}
+
+func GoTimeToJsonDate(t time.Time) JsonDate {
+	return JsonDate(t.Format(time.DateOnly))
 }
