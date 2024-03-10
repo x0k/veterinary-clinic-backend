@@ -39,13 +39,19 @@ type MetricsConfig struct {
 	Address string `yaml:"address" env:"METRICS_ADDRESS"`
 }
 
+type NotionConfig struct {
+	Token              string `yaml:"token" env:"NOTION_TOKEN" env-required:"true"`
+	ServicesDatabaseId string `yaml:"services_database_id" env:"NOTION_SERVICES_DATABASE_ID" env-required:"true"`
+	RecordsDatabaseId  string `yaml:"records_database_id" env:"NOTION_RECORDS_DATABASE_ID" env-required:"true"`
+}
+
 type Config struct {
 	Logger   LoggerConfig   `yaml:"logger"`
 	Storage  StorageConfig  `yaml:"storage"`
 	Profiler ProfilerConfig `yaml:"profiler"`
 	Metrics  MetricsConfig  `yaml:"metrics"`
+	Notion   NotionConfig   `yaml:"notion"`
 
-	NotionToken   string `yaml:"notion_token" env:"NOTION_TOKEN" env-required:"true"`
 	TelegramToken string `yaml:"telegram_token" env:"TELEGRAM_TOKEN" env-required:"true"`
 }
 

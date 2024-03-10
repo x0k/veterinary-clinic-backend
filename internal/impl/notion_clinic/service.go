@@ -31,19 +31,19 @@ func (s *Service) richTextValue(richText []notionapi.RichText) string {
 }
 
 func (s *Service) title(properties notionapi.Properties, titleKey string) string {
-	return s.richTextValue(properties[titleKey].(notionapi.TitleProperty).Title)
+	return s.richTextValue(properties[titleKey].(*notionapi.TitleProperty).Title)
 }
 
 func (s *Service) number(properties notionapi.Properties, numberKey string) float64 {
-	return properties[numberKey].(notionapi.NumberProperty).Number
+	return properties[numberKey].(*notionapi.NumberProperty).Number
 }
 
 func (s *Service) text(properties notionapi.Properties, stringKey string) string {
-	return s.richTextValue(properties[stringKey].(notionapi.TextProperty).Text)
+	return s.richTextValue(properties[stringKey].(*notionapi.RichTextProperty).RichText)
 }
 
 func (s *Service) date(properties notionapi.Properties, dateKey string) *notionapi.DateObject {
-	return properties[dateKey].(notionapi.DateProperty).Date
+	return properties[dateKey].(*notionapi.DateProperty).Date
 }
 
 func (s *Service) service(page notionapi.Page) models.Service {
@@ -68,7 +68,7 @@ func (s *Service) recordUserId(properties notionapi.Properties, currentUserId *m
 }
 
 func (s *Service) actualRecordStatus(properties notionapi.Properties) models.RecordStatus {
-	status := properties[RecordState].(notionapi.SelectProperty).Select.Name
+	status := properties[RecordState].(*notionapi.SelectProperty).Select.Name
 	if status == ClinicRecordInWork {
 		return models.RecordInWork
 	}
@@ -221,9 +221,9 @@ func (s *Service) CreateRecord(
 					Name: ClinicRecordAwaits,
 				},
 			},
-			RecordUserId: notionapi.TextProperty{
-				Type: notionapi.PropertyTypeText,
-				Text: s.makeRichText(string(userId)),
+			RecordUserId: notionapi.RichTextProperty{
+				Type:     notionapi.PropertyTypeText,
+				RichText: s.makeRichText(string(userId)),
 			},
 		},
 	})

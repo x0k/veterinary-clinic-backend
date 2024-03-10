@@ -1,16 +1,20 @@
 #!/bin/bash -e
 
 all:
-    NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/backend-notion-token) \
-        TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
+    TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
+        NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token) \
+        NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id) \
+        NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id) \
         go run cmd/app/*.go --config config/dev.yml
 
 build:
     CGO_ENABLED=1 go build -o bin/app cmd/app/*.go
 
 run:
-    NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/backend-notion-token) \
-        TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
+    TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
+        NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token) \
+        NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id) \
+        NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id) \
         ./bin/app --config config/dev.yml
 
 test:
