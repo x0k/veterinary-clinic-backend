@@ -1,4 +1,4 @@
-package bot
+package telegram
 
 import (
 	"context"
@@ -38,8 +38,8 @@ var (
 	btnNext = selector.Data("➡", "next")
 )
 
-func New(cfg *config.Config, log *logger.Logger) (*Bot, error) {
-	const op = "bot.Bot.New"
+func NewBot(cfg *config.Config, log *logger.Logger) (*Bot, error) {
+	const op = "controller.telegram.NewBot"
 	settings := telebot.Settings{
 		Token:  cfg.TelegramToken,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jomei/notionapi"
-	"github.com/x0k/veterinary-clinic-backend/internal/models"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
 var ErrFailedToCreateRecord = errors.New("failed to create record")
@@ -46,9 +46,9 @@ func (s *Service) date(properties notionapi.Properties, dateKey string) *notiona
 	return properties[dateKey].(*notionapi.DateProperty).Date
 }
 
-func (s *Service) service(page notionapi.Page) models.Service {
-	return models.Service{
-		Id:                models.ServiceId(page.ID),
+func (s *Service) service(page notionapi.Page) entity.Service {
+	return entity.Service{
+		Id:                entity.ServiceId(page.ID),
 		Title:             s.title(page.Properties, ServiceTitle),
 		DurationInMinutes: int(s.number(page.Properties, ServiceDurationInMinutes)),
 		Description:       s.text(page.Properties, ServiceDescription),
@@ -56,7 +56,7 @@ func (s *Service) service(page notionapi.Page) models.Service {
 	}
 }
 
-func (s *Service) recordUserId(properties notionapi.Properties, currentUserId *models.UserId) *models.UserId {
+func (s *Service) recordUserId(properties notionapi.Properties, currentUserId *entity.UserId) *entity.UserId {
 	if currentUserId == nil {
 		return nil
 	}
@@ -67,15 +67,15 @@ func (s *Service) recordUserId(properties notionapi.Properties, currentUserId *m
 	return currentUserId
 }
 
-func (s *Service) actualRecordStatus(properties notionapi.Properties) models.RecordStatus {
+func (s *Service) actualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
 	status := properties[RecordState].(*notionapi.SelectProperty).Select.Name
 	if status == ClinicRecordInWork {
-		return models.RecordInWork
+		return entity.RecordInWork
 	}
-	return models.RecordAwaits
+	return entity.RecordAwaits
 }
 
-func (s *Service) actualRecord(page notionapi.Page, currentUserId *models.UserId) *models.Record {
+func (s *Service) actualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Record {
 	startDateTime := s.date(page.Properties, RecordDateTimePeriod).Start
 	if startDateTime == nil {
 		return nil
@@ -84,13 +84,13 @@ func (s *Service) actualRecord(page notionapi.Page, currentUserId *models.UserId
 	if endDateTime == nil {
 		return nil
 	}
-	return &models.Record{
-		Id:     models.RecordId(page.ID),
+	return &entity.Record{
+		Id:     entity.RecordId(page.ID),
 		UserId: s.recordUserId(page.Properties, currentUserId),
 		Status: s.actualRecordStatus(page.Properties),
-		DateTimePeriod: models.DateTimePeriod{
-			Start: models.GoTimeToDateTime(time.Time(*startDateTime)),
-			End:   models.GoTimeToDateTime(time.Time(*endDateTime)),
+		DateTimePeriod: entity.DateTimePeriod{
+			Start: entity.GoTimeToDateTime(time.Time(*startDateTime)),
+			End:   entity.GoTimeToDateTime(time.Time(*endDateTime)),
 		},
 	}
 }
@@ -146,24 +146,24 @@ func NewService(
 	}
 }
 
-func (s *Service) FetchServices(ctx context.Context) ([]models.Service, error) {
+func (s *Service) FetchServices(ctx context.Context) ([]entity.Service, error) {
 	r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 	if err != nil {
 		return nil, err
 	}
-	services := make([]models.Service, 0, len(r.Results))
+	services := make([]entity.Service, 0, len(r.Results))
 	for _, result := range r.Results {
 		services = append(services, s.service(result))
 	}
 	return services, nil
 }
 
-func (s *Service) FetchActualRecords(ctx context.Context, currentUserId *models.UserId) ([]models.Record, error) {
+func (s *Service) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
 	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, s.actualRecordsDatabaseQueryRequest)
 	if err != nil {
 		return nil, err
 	}
-	records := make([]models.Record, 0, len(r.Results))
+	records := make([]entity.Record, 0, len(r.Results))
 	for _, result := range r.Results {
 		if rec := s.actualRecord(result, currentUserId); rec != nil {
 			records = append(records, *rec)
@@ -174,15 +174,15 @@ func (s *Service) FetchActualRecords(ctx context.Context, currentUserId *models.
 
 func (s *Service) CreateRecord(
 	ctx context.Context,
-	userId models.UserId,
-	serviceId models.ServiceId,
+	userId entity.UserId,
+	serviceId entity.ServiceId,
 	userName string,
 	userEmail string,
 	userPhoneNumber string,
-	utcDateTimePeriod models.DateTimePeriod,
-) (models.Record, error) {
-	start := notionapi.Date(models.DateTimeToGoTime(utcDateTimePeriod.Start))
-	end := notionapi.Date(models.DateTimeToGoTime(utcDateTimePeriod.End))
+	utcDateTimePeriod entity.DateTimePeriod,
+) (entity.Record, error) {
+	start := notionapi.Date(entity.DateTimeToGoTime(utcDateTimePeriod.Start))
+	end := notionapi.Date(entity.DateTimeToGoTime(utcDateTimePeriod.End))
 	res, err := s.client.Page.Create(ctx, &notionapi.PageCreateRequest{
 		Parent: notionapi.Parent{
 			DatabaseID: s.recordsDatabaseId,
@@ -228,18 +228,18 @@ func (s *Service) CreateRecord(
 		},
 	})
 	if err != nil {
-		return models.Record{}, err
+		return entity.Record{}, err
 	}
 	if res == nil {
-		return models.Record{}, ErrFailedToCreateRecord
+		return entity.Record{}, ErrFailedToCreateRecord
 	}
 	if rec := s.actualRecord(*res, &userId); rec != nil {
 		return *rec, nil
 	}
-	return models.Record{}, ErrFailedToCreateRecord
+	return entity.Record{}, ErrFailedToCreateRecord
 }
 
-func (s *Service) RemoveRecord(ctx context.Context, recordId models.RecordId) error {
+func (s *Service) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
 	_, err := s.client.Page.Update(ctx, notionapi.PageID(recordId), &notionapi.PageUpdateRequest{
 		Archived: true,
 	})

@@ -1,4 +1,4 @@
-package main
+package app_logger
 
 import (
 	"log"
@@ -10,7 +10,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/handlers/slogpretty"
 )
 
-func mustSetupLogger(cfg *config.LoggerConfig) *logger.Logger {
+func MustNew(cfg *config.LoggerConfig) *logger.Logger {
 	var level slog.Leveler
 	switch cfg.Level {
 	case config.DebugLevel:
