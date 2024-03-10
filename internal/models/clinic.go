@@ -1,17 +1,13 @@
 package models
 
-import (
-	"time"
-)
-
 type ServiceId string
 
 type Service struct {
-	Id              ServiceId
-	Title           string
-	Duration        time.Duration
-	Description     string
-	CostDescription string
+	Id                ServiceId
+	Title             string
+	DurationInMinutes int
+	Description       string
+	CostDescription   string
 }
 
 type RecordId string
@@ -24,7 +20,8 @@ const (
 )
 
 type Record struct {
-	Id     RecordId
-	UserId UserId
-	Status RecordStatus
+	Id             RecordId
+	Status         RecordStatus
+	DateTimePeriod DateTimePeriod
+	UserId         *UserId
 }
