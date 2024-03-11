@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -45,14 +46,18 @@ type NotionConfig struct {
 	RecordsDatabaseId  string `yaml:"records_database_id" env:"NOTION_RECORDS_DATABASE_ID" env-required:"true"`
 }
 
+type TelegramConfig struct {
+	Token         string        `yaml:"token" env:"TELEGRAM_TOKEN" env-required:"true"`
+	PollerTimeout time.Duration `yaml:"poller_timeout" env:"TELEGRAM_POLLER_TIMEOUT" env-default:"10s"`
+}
+
 type Config struct {
 	Logger   LoggerConfig   `yaml:"logger"`
 	Storage  StorageConfig  `yaml:"storage"`
 	Profiler ProfilerConfig `yaml:"profiler"`
 	Metrics  MetricsConfig  `yaml:"metrics"`
 	Notion   NotionConfig   `yaml:"notion"`
-
-	TelegramToken string `yaml:"telegram_token" env:"TELEGRAM_TOKEN" env-required:"true"`
+	Telegram TelegramConfig `yaml:"telegram"`
 }
 
 func MustLoad(configPath string) *Config {

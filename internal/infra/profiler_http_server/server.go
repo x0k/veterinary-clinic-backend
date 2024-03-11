@@ -6,8 +6,8 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/controller/http/profiler"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type Server struct {

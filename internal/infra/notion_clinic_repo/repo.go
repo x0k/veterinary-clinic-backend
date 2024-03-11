@@ -1,4 +1,4 @@
-package notion_clinic
+package notion_clinic_repo
 
 import (
 	"context"
@@ -10,16 +10,40 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
+const (
+	ServiceTitle             = "Наименование"
+	ServiceDurationInMinutes = "Продолжительность в минутах"
+	ServiceDescription       = "Описание"
+	ServiceCost              = "Стоимость"
+)
+
+const (
+	RecordTitle          = "ФИО"
+	RecordService        = "Услуга"
+	RecordPhoneNumber    = "Телефон"
+	RecordEmail          = "Почта"
+	RecordDateTimePeriod = "Время записи"
+	RecordState          = "Статус"
+	RecordUserId         = "identity"
+)
+
+const (
+	ClinicRecordAwaits    = "Ожидает"
+	ClinicRecordInWork    = "В работе"
+	ClinicRecordDone      = "Выполнено"
+	ClinicRecordNotAppear = "Не пришел"
+)
+
 var ErrFailedToCreateRecord = errors.New("failed to create record")
 
-type Service struct {
+type NotionClinicRepo struct {
 	servicesDatabaseId                notionapi.DatabaseID
 	recordsDatabaseId                 notionapi.DatabaseID
 	client                            *notionapi.Client
 	actualRecordsDatabaseQueryRequest *notionapi.DatabaseQueryRequest
 }
 
-func (s *Service) richTextValue(richText []notionapi.RichText) string {
+func (s *NotionClinicRepo) richTextValue(richText []notionapi.RichText) string {
 	strs := make([]string, 0, len(richText))
 	for _, r := range richText {
 		if r.Type != notionapi.ObjectTypeText {
@@ -30,23 +54,23 @@ func (s *Service) richTextValue(richText []notionapi.RichText) string {
 	return strings.Join(strs, "")
 }
 
-func (s *Service) title(properties notionapi.Properties, titleKey string) string {
+func (s *NotionClinicRepo) title(properties notionapi.Properties, titleKey string) string {
 	return s.richTextValue(properties[titleKey].(*notionapi.TitleProperty).Title)
 }
 
-func (s *Service) number(properties notionapi.Properties, numberKey string) float64 {
+func (s *NotionClinicRepo) number(properties notionapi.Properties, numberKey string) float64 {
 	return properties[numberKey].(*notionapi.NumberProperty).Number
 }
 
-func (s *Service) text(properties notionapi.Properties, stringKey string) string {
+func (s *NotionClinicRepo) text(properties notionapi.Properties, stringKey string) string {
 	return s.richTextValue(properties[stringKey].(*notionapi.RichTextProperty).RichText)
 }
 
-func (s *Service) date(properties notionapi.Properties, dateKey string) *notionapi.DateObject {
+func (s *NotionClinicRepo) date(properties notionapi.Properties, dateKey string) *notionapi.DateObject {
 	return properties[dateKey].(*notionapi.DateProperty).Date
 }
 
-func (s *Service) service(page notionapi.Page) entity.Service {
+func (s *NotionClinicRepo) service(page notionapi.Page) entity.Service {
 	return entity.Service{
 		Id:                entity.ServiceId(page.ID),
 		Title:             s.title(page.Properties, ServiceTitle),
@@ -56,7 +80,7 @@ func (s *Service) service(page notionapi.Page) entity.Service {
 	}
 }
 
-func (s *Service) recordUserId(properties notionapi.Properties, currentUserId *entity.UserId) *entity.UserId {
+func (s *NotionClinicRepo) recordUserId(properties notionapi.Properties, currentUserId *entity.UserId) *entity.UserId {
 	if currentUserId == nil {
 		return nil
 	}
@@ -67,7 +91,7 @@ func (s *Service) recordUserId(properties notionapi.Properties, currentUserId *e
 	return currentUserId
 }
 
-func (s *Service) actualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
+func (s *NotionClinicRepo) actualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
 	status := properties[RecordState].(*notionapi.SelectProperty).Select.Name
 	if status == ClinicRecordInWork {
 		return entity.RecordInWork
@@ -75,7 +99,7 @@ func (s *Service) actualRecordStatus(properties notionapi.Properties) entity.Rec
 	return entity.RecordAwaits
 }
 
-func (s *Service) actualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Record {
+func (s *NotionClinicRepo) actualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Record {
 	startDateTime := s.date(page.Properties, RecordDateTimePeriod).Start
 	if startDateTime == nil {
 		return nil
@@ -95,7 +119,7 @@ func (s *Service) actualRecord(page notionapi.Page, currentUserId *entity.UserId
 	}
 }
 
-func (s *Service) makeRichText(value string) []notionapi.RichText {
+func (s *NotionClinicRepo) makeRichText(value string) []notionapi.RichText {
 	return []notionapi.RichText{
 		{
 			Type: notionapi.ObjectTypeText,
@@ -104,12 +128,12 @@ func (s *Service) makeRichText(value string) []notionapi.RichText {
 	}
 }
 
-func NewService(
+func New(
 	client *notionapi.Client,
 	servicesDatabaseId notionapi.DatabaseID,
 	recordsDatabaseId notionapi.DatabaseID,
-) *Service {
-	return &Service{
+) *NotionClinicRepo {
+	return &NotionClinicRepo{
 		client:             client,
 		servicesDatabaseId: servicesDatabaseId,
 		recordsDatabaseId:  recordsDatabaseId,
@@ -146,7 +170,7 @@ func NewService(
 	}
 }
 
-func (s *Service) FetchServices(ctx context.Context) ([]entity.Service, error) {
+func (s *NotionClinicRepo) Services(ctx context.Context) ([]entity.Service, error) {
 	r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 	if err != nil {
 		return nil, err
@@ -158,7 +182,7 @@ func (s *Service) FetchServices(ctx context.Context) ([]entity.Service, error) {
 	return services, nil
 }
 
-func (s *Service) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
+func (s *NotionClinicRepo) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
 	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, s.actualRecordsDatabaseQueryRequest)
 	if err != nil {
 		return nil, err
@@ -172,7 +196,7 @@ func (s *Service) FetchActualRecords(ctx context.Context, currentUserId *entity.
 	return records, nil
 }
 
-func (s *Service) CreateRecord(
+func (s *NotionClinicRepo) CreateRecord(
 	ctx context.Context,
 	userId entity.UserId,
 	serviceId entity.ServiceId,
@@ -239,7 +263,7 @@ func (s *Service) CreateRecord(
 	return entity.Record{}, ErrFailedToCreateRecord
 }
 
-func (s *Service) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
+func (s *NotionClinicRepo) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
 	_, err := s.client.Page.Update(ctx, notionapi.PageID(recordId), &notionapi.PageUpdateRequest{
 		Archived: true,
 	})

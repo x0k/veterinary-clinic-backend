@@ -35,7 +35,6 @@ type WorkBreak struct {
 	Title           string
 	MatchExpression string
 	Period          TimePeriod
-	DateFormat      string
 }
 
 type WorkBreaks []WorkBreak
@@ -283,17 +282,14 @@ const date_format = "2006-01-02T15:04:05"
 func (c *WorkBreaksCalculator) Calculate(
 	t time.Time,
 ) (WorkBreaks, error) {
-	date := fmt.Sprintf("%d %s", t.Weekday(), t.Format(date_format))
+	dateString := fmt.Sprintf("%d %s", t.Weekday(), t.Format(date_format))
 	breaks := make(WorkBreaks, 0, len(c.workBreaks))
 	for _, wb := range c.workBreaks {
-		if wb.DateFormat != "" {
-			return nil, fmt.Errorf("%w: %s", ErrUnsupportedDateFormat, wb.DateFormat)
-		}
 		expr, err := regexp.Compile(wb.MatchExpression)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", ErrFailedToCompileMatchExpression, wb.MatchExpression)
 		}
-		if expr.MatchString(date) {
+		if expr.MatchString(dateString) {
 			breaks = append(breaks, wb)
 		}
 	}
