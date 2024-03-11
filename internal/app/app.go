@@ -3,14 +3,18 @@ package app
 import (
 	"context"
 	"log/slog"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
-	"github.com/x0k/veterinary-clinic-backend/internal/controller/profiler"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
 )
+
+type Service interface {
+	Start(ctx context.Context)
+	Stop(ctx context.Context)
+}
 
 func Run(cfg *config.Config) {
 	log := app_logger.MustNew(&cfg.Logger)
@@ -19,17 +23,15 @@ func Run(cfg *config.Config) {
 
 	log.Info(ctx, "starting application", slog.String("log_level", cfg.Logger.Level))
 
-	prof := profiler.New(&cfg.Profiler, log)
-	prof.Start(ctx)
+	b := boot.New(log)
 
-	log.Info(ctx, "application started")
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	b.Append(telegram_bot.New(cfg, log))
 
-	<-stop
-	log.Info(ctx, "graceful shutdown")
+	if cfg.Profiler.Enabled {
+		b.Append(profiler_http_server.New(&cfg.Profiler, log, b))
+	}
 
-	prof.Stop(ctx)
+	b.Start(ctx)
 
 	log.Info(ctx, "application stopped")
 }
