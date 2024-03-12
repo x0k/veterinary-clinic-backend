@@ -2,21 +2,19 @@ package shared
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
 type HttpService struct {
-	log     *logger.Logger
+	name    string
 	srv     *http.Server
 	fataler Fataler
 }
 
-func NewHttpService(srv *http.Server, log *logger.Logger, fataler Fataler) *HttpService {
+func NewHttpService(name string, srv *http.Server, fataler Fataler) *HttpService {
 	return &HttpService{
-		log:     log,
+		name:    name,
 		srv:     srv,
 		fataler: fataler,
 	}
@@ -25,8 +23,7 @@ func NewHttpService(srv *http.Server, log *logger.Logger, fataler Fataler) *Http
 func (s *HttpService) Start(ctx context.Context) error {
 	go func() {
 		if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			s.log.Error(ctx, "failed to start", sl.Err(err))
-			s.fataler.Fatal(ctx, err)
+			s.fataler.Fatal(ctx, fmt.Errorf("%s failed to start: %w", s.name, err))
 		}
 	}()
 	return nil

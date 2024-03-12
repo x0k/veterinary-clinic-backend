@@ -50,6 +50,10 @@ func (b *Boot) Fatal(ctx context.Context, err error) {
 }
 
 func (b *Boot) Start(ctx context.Context) {
+	if b.fataled.Load() {
+		b.log.Error(ctx, "fataled before start", sl.Err(<-b.fatal))
+		return
+	}
 	for i, service := range b.services {
 		if err := service.Start(ctx); err != nil {
 			b.Fatal(ctx, fmt.Errorf("failed to start %s: %w", service.Name(), err))

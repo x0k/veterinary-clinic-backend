@@ -8,6 +8,7 @@ require (
 	github.com/jomei/notionapi v1.13.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/telegram-mini-apps/init-data-golang v1.1.5 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 )
 
