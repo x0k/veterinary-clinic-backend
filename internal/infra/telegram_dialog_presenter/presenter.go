@@ -11,6 +11,7 @@ import (
 )
 
 type TelegramDialogPresenterConfig struct {
+	CalendarWebAppUrl  string
 	CalendarHandlerUrl string
 }
 
@@ -32,7 +33,7 @@ func New(cfg *TelegramDialogPresenterConfig) (*TelegramDialogPresenter, error) {
 		return nil, fmt.Errorf("%s request options marshaling: %w", op, err)
 	}
 	params.Add("req", string(reqOptions))
-	webAppUrl := fmt.Sprintf("%s?%s", "https://x0k.github.io/telegram-web-inputs/calendar", params.Encode())
+	webAppUrl := fmt.Sprintf("%s?%s", cfg.CalendarWebAppUrl, params.Encode())
 	calendarKeyboard := &telebot.ReplyMarkup{
 		InlineKeyboard: [][]telebot.InlineButton{{
 			{
@@ -49,6 +50,15 @@ func New(cfg *TelegramDialogPresenterConfig) (*TelegramDialogPresenter, error) {
 			Options: &telebot.SendOptions{
 				ReplyMarkup: calendarKeyboard,
 			},
+		},
+	}, nil
+}
+
+func (p *TelegramDialogPresenter) RenderGreeting() (shared.TelegramResponse, error) {
+	return shared.TelegramResponse{
+		Text: shared.EscapeTelegramMarkdownString("Привет!"),
+		Options: &telebot.SendOptions{
+			ParseMode: telebot.ModeMarkdownV2,
 		},
 	}, nil
 }

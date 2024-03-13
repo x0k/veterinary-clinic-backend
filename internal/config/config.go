@@ -51,6 +51,7 @@ type TelegramConfig struct {
 	PollerTimeout     time.Duration `yaml:"poller_timeout" env:"TELEGRAM_POLLER_TIMEOUT" env-default:"10s"`
 	WebHandlerAddress string        `yaml:"web_handler_address" env:"TELEGRAM_WEB_HANDLER_ADDRESS" env-required:"true"`
 	WebHandlerUrl     string        `yaml:"web_handler_url" env:"TELEGRAM_WEB_HANDLER_URL" env-required:"true"`
+	CalendarWebAppUrl string        `yaml:"calendar_web_app_url" env:"TELEGRAM_CALENDAR_WEB_APP_URL" env-required:"true"`
 }
 
 type Config struct {

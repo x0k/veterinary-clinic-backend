@@ -10,29 +10,29 @@ type ClinicRepo interface {
 	Services(ctx context.Context) ([]entity.Service, error)
 }
 
-type ClinicPresenter[S any] interface {
-	RenderServices(services []entity.Service) (S, error)
+type ClinicPresenter[R any] interface {
+	RenderServices(services []entity.Service) (R, error)
 }
 
-type ClinicUseCase[Services any] struct {
+type ClinicUseCase[R any] struct {
 	clinicRepo      ClinicRepo
-	clinicPresenter ClinicPresenter[Services]
+	clinicPresenter ClinicPresenter[R]
 }
 
-func NewClinicUseCase[Services any](
+func NewClinicUseCase[R any](
 	clinicRepo ClinicRepo,
-	clinicPresenter ClinicPresenter[Services],
-) *ClinicUseCase[Services] {
-	return &ClinicUseCase[Services]{
+	clinicPresenter ClinicPresenter[R],
+) *ClinicUseCase[R] {
+	return &ClinicUseCase[R]{
 		clinicRepo:      clinicRepo,
 		clinicPresenter: clinicPresenter,
 	}
 }
 
-func (u *ClinicUseCase[S]) Services(ctx context.Context) (S, error) {
+func (u *ClinicUseCase[R]) Services(ctx context.Context) (R, error) {
 	services, err := u.clinicRepo.Services(ctx)
 	if err != nil {
-		return *new(S), err
+		return *new(R), err
 	}
 	return u.clinicPresenter.RenderServices(services)
 }

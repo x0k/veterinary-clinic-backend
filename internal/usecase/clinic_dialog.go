@@ -10,28 +10,33 @@ type DialogRepo interface {
 	SaveDialog(ctx context.Context, dialog entity.Dialog) error
 }
 
-type DialogPresenter[ScheduleDialog any] interface {
-	RenderScheduleDialog(dialog entity.Dialog) (ScheduleDialog, error)
+type DialogPresenter[R any] interface {
+	RenderGreeting() (R, error)
+	RenderScheduleDialog(dialog entity.Dialog) (R, error)
 }
 
-type ClinicDialogUseCase[ScheduleDialog any] struct {
+type ClinicDialogUseCase[R any] struct {
 	dialogRepo      DialogRepo
-	dialogPresenter DialogPresenter[ScheduleDialog]
+	dialogPresenter DialogPresenter[R]
 }
 
-func NewClinicDialogUseCase[ScheduleDialog any](
+func NewClinicDialogUseCase[R any](
 	dialogRepo DialogRepo,
-	dialogPresenter DialogPresenter[ScheduleDialog],
-) *ClinicDialogUseCase[ScheduleDialog] {
-	return &ClinicDialogUseCase[ScheduleDialog]{
+	dialogPresenter DialogPresenter[R],
+) *ClinicDialogUseCase[R] {
+	return &ClinicDialogUseCase[R]{
 		dialogRepo:      dialogRepo,
 		dialogPresenter: dialogPresenter,
 	}
 }
 
-func (u *ClinicDialogUseCase[D]) StartScheduleDialog(ctx context.Context, dialog entity.Dialog) (D, error) {
+func (u *ClinicDialogUseCase[R]) GreetUser(ctx context.Context) (R, error) {
+	return u.dialogPresenter.RenderGreeting()
+}
+
+func (u *ClinicDialogUseCase[R]) StartScheduleDialog(ctx context.Context, dialog entity.Dialog) (R, error) {
 	if err := u.dialogRepo.SaveDialog(ctx, dialog); err != nil {
-		return *new(D), err
+		return *new(R), err
 	}
 	return u.dialogPresenter.RenderScheduleDialog(dialog)
 }

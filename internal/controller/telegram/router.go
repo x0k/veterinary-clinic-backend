@@ -22,9 +22,11 @@ func UseRouter(
 	cfg *RouterConfig,
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
-		return c.Send("Hello!", &telebot.SendOptions{
-			ParseMode: telebot.ModeMarkdownV2,
-		})
+		greet, err := clinicDialog.GreetUser(ctx)
+		if err != nil {
+			return err
+		}
+		return c.Send(greet.Text, greet.Options)
 	})
 
 	bot.Handle("/services", func(c telebot.Context) error {

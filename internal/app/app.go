@@ -35,6 +35,7 @@ func Run(cfg *config.Config) {
 
 	telegramDialogPresenter, err := telegram_dialog_presenter.New(&telegram_dialog_presenter.TelegramDialogPresenterConfig{
 		CalendarHandlerUrl: cfg.Telegram.WebHandlerUrl,
+		CalendarWebAppUrl:  cfg.Telegram.CalendarWebAppUrl,
 	})
 	if err != nil {
 		b.Fatal(ctx, err)
