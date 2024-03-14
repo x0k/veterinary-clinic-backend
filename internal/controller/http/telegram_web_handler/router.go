@@ -2,10 +2,14 @@ package telegram_web_handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
+	"strconv"
+	"time"
 
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/httpx"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
@@ -42,7 +46,6 @@ func UseRouter(
 	}
 
 	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("OPTIONS request")
 		w.Header().Set("Access-Control-Allow-Origin", cfg.CalendarWebAppOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -50,22 +53,43 @@ func UseRouter(
 	})
 
 	mux.HandleFunc(fmt.Sprintf("POST %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
-		res, err := httpx.JSONBody[CalendarDialogResult](log.Logger, jsonBodyDecoder, w, r)
-		if err != nil {
-			http.Error(w, err.Text, err.Status)
+		res, httpErr := httpx.JSONBody[CalendarDialogResult](log.Logger, jsonBodyDecoder, w, r)
+		if httpErr != nil {
+			http.Error(w, httpErr.Text, httpErr.Status)
+			return
+		}
+		if len(res.Calendar.SelectedDates) == 0 {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
 		if err := initDataParser.Validate(res.WebAppInitData); err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-		data, err2 := initDataParser.Parse(res.WebAppInitData)
-		if err2 != nil {
-			log.Error(r.Context(), "failed to parse init data", sl.Err(err2))
+		data, err := initDataParser.Parse(res.WebAppInitData)
+		if err != nil {
+			log.Error(
+				r.Context(),
+				"failed to parse valid init data",
+				slog.String("data", res.WebAppInitData),
+				sl.Err(err),
+			)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(data)
-		fmt.Println(res.Calendar)
+		t, err := time.Parse(time.DateOnly, res.Calendar.SelectedDates[0])
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		clinicDialog.FinishScheduleDialog(
+			r.Context(),
+			entity.Dialog{
+				Id:     entity.DialogId(data.QueryID),
+				UserId: entity.UserId(strconv.FormatInt(data.User.ID, 10)),
+			},
+			t,
+		)
+		w.WriteHeader(http.StatusOK)
 	})
 }

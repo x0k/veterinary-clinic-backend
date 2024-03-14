@@ -65,6 +65,8 @@ func (b *Boot) Start(ctx context.Context) {
 		b.log.Error(ctx, "fataled before start", sl.Err(<-b.fatal))
 		return
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	for i, service := range b.services {
 		if err := service.Start(ctx); err != nil {
 			b.Fatal(ctx, fmt.Errorf("failed to start %s: %w", service.Name(), err))
@@ -85,7 +87,7 @@ func (b *Boot) Start(ctx context.Context) {
 	}
 
 	b.log.Info(ctx, "shutting down")
-
+	cancel()
 	b.stop(ctx)
 }
 

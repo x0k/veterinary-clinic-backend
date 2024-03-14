@@ -28,7 +28,7 @@ func (p *TelegramClinicPresenter) RenderServices(services []entity.Service) (sha
 		sb.WriteString(shared.EscapeTelegramMarkdownString(service.CostDescription))
 		sb.WriteString("\n\n")
 	}
-	return shared.TelegramResponse{
+	return shared.TelegramTextResponse{
 		Text:    sb.String(),
 		Options: &telebot.SendOptions{ParseMode: telebot.ModeMarkdownV2},
 	}, nil

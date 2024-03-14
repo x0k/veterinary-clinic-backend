@@ -11,5 +11,5 @@ metrics:
   address: 0.0.0.0:9099
 telegram:
   web_handler_address: 0.0.0.0:6012
-  web_handler_url: http://127.0.0.1:6012
+  # web_handler_url: this is should be a https url to the 127.0.0.1:6012
   calendar_web_app_url: https://x0k.github.io/telegram-web-inputs/calendar

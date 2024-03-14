@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/controller/http/telegram_web_handler"
@@ -25,6 +26,8 @@ type Config struct {
 }
 
 type Bot struct {
+	log          *logger.Logger
+	wg           sync.WaitGroup
 	httpService  *shared.HttpService
 	cfg          *Config
 	bot          *telebot.Bot
@@ -46,6 +49,7 @@ func New(
 		CalendarInputHandlerPath: cfg.CalendarInputHandlerPath,
 	})
 	return &Bot{
+		log:          log,
 		cfg:          cfg,
 		clinic:       clinic,
 		clinicDialog: clinicDialog,
@@ -81,12 +85,13 @@ func (b *Bot) Start(ctx context.Context) error {
 	} else {
 		b.bot = bot
 	}
-	telegram.UseRouter(ctx, b.bot, b.clinic, b.clinicDialog)
+	telegram.UseRouter(ctx, &b.wg, b.log, b.bot, b.clinic, b.clinicDialog)
 	go b.bot.Start()
 	return nil
 }
 
 func (b *Bot) Stop(ctx context.Context) error {
+	b.wg.Wait()
 	b.bot.Stop()
 	return b.httpService.Stop(ctx)
 }

@@ -11,7 +11,7 @@ type Config struct {
 }
 
 type TelegramDialogPresenter struct {
-	calendarResponse shared.TelegramResponse
+	datePickerResponse shared.TelegramTextResponse
 }
 
 func New(cfg *Config) *TelegramDialogPresenter {
@@ -26,7 +26,7 @@ func New(cfg *Config) *TelegramDialogPresenter {
 		}},
 	}
 	return &TelegramDialogPresenter{
-		calendarResponse: shared.TelegramResponse{
+		datePickerResponse: shared.TelegramTextResponse{
 			Text: "Выберите дату",
 			Options: &telebot.SendOptions{
 				ReplyMarkup: calendarKeyboard,
@@ -36,7 +36,7 @@ func New(cfg *Config) *TelegramDialogPresenter {
 }
 
 func (p *TelegramDialogPresenter) RenderGreeting() (shared.TelegramResponse, error) {
-	return shared.TelegramResponse{
+	return shared.TelegramTextResponse{
 		Text: shared.EscapeTelegramMarkdownString("Привет!"),
 		Options: &telebot.SendOptions{
 			ParseMode: telebot.ModeMarkdownV2,
@@ -44,6 +44,19 @@ func (p *TelegramDialogPresenter) RenderGreeting() (shared.TelegramResponse, err
 	}, nil
 }
 
-func (p *TelegramDialogPresenter) RenderScheduleDialog(dialog entity.Dialog) (shared.TelegramResponse, error) {
-	return p.calendarResponse, nil
+func (p *TelegramDialogPresenter) RenderDatePicker() (shared.TelegramResponse, error) {
+	return p.datePickerResponse, nil
+}
+
+func (p *TelegramDialogPresenter) RenderSchedule(periods []entity.TimePeriod) (shared.TelegramResponse, error) {
+	return shared.TelegramQueryResponse{}, nil
+}
+
+func (p *TelegramDialogPresenter) RenderError(err error) (shared.TelegramResponse, error) {
+	return shared.TelegramTextResponse{
+		Text: shared.EscapeTelegramMarkdownString(err.Error()),
+		Options: &telebot.SendOptions{
+			ParseMode: telebot.ModeMarkdownV2,
+		},
+	}, nil
 }

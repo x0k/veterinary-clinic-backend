@@ -2,26 +2,68 @@ package telegram
 
 import (
 	"context"
-	"strconv"
+	"errors"
+	"log/slog"
+	"sync"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"gopkg.in/telebot.v3"
 )
 
+var ErrUnexpectedMessageType = errors.New("unexpected message type")
+
 func UseRouter(
 	ctx context.Context,
+	wg *sync.WaitGroup,
+	log *logger.Logger,
 	bot *telebot.Bot,
 	clinic *usecase.ClinicUseCase[shared.TelegramResponse],
 	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
 ) {
+	l := log.With(slog.String("component", "controller.telegram.UseRouter"))
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg := <-clinicDialog.Messages():
+				queryResponse, ok := msg.Message.(shared.TelegramQueryResponse)
+				if !ok {
+					l.Error(ctx, "unexpected message type", slog.Int("type", int(msg.Message.Type())))
+					continue
+				}
+				if _, err := bot.AnswerWebApp(
+					&telebot.Query{
+						ID: string(msg.DialogId),
+					},
+					queryResponse.Result,
+				); err != nil {
+					l.Error(ctx, "failed to answer query", sl.Err(err))
+				}
+			}
+		}
+	}()
+
+	send := func(c telebot.Context, response shared.TelegramResponse) error {
+		msg, ok := response.(shared.TelegramTextResponse)
+		if !ok {
+			return ErrUnexpectedMessageType
+		}
+		return c.Send(msg.Text, msg.Options)
+	}
+
 	bot.Handle("/start", func(c telebot.Context) error {
-		greet, err := clinicDialog.GreetUser(ctx)
+		res, err := clinicDialog.GreetUser(ctx)
 		if err != nil {
 			return err
 		}
-		return c.Send(greet.Text, greet.Options)
+		return send(c, res)
 	})
 
 	bot.Handle("/services", func(c telebot.Context) error {
@@ -29,17 +71,14 @@ func UseRouter(
 		if err != nil {
 			return err
 		}
-		return c.Send(res.Text, res.Options)
+		return send(c, res)
 	})
 
 	bot.Handle("/s", func(c telebot.Context) error {
-		res, err := clinicDialog.StartScheduleDialog(ctx, entity.Dialog{
-			Id:     entity.DialogId(strconv.FormatInt(c.Chat().ID, 10)),
-			UserId: entity.UserId(strconv.FormatInt(c.Sender().ID, 10)),
-		})
+		res, err := clinicDialog.StartScheduleDialog(ctx)
 		if err != nil {
 			return err
 		}
-		return c.Send(res.Text, res.Options)
+		return send(c, res)
 	})
 }

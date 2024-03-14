@@ -12,7 +12,6 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/memory_dialog_repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/notion_clinic_repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
@@ -47,6 +46,7 @@ func Run(cfg *config.Config) {
 		}
 		calendarWebAppParams.Add("req", string(calendarWebAppRequestOptions))
 		configuredCalendarWebAppUrl := fmt.Sprintf("%s?%s", cfg.Telegram.CalendarWebAppUrl, calendarWebAppParams.Encode())
+		log.Debug(ctx, "configured calendar web app url", slog.String("url", configuredCalendarWebAppUrl))
 
 		calendarWebAppUrl, err := url.Parse(cfg.Telegram.CalendarWebAppUrl)
 		if err != nil {
@@ -65,7 +65,7 @@ func Run(cfg *config.Config) {
 				telegram_clinic_presenter.New(),
 			),
 			usecase.NewClinicDialogUseCase(
-				memory_dialog_repo.New(),
+				log,
 				telegram_dialog_presenter.New(&telegram_dialog_presenter.Config{
 					CalendarWebAppUrl: configuredCalendarWebAppUrl,
 				}),
