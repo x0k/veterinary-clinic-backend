@@ -10,17 +10,12 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type RouterConfig struct {
-	CalendarHandlerUrl string
-}
-
 func UseRouter(
 	ctx context.Context,
 	bot *telebot.Bot,
 	clinic *usecase.ClinicUseCase[shared.TelegramResponse],
 	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
-	cfg *RouterConfig,
-) error {
+) {
 	bot.Handle("/start", func(c telebot.Context) error {
 		greet, err := clinicDialog.GreetUser(ctx)
 		if err != nil {
@@ -47,6 +42,4 @@ func UseRouter(
 		}
 		return c.Send(res.Text, res.Options)
 	})
-
-	return nil
 }

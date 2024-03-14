@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/controller/http/telegram_web_handler"
 	"github.com/x0k/veterinary-clinic-backend/internal/controller/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
@@ -16,9 +16,17 @@ import (
 
 const component_name = "telegram_bot"
 
+type Config struct {
+	CalendarWebAppOrigin     string
+	CalendarInputHandlerPath string
+	WebHandlerAddress        string
+	Token                    string
+	PollerTimeout            time.Duration
+}
+
 type Bot struct {
 	httpService  *shared.HttpService
-	cfg          *config.TelegramConfig
+	cfg          *Config
 	bot          *telebot.Bot
 	clinic       *usecase.ClinicUseCase[shared.TelegramResponse]
 	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse]
@@ -26,14 +34,17 @@ type Bot struct {
 
 func New(
 	log *logger.Logger,
-	cfg *config.TelegramConfig,
 	clinic *usecase.ClinicUseCase[shared.TelegramResponse],
 	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
 	fataler shared.Fataler,
 	initDataParser telegram_web_handler.TelegramInitDataParser,
+	cfg *Config,
 ) *Bot {
 	mux := http.NewServeMux()
-	telegram_web_handler.UseRouter(log, mux, clinicDialog, initDataParser)
+	telegram_web_handler.UseRouter(log, mux, clinicDialog, initDataParser, &telegram_web_handler.Config{
+		CalendarWebAppOrigin:     cfg.CalendarWebAppOrigin,
+		CalendarInputHandlerPath: cfg.CalendarInputHandlerPath,
+	})
 	return &Bot{
 		cfg:          cfg,
 		clinic:       clinic,
@@ -42,7 +53,7 @@ func New(
 			component_name,
 			&http.Server{
 				Addr:    cfg.WebHandlerAddress,
-				Handler: mux,
+				Handler: shared.Logging(log, mux),
 			},
 			fataler,
 		),
@@ -70,11 +81,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	} else {
 		b.bot = bot
 	}
-	if err := telegram.UseRouter(ctx, b.bot, b.clinic, b.clinicDialog, &telegram.RouterConfig{
-		CalendarHandlerUrl: b.cfg.WebHandlerAddress,
-	}); err != nil {
-		return fmt.Errorf("%s use router: %w", op, err)
-	}
+	telegram.UseRouter(ctx, b.bot, b.clinic, b.clinicDialog)
 	go b.bot.Start()
 	return nil
 }

@@ -40,6 +40,17 @@ func (b *Boot) Append(services ...Service) {
 	b.services = append(b.services, services...)
 }
 
+func (b *Boot) TryAppend(ctx context.Context, services ...func() (Service, error)) {
+	for _, f := range services {
+		service, err := f()
+		if err != nil {
+			b.Fatal(ctx, err)
+			break
+		}
+		b.services = append(b.services, service)
+	}
+}
+
 func (b *Boot) Fatal(ctx context.Context, err error) {
 	if b.fataled.Swap(true) {
 		b.log.Error(ctx, "another fatal error", sl.Err(err))

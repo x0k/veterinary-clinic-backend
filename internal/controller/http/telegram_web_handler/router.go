@@ -25,16 +25,31 @@ type TelegramInitDataParser interface {
 	Parse(data string) (initdata.InitData, error)
 }
 
+type Config struct {
+	CalendarInputHandlerPath string
+	CalendarWebAppOrigin     string
+}
+
 func UseRouter(
 	log *logger.Logger,
 	mux *http.ServeMux,
 	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
 	initDataParser TelegramInitDataParser,
+	cfg *Config,
 ) {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,
 	}
-	mux.HandleFunc("POST /calendar-input-result", func(w http.ResponseWriter, r *http.Request) {
+
+	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("OPTIONS request")
+		w.Header().Set("Access-Control-Allow-Origin", cfg.CalendarWebAppOrigin)
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("POST %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		res, err := httpx.JSONBody[CalendarDialogResult](log.Logger, jsonBodyDecoder, w, r)
 		if err != nil {
 			http.Error(w, err.Text, err.Status)

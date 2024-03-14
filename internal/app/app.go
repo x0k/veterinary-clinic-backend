@@ -2,7 +2,10 @@ package app
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
+	"net/url"
 	"time"
 
 	"github.com/jomei/notionapi"
@@ -19,9 +22,10 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
-type Service interface {
-	Start(ctx context.Context)
-	Stop(ctx context.Context)
+const calendarInputHandlerPath = "/calendar-input"
+
+type CalendarRequestOptions struct {
+	Url string `json:"url"`
 }
 
 func Run(cfg *config.Config) {
@@ -33,18 +37,25 @@ func Run(cfg *config.Config) {
 
 	b := boot.New(log)
 
-	telegramDialogPresenter, err := telegram_dialog_presenter.New(&telegram_dialog_presenter.TelegramDialogPresenterConfig{
-		CalendarHandlerUrl: cfg.Telegram.WebHandlerUrl,
-		CalendarWebAppUrl:  cfg.Telegram.CalendarWebAppUrl,
-	})
-	if err != nil {
-		b.Fatal(ctx, err)
-	}
+	b.TryAppend(ctx, func() (boot.Service, error) {
+		calendarWebAppParams := url.Values{}
+		calendarWebAppRequestOptions, err := json.Marshal(&CalendarRequestOptions{
+			Url: fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerUrl, calendarInputHandlerPath),
+		})
+		if err != nil {
+			return nil, err
+		}
+		calendarWebAppParams.Add("req", string(calendarWebAppRequestOptions))
+		configuredCalendarWebAppUrl := fmt.Sprintf("%s?%s", cfg.Telegram.CalendarWebAppUrl, calendarWebAppParams.Encode())
 
-	b.Append(
-		telegram_bot.New(
+		calendarWebAppUrl, err := url.Parse(cfg.Telegram.CalendarWebAppUrl)
+		if err != nil {
+			return nil, err
+		}
+		calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
+
+		return telegram_bot.New(
 			log,
-			&cfg.Telegram,
 			usecase.NewClinicUseCase(
 				notion_clinic_repo.New(
 					notionapi.NewClient(notionapi.Token(cfg.Notion.Token)),
@@ -55,12 +66,21 @@ func Run(cfg *config.Config) {
 			),
 			usecase.NewClinicDialogUseCase(
 				memory_dialog_repo.New(),
-				telegramDialogPresenter,
+				telegram_dialog_presenter.New(&telegram_dialog_presenter.Config{
+					CalendarWebAppUrl: configuredCalendarWebAppUrl,
+				}),
 			),
 			b,
 			telegram_init_data_parser.New(cfg.Telegram.Token, 24*time.Hour),
-		),
-	)
+			&telegram_bot.Config{
+				CalendarInputHandlerPath: calendarInputHandlerPath,
+				CalendarWebAppOrigin:     calendarWebAppOrigin,
+				WebHandlerAddress:        cfg.Telegram.WebHandlerAddress,
+				Token:                    cfg.Telegram.Token,
+				PollerTimeout:            cfg.Telegram.PollerTimeout,
+			},
+		), nil
+	})
 
 	if cfg.Profiler.Enabled {
 		b.Append(profiler_http_server.New(&cfg.Profiler, b))
