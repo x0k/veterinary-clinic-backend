@@ -27,12 +27,12 @@ var wbCalculator = entity.NewWorkBreaksCalculator(
 	},
 )
 
-type Static struct{}
+type StaticWorkBreaks struct{}
 
-func NewStatic() *Static {
-	return &Static{}
+func NewStaticWorkBreaks() *StaticWorkBreaks {
+	return &StaticWorkBreaks{}
 }
 
-func (s *Static) WorkBreaks(ctx context.Context, t time.Time) (entity.WorkBreaks, error) {
+func (s *StaticWorkBreaks) WorkBreaks(ctx context.Context, t time.Time) (entity.WorkBreaks, error) {
 	return wbCalculator.Calculate(t)
 }

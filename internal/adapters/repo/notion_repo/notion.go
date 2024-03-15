@@ -88,23 +88,35 @@ func ActualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
 	return entity.RecordAwaits
 }
 
-func ActualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Record {
-	startDateTime := Date(page.Properties, RecordDateTimePeriod).Start
-	if startDateTime == nil {
+func DateTimePeriodFromRecord(properties notionapi.Properties) *entity.DateTimePeriod {
+	date := Date(properties, RecordDateTimePeriod)
+	if date == nil {
 		return nil
 	}
-	endDateTime := Date(page.Properties, RecordDateTimePeriod).End
-	if endDateTime == nil {
+	start := date.Start
+	if start == nil {
+		return nil
+	}
+	end := date.End
+	if end == nil {
+		return nil
+	}
+	return &entity.DateTimePeriod{
+		Start: entity.GoTimeToDateTime(time.Time(*start)),
+		End:   entity.GoTimeToDateTime(time.Time(*end)),
+	}
+}
+
+func ActualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Record {
+	dateTimePeriod := DateTimePeriodFromRecord(page.Properties)
+	if dateTimePeriod == nil {
 		return nil
 	}
 	return &entity.Record{
-		Id:     entity.RecordId(page.ID),
-		UserId: UserIdFromRecord(page.Properties, currentUserId),
-		Status: ActualRecordStatus(page.Properties),
-		DateTimePeriod: entity.DateTimePeriod{
-			Start: entity.GoTimeToDateTime(time.Time(*startDateTime)),
-			End:   entity.GoTimeToDateTime(time.Time(*endDateTime)),
-		},
+		Id:             entity.RecordId(page.ID),
+		UserId:         UserIdFromRecord(page.Properties, currentUserId),
+		Status:         ActualRecordStatus(page.Properties),
+		DateTimePeriod: *dateTimePeriod,
 	}
 }
 

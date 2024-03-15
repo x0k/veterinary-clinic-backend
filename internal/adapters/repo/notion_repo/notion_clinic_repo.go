@@ -17,7 +17,7 @@ type Clinic struct {
 	actualRecordsDatabaseQueryRequest *notionapi.DatabaseQueryRequest
 }
 
-func NewNotionClinic(
+func NewClinic(
 	client *notionapi.Client,
 	servicesDatabaseId notionapi.DatabaseID,
 	recordsDatabaseId notionapi.DatabaseID,

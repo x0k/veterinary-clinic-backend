@@ -1,4 +1,4 @@
-package telegram_init_data_parser
+package parser
 
 import (
 	"time"
@@ -11,7 +11,7 @@ type TelegramInitData struct {
 	expiredIn     time.Duration
 }
 
-func New(telegramToken string, expiredIn time.Duration) *TelegramInitData {
+func NewTelegramInitData(telegramToken string, expiredIn time.Duration) *TelegramInitData {
 	return &TelegramInitData{
 		telegramToken: telegramToken,
 		expiredIn:     expiredIn,

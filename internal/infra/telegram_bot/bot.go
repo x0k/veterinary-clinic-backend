@@ -24,9 +24,9 @@ type Config struct {
 }
 
 type Bot struct {
+	*infra.HttpService
 	log          *logger.Logger
 	wg           sync.WaitGroup
-	httpService  *infra.HttpService
 	cfg          *Config
 	bot          *telebot.Bot
 	clinic       *usecase.ClinicUseCase[adapters.TelegramResponse]
@@ -52,7 +52,7 @@ func New(
 		cfg:          cfg,
 		clinic:       clinic,
 		clinicDialog: clinicDialog,
-		httpService: infra.NewHttpService(
+		HttpService: infra.NewHttpService(
 			"telegram_bot",
 			&http.Server{
 				Addr:    cfg.WebHandlerAddress,
@@ -66,7 +66,7 @@ func New(
 func (b *Bot) Start(ctx context.Context) error {
 	const op = "infra.telegram_bot.Bot.Start"
 
-	if err := b.httpService.Start(ctx); err != nil {
+	if err := b.HttpService.Start(ctx); err != nil {
 		return fmt.Errorf("%s starting http service: %w", op, err)
 	}
 
@@ -90,5 +90,5 @@ func (b *Bot) Stop(ctx context.Context) error {
 	b.bot.Stop()
 	b.stop()
 	b.wg.Wait()
-	return b.httpService.Stop(ctx)
+	return b.HttpService.Stop(ctx)
 }

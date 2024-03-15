@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/jomei/notionapi"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/parser"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo/notion_repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/busy_periods_repo"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/clinic_repo"
+
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_clinic_presenter"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_dialog_presenter"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_init_data_parser"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/work_breaks_repo"
+
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
@@ -56,28 +56,32 @@ func Run(cfg *config.Config) {
 		}
 		calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
 
-		clinicRepo := clinic_repo.New(
-			notionapi.NewClient(notionapi.Token(cfg.Notion.Token)),
-			notionapi.DatabaseID(cfg.Notion.ServicesDatabaseId),
-			notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
-		)
+		notionClient := notionapi.NewClient(notionapi.Token(cfg.Notion.Token))
 
 		return telegram_bot.New(
 			log,
 			usecase.NewClinicUseCase(
-				clinicRepo,
-				telegram_clinic_presenter.New(),
+				notion_repo.NewClinic(
+					notionClient,
+					notionapi.DatabaseID(cfg.Notion.ServicesDatabaseId),
+					notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
+				),
+				presenter.NewTelegramClinic(),
 			),
 			usecase.NewClinicDialogUseCase(
 				log,
-				telegram_dialog_presenter.New(&telegram_dialog_presenter.Config{
+				presenter.NewTelegramDialog(&presenter.TelegramDialogConfig{
 					CalendarWebAppUrl: configuredCalendarWebAppUrl,
 				}),
-				work_breaks_repo.NewStatic(),
-				busy_periods_repo.NewClinicRecords(clinicRepo),
+				repo.NewStaticWorkBreaks(),
+				notion_repo.NewBusyPeriods(
+					log,
+					notionClient,
+					notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
+				),
 			),
 			b,
-			telegram_init_data_parser.New(cfg.Telegram.Token, 24*time.Hour),
+			parser.NewTelegramInitData(cfg.Telegram.Token, 24*time.Hour),
 			&telegram_bot.Config{
 				CalendarInputHandlerPath: calendarInputHandlerPath,
 				CalendarWebAppOrigin:     calendarWebAppOrigin,
