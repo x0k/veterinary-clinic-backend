@@ -110,7 +110,7 @@ func (u *ClinicDialogUseCase[R]) FinishScheduleDialog(
 		u.sendError(ctx, dialog.Id, ErrLoadingBusyPeriodsFailed)
 		return
 	}
-	schedule := entity.CalculateSchedule(busyPeriods, workBreaks, freePeriods)
+	schedule := entity.CalculateSchedule(freePeriods, busyPeriods, workBreaks)
 
 	msg, err := u.dialogPresenter.RenderSchedule(schedule)
 	if err != nil {

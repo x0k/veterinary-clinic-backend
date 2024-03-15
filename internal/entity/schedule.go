@@ -18,9 +18,9 @@ type TitledTimePeriod struct {
 type Schedule []TitledTimePeriod
 
 func CalculateSchedule(
+	freePeriods []TimePeriod,
 	busyPeriods []TimePeriod,
 	workBreaks []WorkBreak,
-	freePeriods []TimePeriod,
 ) Schedule {
 	allBusyPeriods := make([]TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)
