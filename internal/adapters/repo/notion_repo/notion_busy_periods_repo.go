@@ -1,4 +1,4 @@
-package repo
+package notion_repo
 
 import (
 	"context"

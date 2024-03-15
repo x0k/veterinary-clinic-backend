@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/controller"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"gopkg.in/telebot.v3"
 )
-
-const component_name = "telegram_bot"
 
 type Config struct {
 	CalendarWebAppOrigin     string
@@ -26,23 +26,24 @@ type Config struct {
 type Bot struct {
 	log          *logger.Logger
 	wg           sync.WaitGroup
-	httpService  *adapters.HttpService
+	httpService  *infra.HttpService
 	cfg          *Config
 	bot          *telebot.Bot
 	clinic       *usecase.ClinicUseCase[adapters.TelegramResponse]
 	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse]
+	stop         context.CancelFunc
 }
 
 func New(
 	log *logger.Logger,
 	clinic *usecase.ClinicUseCase[adapters.TelegramResponse],
 	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
-	fataler adapters.Fataler,
-	initDataParser telegram_web_handler.TelegramInitDataParser,
+	fataler infra.Fataler,
+	initDataParser controller.TelegramInitDataParser,
 	cfg *Config,
 ) *Bot {
 	mux := http.NewServeMux()
-	telegram_web_handler.UseRouter(log, mux, clinicDialog, initDataParser, &telegram_web_handler.Config{
+	controller.UseHttpTelegramRouter(log, mux, clinicDialog, initDataParser, &controller.HttpTelegramConfig{
 		CalendarWebAppOrigin:     cfg.CalendarWebAppOrigin,
 		CalendarInputHandlerPath: cfg.CalendarInputHandlerPath,
 	})
@@ -51,19 +52,15 @@ func New(
 		cfg:          cfg,
 		clinic:       clinic,
 		clinicDialog: clinicDialog,
-		httpService: adapters.NewHttpService(
-			component_name,
+		httpService: infra.NewHttpService(
+			"telegram_bot",
 			&http.Server{
 				Addr:    cfg.WebHandlerAddress,
-				Handler: adapters.Logging(log, mux),
+				Handler: infra.Logging(log, mux),
 			},
 			fataler,
 		),
 	}
-}
-
-func (b *Bot) Name() string {
-	return component_name
 }
 
 func (b *Bot) Start(ctx context.Context) error {
@@ -83,13 +80,15 @@ func (b *Bot) Start(ctx context.Context) error {
 	} else {
 		b.bot = bot
 	}
-	telegram.UseRouter(ctx, &b.wg, b.log, b.bot, b.clinic, b.clinicDialog)
+	ctx, b.stop = context.WithCancel(ctx)
+	controller.UseTelegramBotRouter(ctx, &b.wg, b.log, b.bot, b.clinic, b.clinicDialog)
 	go b.bot.Start()
 	return nil
 }
 
 func (b *Bot) Stop(ctx context.Context) error {
-	b.wg.Wait()
 	b.bot.Stop()
+	b.stop()
+	b.wg.Wait()
 	return b.httpService.Stop(ctx)
 }

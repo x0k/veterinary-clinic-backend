@@ -20,6 +20,10 @@ func NewHttpService(name string, srv *http.Server, fataler Fataler) *HttpService
 	}
 }
 
+func (s *HttpService) Name() string {
+	return s.name
+}
+
 func (s *HttpService) Start(ctx context.Context) error {
 	go func() {
 		if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
