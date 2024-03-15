@@ -2,37 +2,31 @@ package infra
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"net/http"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
 type HttpService struct {
-	name    string
-	srv     *http.Server
-	fataler Fataler
+	log *logger.Logger
+	srv *http.Server
 }
 
-func NewHttpService(name string, srv *http.Server, fataler Fataler) *HttpService {
+func NewHttpService(log *logger.Logger, srv *http.Server) *HttpService {
 	return &HttpService{
-		name:    name,
-		srv:     srv,
-		fataler: fataler,
+		log: log.With(slog.String("component", "infra.http_service.HttpService")),
+		srv: srv,
 	}
 }
 
-func (s *HttpService) Name() string {
-	return s.name
-}
-
 func (s *HttpService) Start(ctx context.Context) error {
-	go func() {
-		if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			s.fataler.Fatal(ctx, fmt.Errorf("%s failed to start: %w", s.name, err))
+	const op = "infra.HttpService.Start"
+	context.AfterFunc(ctx, func() {
+		if err := s.srv.Shutdown(ctx); err != nil {
+			s.log.Error(ctx, "failed to shutdown http server", sl.Err(err))
 		}
-	}()
-	return nil
-}
-
-func (s *HttpService) Stop(ctx context.Context) error {
-	return s.srv.Shutdown(ctx)
+	})
+	return s.srv.ListenAndServe()
 }

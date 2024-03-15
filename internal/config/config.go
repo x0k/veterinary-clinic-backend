@@ -54,13 +54,18 @@ type TelegramConfig struct {
 	CalendarWebAppUrl string        `yaml:"calendar_web_app_url" env:"TELEGRAM_CALENDAR_WEB_APP_URL" env-required:"true"`
 }
 
+type ProductionCalendarConfig struct {
+	Url string `yaml:"url" env:"PRODUCTION_CALENDAR_URL" env-required:"true"`
+}
+
 type Config struct {
-	Logger   LoggerConfig   `yaml:"logger"`
-	Storage  StorageConfig  `yaml:"storage"`
-	Profiler ProfilerConfig `yaml:"profiler"`
-	Metrics  MetricsConfig  `yaml:"metrics"`
-	Notion   NotionConfig   `yaml:"notion"`
-	Telegram TelegramConfig `yaml:"telegram"`
+	Logger             LoggerConfig             `yaml:"logger"`
+	Storage            StorageConfig            `yaml:"storage"`
+	Profiler           ProfilerConfig           `yaml:"profiler"`
+	Metrics            MetricsConfig            `yaml:"metrics"`
+	Notion             NotionConfig             `yaml:"notion"`
+	Telegram           TelegramConfig           `yaml:"telegram"`
+	ProductionCalendar ProductionCalendarConfig `yaml:"production_calendar"`
 }
 
 func MustLoad(configPath string) *Config {

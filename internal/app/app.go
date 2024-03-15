@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -16,6 +17,9 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_http_server"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
@@ -30,35 +34,69 @@ type CalendarRequestOptions struct {
 }
 
 func Run(cfg *config.Config) {
-	log := app_logger.MustNew(&cfg.Logger)
-
 	ctx := context.Background()
+	log := app_logger.MustNew(&cfg.Logger)
+	if err := run(ctx, cfg, log); err != nil {
+		log.Error(ctx, "failed to run", sl.Err(err))
+	}
+}
+
+func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	log.Info(ctx, "starting application", slog.String("log_level", cfg.Logger.Level))
 
 	b := boot.New(log)
 
-	b.TryAppend(ctx, func() (boot.Service, error) {
-		calendarWebAppParams := url.Values{}
-		calendarWebAppRequestOptions, err := json.Marshal(&CalendarRequestOptions{
-			Url: fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerUrl, calendarInputHandlerPath),
-		})
-		if err != nil {
-			return nil, err
-		}
-		calendarWebAppParams.Add("req", string(calendarWebAppRequestOptions))
-		configuredCalendarWebAppUrl := fmt.Sprintf("%s?%s", cfg.Telegram.CalendarWebAppUrl, calendarWebAppParams.Encode())
-		log.Debug(ctx, "configured calendar web app url", slog.String("url", configuredCalendarWebAppUrl))
+	httpProductionCalendarRepo := repo.NewHttpProductionCalendar(
+		log,
+		cfg.ProductionCalendar.Url,
+		&http.Client{},
+	)
 
-		calendarWebAppUrl, err := url.Parse(cfg.Telegram.CalendarWebAppUrl)
-		if err != nil {
-			return nil, err
-		}
-		calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
+	calendarWebAppParams := url.Values{}
+	calendarWebAppRequestOptions, err := json.Marshal(&CalendarRequestOptions{
+		Url: fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerUrl, calendarInputHandlerPath),
+	})
+	if err != nil {
+		return err
+	}
+	calendarWebAppParams.Add("req", string(calendarWebAppRequestOptions))
+	configuredCalendarWebAppUrl := fmt.Sprintf("%s?%s", cfg.Telegram.CalendarWebAppUrl, calendarWebAppParams.Encode())
+	log.Debug(ctx, "configured calendar web app url", slog.String("url", configuredCalendarWebAppUrl))
 
-		notionClient := notionapi.NewClient(notionapi.Token(cfg.Notion.Token))
+	calendarWebAppUrl, err := url.Parse(cfg.Telegram.CalendarWebAppUrl)
+	if err != nil {
+		return err
+	}
+	calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
 
-		return telegram_bot.New(
+	notionClient := notionapi.NewClient(notionapi.Token(cfg.Notion.Token))
+	clinicDialogUseCase := usecase.NewClinicDialogUseCase(
+		log,
+		presenter.NewTelegramDialog(&presenter.TelegramDialogConfig{
+			CalendarWebAppUrl: configuredCalendarWebAppUrl,
+		}),
+		repo.NewStaticWorkBreaks(),
+		notion_repo.NewBusyPeriods(
+			log,
+			notionClient,
+			notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
+		),
+	)
+
+	b.Append(
+		httpProductionCalendarRepo,
+		telegram_http_server.New(
+			log,
+			clinicDialogUseCase,
+			parser.NewTelegramInitData(cfg.Telegram.Token, 24*time.Hour),
+			&telegram_http_server.Config{
+				CalendarInputHandlerPath: calendarInputHandlerPath,
+				CalendarWebAppOrigin:     calendarWebAppOrigin,
+				Address:                  cfg.Telegram.WebHandlerAddress,
+			},
+		),
+		telegram_bot.New(
 			log,
 			usecase.NewClinicUseCase(
 				notion_repo.NewClinic(
@@ -68,35 +106,20 @@ func Run(cfg *config.Config) {
 				),
 				presenter.NewTelegramClinic(),
 			),
-			usecase.NewClinicDialogUseCase(
-				log,
-				presenter.NewTelegramDialog(&presenter.TelegramDialogConfig{
-					CalendarWebAppUrl: configuredCalendarWebAppUrl,
-				}),
-				repo.NewStaticWorkBreaks(),
-				notion_repo.NewBusyPeriods(
-					log,
-					notionClient,
-					notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
-				),
-			),
-			b,
-			parser.NewTelegramInitData(cfg.Telegram.Token, 24*time.Hour),
+			clinicDialogUseCase,
 			&telegram_bot.Config{
-				CalendarInputHandlerPath: calendarInputHandlerPath,
-				CalendarWebAppOrigin:     calendarWebAppOrigin,
-				WebHandlerAddress:        cfg.Telegram.WebHandlerAddress,
-				Token:                    cfg.Telegram.Token,
-				PollerTimeout:            cfg.Telegram.PollerTimeout,
+				Token:         cfg.Telegram.Token,
+				PollerTimeout: cfg.Telegram.PollerTimeout,
 			},
-		), nil
-	})
+		),
+	)
 
 	if cfg.Profiler.Enabled {
-		b.Append(profiler_http_server.New(&cfg.Profiler, b))
+		b.Append(profiler_http_server.New(log, &cfg.Profiler))
 	}
 
 	b.Start(ctx)
 
 	log.Info(ctx, "application stopped")
+	return nil
 }
