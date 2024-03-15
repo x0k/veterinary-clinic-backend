@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"slices"
 	"time"
 )
 
@@ -319,5 +320,6 @@ func (c *BusyPeriodsCalculator) Calculate(
 			periods = append(periods, period)
 		}
 	}
+	slices.SortFunc(periods, DateTimePeriodApi.ComparePeriods)
 	return periods
 }
