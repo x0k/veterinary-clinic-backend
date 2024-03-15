@@ -1,4 +1,4 @@
-package telegram_web_handler
+package controller
 
 import (
 	"fmt"
@@ -9,11 +9,11 @@ import (
 
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/httpx"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
-	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
@@ -29,17 +29,17 @@ type TelegramInitDataParser interface {
 	Parse(data string) (initdata.InitData, error)
 }
 
-type Config struct {
+type HttpTelegramConfig struct {
 	CalendarInputHandlerPath string
 	CalendarWebAppOrigin     string
 }
 
-func UseRouter(
+func UseHttpTelegramRouter(
 	log *logger.Logger,
 	mux *http.ServeMux,
-	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
+	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
 	initDataParser TelegramInitDataParser,
-	cfg *Config,
+	cfg *HttpTelegramConfig,
 ) {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,

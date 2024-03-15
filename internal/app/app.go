@@ -12,12 +12,14 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/notion_clinic_repo"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/busy_periods_repo"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/clinic_repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_clinic_presenter"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_dialog_presenter"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_init_data_parser"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/work_breaks_repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
@@ -54,14 +56,16 @@ func Run(cfg *config.Config) {
 		}
 		calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
 
+		clinicRepo := clinic_repo.New(
+			notionapi.NewClient(notionapi.Token(cfg.Notion.Token)),
+			notionapi.DatabaseID(cfg.Notion.ServicesDatabaseId),
+			notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
+		)
+
 		return telegram_bot.New(
 			log,
 			usecase.NewClinicUseCase(
-				notion_clinic_repo.New(
-					notionapi.NewClient(notionapi.Token(cfg.Notion.Token)),
-					notionapi.DatabaseID(cfg.Notion.ServicesDatabaseId),
-					notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
-				),
+				clinicRepo,
 				telegram_clinic_presenter.New(),
 			),
 			usecase.NewClinicDialogUseCase(
@@ -69,6 +73,8 @@ func Run(cfg *config.Config) {
 				telegram_dialog_presenter.New(&telegram_dialog_presenter.Config{
 					CalendarWebAppUrl: configuredCalendarWebAppUrl,
 				}),
+				work_breaks_repo.NewStatic(),
+				busy_periods_repo.NewClinicRecords(clinicRepo),
 			),
 			b,
 			telegram_init_data_parser.New(cfg.Telegram.Token, 24*time.Hour),

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"slices"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
@@ -18,23 +17,10 @@ var ErrLoadingWorkBreaksFailed = errors.New("loading work breaks failed")
 var ErrLoadingBusyPeriodsFailed = errors.New("loading busy periods failed")
 var ErrLoadingFreePeriodsFailed = errors.New("loading free periods failed")
 
-type TimePeriodType int
-
-const (
-	FreePeriod TimePeriodType = iota
-	BusyPeriod
-)
-
-type TitledTimePeriod struct {
-	entity.TimePeriod
-	Type  TimePeriodType
-	Title string
-}
-
 type DialogPresenter[R any] interface {
 	RenderGreeting() (R, error)
 	RenderDatePicker() (R, error)
-	RenderSchedule([]TitledTimePeriod) (R, error)
+	RenderSchedule(entity.Schedule) (R, error)
 	RenderError(error) (R, error)
 }
 
@@ -124,44 +110,7 @@ func (u *ClinicDialogUseCase[R]) FinishScheduleDialog(
 		u.sendError(ctx, dialog.Id, ErrLoadingBusyPeriodsFailed)
 		return
 	}
-	allBusyPeriods := make([]entity.TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
-	copy(allBusyPeriods, busyPeriods)
-	for _, wb := range workBreaks {
-		allBusyPeriods = append(allBusyPeriods, wb.Period)
-	}
-
-	actualFreePeriods := entity.TimePeriodApi.SortAndUnitePeriods(
-		entity.TimePeriodApi.SubtractPeriodsFromPeriods(
-			freePeriods,
-			allBusyPeriods,
-		),
-	)
-
-	schedule := make([]TitledTimePeriod, 0, len(actualFreePeriods)+len(allBusyPeriods))
-	for _, p := range actualFreePeriods {
-		schedule = append(schedule, TitledTimePeriod{
-			TimePeriod: p,
-			Type:       FreePeriod,
-			Title:      "Свободно",
-		})
-	}
-	for _, p := range busyPeriods {
-		schedule = append(schedule, TitledTimePeriod{
-			TimePeriod: p,
-			Type:       BusyPeriod,
-			Title:      "Занято",
-		})
-	}
-	for _, p := range workBreaks {
-		schedule = append(schedule, TitledTimePeriod{
-			TimePeriod: p.Period,
-			Type:       BusyPeriod,
-			Title:      p.Title,
-		})
-	}
-	slices.SortFunc(schedule, func(a, b TitledTimePeriod) int {
-		return entity.TimePeriodApi.ComparePeriods(a.TimePeriod, b.TimePeriod)
-	})
+	schedule := entity.CalculateSchedule(busyPeriods, workBreaks, freePeriods)
 
 	msg, err := u.dialogPresenter.RenderSchedule(schedule)
 	if err != nil {

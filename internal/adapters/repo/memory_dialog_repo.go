@@ -1,4 +1,4 @@
-package memory_dialog_repo
+package repo
 
 import (
 	"context"
@@ -7,18 +7,18 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type MemoryDialogRepo struct {
+type Memory struct {
 	mu      sync.RWMutex
 	dialogs map[entity.DialogId]entity.UserId
 }
 
-func New() *MemoryDialogRepo {
-	return &MemoryDialogRepo{
+func NewMemoryDialog() *Memory {
+	return &Memory{
 		dialogs: make(map[entity.DialogId]entity.UserId),
 	}
 }
 
-func (r *MemoryDialogRepo) SaveDialog(ctx context.Context, dialog entity.Dialog) error {
+func (r *Memory) SaveDialog(ctx context.Context, dialog entity.Dialog) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.dialogs[dialog.Id] = dialog.UserId

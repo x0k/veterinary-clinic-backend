@@ -1,11 +1,11 @@
-package profiler
+package controller
 
 import (
 	"net/http"
 	"net/http/pprof"
 )
 
-func UseRouter(mux *http.ServeMux) {
+func UseHttpProfilerRouter(mux *http.ServeMux) {
 	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
 	mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))

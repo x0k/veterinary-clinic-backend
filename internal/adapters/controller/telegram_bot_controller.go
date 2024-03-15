@@ -1,4 +1,4 @@
-package telegram
+package controller
 
 import (
 	"context"
@@ -6,22 +6,22 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
-	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"gopkg.in/telebot.v3"
 )
 
 var ErrUnexpectedMessageType = errors.New("unexpected message type")
 
-func UseRouter(
+func UseTelegramBotRouter(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	log *logger.Logger,
 	bot *telebot.Bot,
-	clinic *usecase.ClinicUseCase[shared.TelegramResponse],
-	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
+	clinic *usecase.ClinicUseCase[adapters.TelegramResponse],
+	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
 ) {
 	l := log.With(slog.String("component", "controller.telegram.UseRouter"))
 
@@ -33,7 +33,7 @@ func UseRouter(
 			case <-ctx.Done():
 				return
 			case msg := <-clinicDialog.Messages():
-				queryResponse, ok := msg.Message.(shared.TelegramQueryResponse)
+				queryResponse, ok := msg.Message.(adapters.TelegramQueryResponse)
 				if !ok {
 					l.Error(ctx, "unexpected message type", slog.Int("type", int(msg.Message.Type())))
 					continue
@@ -50,8 +50,8 @@ func UseRouter(
 		}
 	}()
 
-	send := func(c telebot.Context, response shared.TelegramResponse) error {
-		msg, ok := response.(shared.TelegramTextResponse)
+	send := func(c telebot.Context, response adapters.TelegramResponse) error {
+		msg, ok := response.(adapters.TelegramTextResponse)
 		if !ok {
 			return ErrUnexpectedMessageType
 		}

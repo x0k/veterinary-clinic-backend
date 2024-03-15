@@ -3,8 +3,6 @@ package entity
 import (
 	"math"
 	"time"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/period"
 )
 
 type Time struct {
@@ -100,36 +98,5 @@ func MakeDateTimeShifter(shift DateTime) func(DateTime) DateTime {
 			Add(time.Duration(shift.Hours) * time.Hour).
 			Add(time.Duration(shift.Minutes) * time.Minute)
 		return GoTimeToDateTime(t)
-	}
-}
-
-type TimePeriod = period.Period[Time]
-
-type DateTimePeriod = period.Period[DateTime]
-
-var TimePeriodApi = period.NewApi(CompareTime)
-
-var DateTimePeriodApi = period.NewApi(CompareDateTime)
-
-func TimePeriodDurationInMinutes(period TimePeriod) int {
-	return (period.End.Hours-period.Start.Hours)*60 + (period.End.Minutes - period.Start.Minutes)
-}
-
-func DateToDateTimePeriod(d Date) DateTimePeriod {
-	return DateTimePeriod{
-		Start: DateTime{
-			Date: d,
-			Time: Time{
-				Hours:   0,
-				Minutes: 0,
-			},
-		},
-		End: DateTime{
-			Date: d,
-			Time: Time{
-				Hours:   23,
-				Minutes: 59,
-			},
-		},
 	}
 }

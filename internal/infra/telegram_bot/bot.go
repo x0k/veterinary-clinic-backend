@@ -7,10 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/controller/http/telegram_web_handler"
-	"github.com/x0k/veterinary-clinic-backend/internal/controller/telegram"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"gopkg.in/telebot.v3"
 )
@@ -28,18 +26,18 @@ type Config struct {
 type Bot struct {
 	log          *logger.Logger
 	wg           sync.WaitGroup
-	httpService  *shared.HttpService
+	httpService  *adapters.HttpService
 	cfg          *Config
 	bot          *telebot.Bot
-	clinic       *usecase.ClinicUseCase[shared.TelegramResponse]
-	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse]
+	clinic       *usecase.ClinicUseCase[adapters.TelegramResponse]
+	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse]
 }
 
 func New(
 	log *logger.Logger,
-	clinic *usecase.ClinicUseCase[shared.TelegramResponse],
-	clinicDialog *usecase.ClinicDialogUseCase[shared.TelegramResponse],
-	fataler shared.Fataler,
+	clinic *usecase.ClinicUseCase[adapters.TelegramResponse],
+	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
+	fataler adapters.Fataler,
 	initDataParser telegram_web_handler.TelegramInitDataParser,
 	cfg *Config,
 ) *Bot {
@@ -53,11 +51,11 @@ func New(
 		cfg:          cfg,
 		clinic:       clinic,
 		clinicDialog: clinicDialog,
-		httpService: shared.NewHttpService(
+		httpService: adapters.NewHttpService(
 			component_name,
 			&http.Server{
 				Addr:    cfg.WebHandlerAddress,
-				Handler: shared.Logging(log, mux),
+				Handler: adapters.Logging(log, mux),
 			},
 			fataler,
 		),
