@@ -2,13 +2,13 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
 
 	"github.com/jomei/notionapi"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo/notion_repo"
@@ -24,8 +24,6 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
-
-const calendarInputHandlerPath = "/calendar-input"
 
 type CalendarRequestOptions struct {
 	Url string `json:"url"`
@@ -51,29 +49,21 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		&http.Client{},
 	)
 
-	calendarWebAppParams := url.Values{}
-	calendarWebAppRequestOptions, err := json.Marshal(&CalendarRequestOptions{
-		Url: fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerUrl, calendarInputHandlerPath),
-	})
-	if err != nil {
-		return err
-	}
-	calendarWebAppParams.Add("r", string(calendarWebAppRequestOptions))
-	configuredCalendarWebAppUrl := fmt.Sprintf("%s?%s", cfg.Telegram.CalendarWebAppUrl, calendarWebAppParams.Encode())
-	log.Debug(ctx, "configured calendar web app url", slog.String("url", configuredCalendarWebAppUrl))
-
 	calendarWebAppUrl, err := url.Parse(cfg.Telegram.CalendarWebAppUrl)
 	if err != nil {
 		return err
 	}
 	calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
 
+	calendarWebHandlerUrl := fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.CalendarInputHandlerPath)
+
 	notionClient := notionapi.NewClient(notionapi.Token(cfg.Notion.Token))
 	clinicDialogUseCase := usecase.NewClinicDialogUseCase(
 		log,
-		presenter.NewTelegramDialog(&presenter.TelegramDialogConfig{
-			CalendarWebAppUrl: configuredCalendarWebAppUrl,
-		}),
+		presenter.NewTelegramDialog(
+			cfg.Telegram.CalendarWebAppUrl,
+			calendarWebHandlerUrl,
+		),
 		repo.NewStaticWorkBreaks(),
 		notion_repo.NewBusyPeriods(
 			log,
@@ -89,10 +79,9 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			log,
 			clinicDialogUseCase,
 			&telegram_http_server.Config{
-				Token:                    cfg.Telegram.Token,
-				CalendarInputHandlerPath: calendarInputHandlerPath,
-				CalendarWebAppOrigin:     calendarWebAppOrigin,
-				Address:                  cfg.Telegram.WebHandlerAddress,
+				Token:                cfg.Telegram.Token,
+				CalendarWebAppOrigin: calendarWebAppOrigin,
+				Address:              cfg.Telegram.WebHandlerAddress,
 			},
 		),
 		telegram_bot.New(

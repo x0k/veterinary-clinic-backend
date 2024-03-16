@@ -15,10 +15,9 @@ type Server struct {
 }
 
 type Config struct {
-	Token                    string
-	CalendarInputHandlerPath string
-	CalendarWebAppOrigin     string
-	Address                  string
+	Token                string
+	CalendarWebAppOrigin string
+	Address              string
 }
 
 func New(
@@ -31,9 +30,8 @@ func New(
 		log, mux,
 		clinicDialog,
 		&controller.HttpTelegramConfig{
-			Token:                    cfg.Token,
-			CalendarInputHandlerPath: cfg.CalendarInputHandlerPath,
-			CalendarWebAppOrigin:     cfg.CalendarWebAppOrigin,
+			Token:                cfg.Token,
+			CalendarWebAppOrigin: cfg.CalendarWebAppOrigin,
 		},
 	)
 	return &Server{

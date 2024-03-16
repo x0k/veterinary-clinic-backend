@@ -23,9 +23,8 @@ type WebAppResultResponse struct {
 }
 
 type HttpTelegramConfig struct {
-	Token                    string
-	CalendarInputHandlerPath string
-	CalendarWebAppOrigin     string
+	Token                string
+	CalendarWebAppOrigin string
 }
 
 func UseHttpTelegramRouter(
@@ -39,14 +38,14 @@ func UseHttpTelegramRouter(
 	}
 	initDataParser := NewTelegramInitData(cfg.Token, time.Hour*24)
 
-	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", adapters.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", cfg.CalendarWebAppOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mux.HandleFunc(fmt.Sprintf("POST %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("POST %s", adapters.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		res, httpErr := httpx.JSONBody[WebAppResultResponse](log.Logger, jsonBodyDecoder, w, r)
 		if httpErr != nil {
 			http.Error(w, httpErr.Text, httpErr.Status)

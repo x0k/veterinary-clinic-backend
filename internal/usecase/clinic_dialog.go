@@ -16,10 +16,11 @@ var ErrScheduleRenderingFailed = errors.New("schedule rendering failed")
 var ErrLoadingWorkBreaksFailed = errors.New("loading work breaks failed")
 var ErrLoadingBusyPeriodsFailed = errors.New("loading busy periods failed")
 var ErrLoadingFreePeriodsFailed = errors.New("loading free periods failed")
+var ErrNextAvailableDayCalculationFailed = errors.New("next available day calculation failed")
 
 type DialogPresenter[R any] interface {
 	RenderGreeting() (R, error)
-	RenderDatePicker() (R, error)
+	RenderDatePicker(time.Time) (R, error)
 	RenderSchedule(entity.Schedule) (R, error)
 	RenderError(error) (R, error)
 }
@@ -34,6 +35,7 @@ type BusyPeriodsRepo interface {
 
 type FreePeriodsRepo interface {
 	FreePeriods(ctx context.Context, t time.Time) ([]entity.TimePeriod, error)
+	NextAvailableDay(ctx context.Context, t time.Time) (time.Time, error)
 }
 
 type ClinicDialogUseCase[R any] struct {
@@ -85,7 +87,12 @@ func (u *ClinicDialogUseCase[R]) GreetUser(ctx context.Context) (R, error) {
 }
 
 func (u *ClinicDialogUseCase[R]) StartScheduleDialog(ctx context.Context) (R, error) {
-	return u.dialogPresenter.RenderDatePicker()
+	t, err := u.freePeriodsRepo.NextAvailableDay(ctx, time.Now())
+	if err != nil {
+		u.log.Error(ctx, "failed to get next available day", sl.Err(err))
+		return *new(R), ErrNextAvailableDayCalculationFailed
+	}
+	return u.dialogPresenter.RenderDatePicker(t)
 }
 
 func (u *ClinicDialogUseCase[R]) FinishScheduleDialog(

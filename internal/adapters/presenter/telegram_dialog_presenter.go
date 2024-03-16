@@ -2,39 +2,26 @@ package presenter
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
+	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"gopkg.in/telebot.v3"
 )
 
-type TelegramDialogConfig struct {
-	CalendarWebAppUrl string
-}
-
 type TelegramDialogPresenter struct {
-	datePickerResponse adapters.TelegramTextResponse
+	calendarWebAppUrl           string
+	calendarInputRequestOptions string
 }
 
-func NewTelegramDialog(cfg *TelegramDialogConfig) *TelegramDialogPresenter {
-	calendarKeyboard := &telebot.ReplyMarkup{
-		InlineKeyboard: [][]telebot.InlineButton{{
-			{
-				Text: "Открыть календарь",
-				WebApp: &telebot.WebApp{
-					URL: cfg.CalendarWebAppUrl,
-				},
-			},
-		}},
-	}
+const calendarInputValidationSchema = `{"type":"object","properties":{"selectedDates":{"type":"array","minItems":1}},"required":["selectedDates"]}`
+
+func NewTelegramDialog(calendarWebAppUrl string, calendarWebHandlerUrl string) *TelegramDialogPresenter {
 	return &TelegramDialogPresenter{
-		datePickerResponse: adapters.TelegramTextResponse{
-			Text: "Выберите дату",
-			Options: &telebot.SendOptions{
-				ReplyMarkup: calendarKeyboard,
-			},
-		},
+		calendarWebAppUrl:           calendarWebAppUrl,
+		calendarInputRequestOptions: fmt.Sprintf(`{"url": "%s"}`, calendarWebHandlerUrl),
 	}
 }
 
@@ -47,8 +34,28 @@ func (p *TelegramDialogPresenter) RenderGreeting() (adapters.TelegramResponse, e
 	}, nil
 }
 
-func (p *TelegramDialogPresenter) RenderDatePicker() (adapters.TelegramResponse, error) {
-	return p.datePickerResponse, nil
+func (p *TelegramDialogPresenter) RenderDatePicker(t time.Time) (adapters.TelegramResponse, error) {
+	webAppParams := url.Values{}
+	webAppParams.Add("r", p.calendarInputRequestOptions)
+	webAppParams.Add("v", calendarInputValidationSchema)
+	date := t.Format(time.DateOnly)
+	webAppParams.Add("w", fmt.Sprintf(`{"date":{"min":"%s"},"settings":{"selected":{"dates":["%s"]}}}`, date, date))
+	url := fmt.Sprintf("%s?%s", p.calendarWebAppUrl, webAppParams.Encode())
+	return adapters.TelegramTextResponse{
+		Text: "Выберите дату",
+		Options: &telebot.SendOptions{
+			ReplyMarkup: &telebot.ReplyMarkup{
+				InlineKeyboard: [][]telebot.InlineButton{{
+					{
+						Text: "Открыть календарь",
+						WebApp: &telebot.WebApp{
+							URL: url,
+						},
+					},
+				}},
+			},
+		},
+	}, nil
 }
 
 func (p *TelegramDialogPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramResponse, error) {

@@ -86,6 +86,13 @@ func (r *HttpFreePeriods) FreePeriods(ctx context.Context, t time.Time) ([]entit
 	return calculator.Calculate(t)
 }
 
+func (r *HttpFreePeriods) NextAvailableDay(ctx context.Context, t time.Time) (time.Time, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	calculator := entity.NewNextAvailableDayCalculator(r.productionCalendar)
+	return calculator.Calculate(t), nil
+}
+
 func (s *HttpFreePeriods) updateProductionCalendar(calendar entity.ProductionCalendar) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
