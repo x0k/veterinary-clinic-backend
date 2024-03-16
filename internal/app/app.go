@@ -58,7 +58,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	if err != nil {
 		return err
 	}
-	calendarWebAppParams.Add("req", string(calendarWebAppRequestOptions))
+	calendarWebAppParams.Add("r", string(calendarWebAppRequestOptions))
 	configuredCalendarWebAppUrl := fmt.Sprintf("%s?%s", cfg.Telegram.CalendarWebAppUrl, calendarWebAppParams.Encode())
 	log.Debug(ctx, "configured calendar web app url", slog.String("url", configuredCalendarWebAppUrl))
 

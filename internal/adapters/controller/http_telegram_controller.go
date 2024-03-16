@@ -15,10 +15,10 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
-type CalendarDialogResult struct {
-	Calendar struct {
+type WebAppResultResponse struct {
+	Data struct {
 		SelectedDates []string `json:"selectedDates"`
-	} `json:"calendar"`
+	} `json:"data"`
 	WebAppInitData string `json:"webAppInitData"`
 }
 
@@ -47,12 +47,12 @@ func UseHttpTelegramRouter(
 	})
 
 	mux.HandleFunc(fmt.Sprintf("POST %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
-		res, httpErr := httpx.JSONBody[CalendarDialogResult](log.Logger, jsonBodyDecoder, w, r)
+		res, httpErr := httpx.JSONBody[WebAppResultResponse](log.Logger, jsonBodyDecoder, w, r)
 		if httpErr != nil {
 			http.Error(w, httpErr.Text, httpErr.Status)
 			return
 		}
-		if len(res.Calendar.SelectedDates) == 0 {
+		if len(res.Data.SelectedDates) == 0 {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -71,7 +71,7 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		t, err := time.Parse(time.DateOnly, res.Calendar.SelectedDates[0])
+		t, err := time.Parse(time.DateOnly, res.Data.SelectedDates[0])
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
