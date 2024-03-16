@@ -72,6 +72,7 @@ func NewClinicDialogUseCase[R any](
 		messages:        make(chan entity.DialogMessage[R]),
 		workBreaksRepo:  workBreaksRepo,
 		busyPeriodsRepo: busyPeriodsRepo,
+		freePeriodsRepo: freePeriodsRepo,
 	}
 }
 

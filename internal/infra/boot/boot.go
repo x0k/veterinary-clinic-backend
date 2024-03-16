@@ -84,6 +84,7 @@ func (b *Boot) Start(ctx context.Context) {
 	}
 
 	b.log.Info(ctx, "shutting down")
+	// Log errors during shutdown via Fatal
 	b.fataled.Store(true)
 	cancel()
 	b.wg.Wait()

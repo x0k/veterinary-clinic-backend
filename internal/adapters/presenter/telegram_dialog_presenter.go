@@ -48,7 +48,7 @@ func (p *TelegramDialogPresenter) RenderDatePicker() (adapters.TelegramResponse,
 	return p.datePickerResponse, nil
 }
 
-func (p *TelegramDialogPresenter) RenderSchedule(periods []entity.TimePeriod) (adapters.TelegramResponse, error) {
+func (p *TelegramDialogPresenter) RenderSchedule(periods entity.Schedule) (adapters.TelegramResponse, error) {
 	return adapters.TelegramQueryResponse{}, nil
 }
 

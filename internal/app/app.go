@@ -7,10 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/jomei/notionapi"
-	"github.com/x0k/veterinary-clinic-backend/internal/adapters/parser"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo/notion_repo"
@@ -47,7 +45,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	b := boot.New(log)
 
-	httpProductionCalendarRepo := repo.NewHttpProductionCalendar(
+	freePeriodsRepo := repo.NewHttpFreePeriods(
 		log,
 		cfg.ProductionCalendar.Url,
 		&http.Client{},
@@ -82,15 +80,16 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			notionClient,
 			notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
 		),
+		freePeriodsRepo,
 	)
 
 	b.Append(
-		httpProductionCalendarRepo,
+		freePeriodsRepo,
 		telegram_http_server.New(
 			log,
 			clinicDialogUseCase,
-			parser.NewTelegramInitData(cfg.Telegram.Token, 24*time.Hour),
 			&telegram_http_server.Config{
+				Token:                    cfg.Telegram.Token,
 				CalendarInputHandlerPath: calendarInputHandlerPath,
 				CalendarWebAppOrigin:     calendarWebAppOrigin,
 				Address:                  cfg.Telegram.WebHandlerAddress,

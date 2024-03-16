@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	initdata "github.com/telegram-mini-apps/init-data-golang"
-
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/httpx"
@@ -24,12 +22,8 @@ type CalendarDialogResult struct {
 	WebAppInitData string `json:"webAppInitData"`
 }
 
-type TelegramInitDataParser interface {
-	Validate(data string) error
-	Parse(data string) (initdata.InitData, error)
-}
-
 type HttpTelegramConfig struct {
+	Token                    string
 	CalendarInputHandlerPath string
 	CalendarWebAppOrigin     string
 }
@@ -38,12 +32,12 @@ func UseHttpTelegramRouter(
 	log *logger.Logger,
 	mux *http.ServeMux,
 	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
-	initDataParser TelegramInitDataParser,
 	cfg *HttpTelegramConfig,
 ) {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,
 	}
+	initDataParser := NewTelegramInitData(cfg.Token, time.Hour*24)
 
 	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", cfg.CalendarInputHandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", cfg.CalendarWebAppOrigin)

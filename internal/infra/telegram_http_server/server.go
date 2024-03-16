@@ -15,6 +15,7 @@ type Server struct {
 }
 
 type Config struct {
+	Token                    string
 	CalendarInputHandlerPath string
 	CalendarWebAppOrigin     string
 	Address                  string
@@ -23,19 +24,19 @@ type Config struct {
 func New(
 	log *logger.Logger,
 	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
-	initDataValidator controller.TelegramInitDataParser,
 	cfg *Config,
 ) *Server {
 	mux := http.NewServeMux()
 	controller.UseHttpTelegramRouter(
 		log, mux,
 		clinicDialog,
-		initDataValidator,
 		&controller.HttpTelegramConfig{
+			Token:                    cfg.Token,
 			CalendarInputHandlerPath: cfg.CalendarInputHandlerPath,
 			CalendarWebAppOrigin:     cfg.CalendarWebAppOrigin,
 		},
 	)
+	infra.Logging(log, mux)
 	return &Server{
 		HttpService: *infra.NewHttpService(
 			log,
