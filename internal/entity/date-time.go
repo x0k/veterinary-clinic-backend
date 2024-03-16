@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"math"
 	"time"
 )
@@ -10,10 +11,18 @@ type Time struct {
 	Hours   int
 }
 
+func (t Time) String() string {
+	return fmt.Sprintf("%02d:%02d", t.Hours, t.Minutes)
+}
+
 type Date struct {
 	Day   int
 	Month int
 	Year  int
+}
+
+func (d Date) String() string {
+	return fmt.Sprintf("%04d-%02d-%02d", d.Year, d.Month, d.Day)
 }
 
 type DateTime struct {

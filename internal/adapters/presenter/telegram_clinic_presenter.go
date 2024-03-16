@@ -18,7 +18,7 @@ func (p *TelegramClinicPresenter) RenderServices(services []entity.Service) (ada
 	sb := strings.Builder{}
 	sb.WriteString("Услуги: \n\n")
 	for _, service := range services {
-		sb.WriteString("*")
+		sb.WriteByte('*')
 		sb.WriteString(service.Title)
 		sb.WriteString("*\n")
 		if service.Description != "" {

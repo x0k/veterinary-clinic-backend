@@ -1,6 +1,9 @@
 package entity
 
-import "slices"
+import (
+	"slices"
+	"time"
+)
 
 type TimePeriodType int
 
@@ -15,13 +18,25 @@ type TitledTimePeriod struct {
 	Title string
 }
 
-type Schedule []TitledTimePeriod
+type SchedulePeriods []TitledTimePeriod
 
-func CalculateSchedule(
+type Schedule struct {
+	Date    Date
+	Periods SchedulePeriods
+}
+
+func NewSchedule(t time.Time, periods []TitledTimePeriod) Schedule {
+	return Schedule{
+		Date:    GoTimeToDate(t),
+		Periods: periods,
+	}
+}
+
+func CalculateSchedulePeriods(
 	freePeriods []TimePeriod,
 	busyPeriods []TimePeriod,
 	workBreaks []WorkBreak,
-) Schedule {
+) SchedulePeriods {
 	allBusyPeriods := make([]TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)
 	for _, wb := range workBreaks {

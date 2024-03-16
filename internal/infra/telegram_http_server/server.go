@@ -36,13 +36,12 @@ func New(
 			CalendarWebAppOrigin:     cfg.CalendarWebAppOrigin,
 		},
 	)
-	infra.Logging(log, mux)
 	return &Server{
 		HttpService: *infra.NewHttpService(
 			log,
 			&http.Server{
 				Addr:    cfg.Address,
-				Handler: mux,
+				Handler: infra.Logging(log, mux),
 			},
 		),
 	}
