@@ -24,7 +24,7 @@ func newTelegramClinicSchedulePresenter(
 ) telegramClinicSchedulePresenter {
 	return telegramClinicSchedulePresenter{
 		calendarWebAppUrl:           calendarWebAppUrl,
-		calendarInputRequestOptions: fmt.Sprintf(`{"url": "%s"}`, calendarWebHandlerUrl),
+		calendarInputRequestOptions: fmt.Sprintf(`{"url":"%s"}`, string(calendarWebHandlerUrl)),
 	}
 }
 

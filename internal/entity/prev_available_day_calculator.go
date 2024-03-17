@@ -21,7 +21,7 @@ func (c *PrevAvailableDayCalculator) Calculate(
 	fromDate time.Time,
 ) *time.Time {
 	prevDay := fromDate
-	for prevDay.Sub(c.nowDate) > 24*time.Hour {
+	for prevDay.Sub(c.nowDate) >= 0 {
 		prevDayJson := GoTimeToJsonDate(prevDay)
 		if dayType, ok := c.productionCalendar[prevDayJson]; !ok || !IsNonWorkingDayType(dayType) {
 			return &prevDay

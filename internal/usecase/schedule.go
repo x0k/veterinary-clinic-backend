@@ -23,7 +23,7 @@ func schedule(
 	date time.Time,
 ) entity.Schedule {
 	schedulePeriods := entity.CalculateSchedulePeriods(freePeriods, busyPeriods, workBreaks)
-	next := nextAvailableDay(productionCalendar, date)
-	prev := prevAvailableDay(productionCalendar, now, date)
+	next := nextAvailableDay(productionCalendar, date.AddDate(0, 0, 1))
+	prev := prevAvailableDay(productionCalendar, now, date.AddDate(0, 0, -1))
 	return entity.NewSchedule(date, schedulePeriods).SetDates(&next, prev)
 }
