@@ -1,4 +1,4 @@
-package usecase
+package clinic_dialog_usecase
 
 import (
 	"context"
@@ -20,7 +20,7 @@ var ErrNextAvailableDayCalculationFailed = errors.New("next available day calcul
 var ErrPrevAvailableDayCalculationFailed = errors.New("prev available day calculation failed")
 
 type DialogPresenter[R any] interface {
-	RenderGreeting() (R, error)
+	GreetPresenter[R]
 	RenderSchedule(entity.Schedule) (R, error)
 	RenderSendableSchedule(entity.Schedule) (R, error)
 	RenderError(error) (R, error)
@@ -82,10 +82,6 @@ func NewClinicDialogUseCase[R any](
 
 func (u *ClinicDialogUseCase[R]) Messages() <-chan entity.DialogMessage[R] {
 	return u.messages
-}
-
-func (u *ClinicDialogUseCase[R]) GreetUser(ctx context.Context) (R, error) {
-	return u.dialogPresenter.RenderGreeting()
 }
 
 func (u *ClinicDialogUseCase[R]) Schedule(ctx context.Context, t time.Time) (R, error) {
