@@ -8,13 +8,13 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type TelegramClinicPresenter struct{}
+type TelegramClinicServicesPresenter struct{}
 
-func NewTelegramClinic() *TelegramClinicPresenter {
-	return &TelegramClinicPresenter{}
+func NewTelegramClinicServices() *TelegramClinicServicesPresenter {
+	return &TelegramClinicServicesPresenter{}
 }
 
-func (p *TelegramClinicPresenter) RenderServices(services []entity.Service) (adapters.TelegramTextResponse, error) {
+func (p *TelegramClinicServicesPresenter) RenderServices(services []entity.Service) (adapters.TelegramTextResponse, error) {
 	sb := strings.Builder{}
 	sb.WriteString("Услуги: \n\n")
 	for _, service := range services {

@@ -1,4 +1,4 @@
-package notion_repo
+package repo
 
 import (
 	"context"
@@ -10,19 +10,19 @@ import (
 
 var ErrFailedToCreateRecord = errors.New("failed to create record")
 
-type Clinic struct {
+type NotionClinicServicesRepo struct {
 	servicesDatabaseId                notionapi.DatabaseID
 	recordsDatabaseId                 notionapi.DatabaseID
 	client                            *notionapi.Client
 	actualRecordsDatabaseQueryRequest *notionapi.DatabaseQueryRequest
 }
 
-func NewClinic(
+func NewNotionClinicServices(
 	client *notionapi.Client,
 	servicesDatabaseId notionapi.DatabaseID,
 	recordsDatabaseId notionapi.DatabaseID,
-) *Clinic {
-	return &Clinic{
+) *NotionClinicServicesRepo {
+	return &NotionClinicServicesRepo{
 		client:             client,
 		servicesDatabaseId: servicesDatabaseId,
 		recordsDatabaseId:  recordsDatabaseId,
@@ -59,7 +59,7 @@ func NewClinic(
 	}
 }
 
-func (s *Clinic) Services(ctx context.Context) ([]entity.Service, error) {
+func (s *NotionClinicServicesRepo) Services(ctx context.Context) ([]entity.Service, error) {
 	r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (s *Clinic) Services(ctx context.Context) ([]entity.Service, error) {
 	return services, nil
 }
 
-func (s *Clinic) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
+func (s *NotionClinicServicesRepo) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
 	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, s.actualRecordsDatabaseQueryRequest)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (s *Clinic) FetchActualRecords(ctx context.Context, currentUserId *entity.U
 	return records, nil
 }
 
-func (s *Clinic) CreateRecord(
+func (s *NotionClinicServicesRepo) CreateRecord(
 	ctx context.Context,
 	userId entity.UserId,
 	serviceId entity.ServiceId,
@@ -152,7 +152,7 @@ func (s *Clinic) CreateRecord(
 	return entity.Record{}, ErrFailedToCreateRecord
 }
 
-func (s *Clinic) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
+func (s *NotionClinicServicesRepo) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
 	_, err := s.client.Page.Update(ctx, notionapi.PageID(recordId), &notionapi.PageUpdateRequest{
 		Archived: true,
 	})

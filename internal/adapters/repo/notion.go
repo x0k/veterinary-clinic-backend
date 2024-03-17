@@ -1,4 +1,4 @@
-package notion_repo
+package repo
 
 import (
 	"strings"

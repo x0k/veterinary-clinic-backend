@@ -11,23 +11,17 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
-	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo/notion_repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_http_server"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
-
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
-
-type CalendarRequestOptions struct {
-	Url string `json:"url"`
-}
 
 func Run(cfg *config.Config) {
 	ctx := context.Background()
@@ -43,12 +37,6 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	b := boot.New(log)
 
-	freePeriodsRepo := repo.NewHttpFreePeriods(
-		log,
-		cfg.ProductionCalendar.Url,
-		&http.Client{},
-	)
-
 	calendarWebAppUrl, err := url.Parse(string(cfg.Telegram.CalendarWebAppUrl))
 	if err != nil {
 		return err
@@ -58,47 +46,59 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	calendarWebHandlerUrl := adapters.CalendarWebHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.CalendarWebHandlerPath))
 
 	notionClient := notionapi.NewClient(cfg.Notion.Token)
-	clinicDialogUseCase := usecase.NewClinicDialogUseCase(
-		log,
-		presenter.NewTelegramDialog(
-			cfg.Telegram.CalendarWebAppUrl,
-			calendarWebHandlerUrl,
-		),
-		repo.NewStaticWorkBreaks(),
-		notion_repo.NewBusyPeriods(
-			log,
-			notionClient,
-			cfg.Notion.RecordsDatabaseId,
-		),
-		freePeriodsRepo,
+
+	productionCalendarRepo := repo.NewHttpProductionCalendar(log, cfg.ProductionCalendar.Url, &http.Client{})
+	openingHoursRepo := repo.NewStaticOpeningHoursRepo()
+	busyPeriodsRepo := repo.NewBusyPeriods(log, notionClient, cfg.Notion.RecordsDatabaseId)
+	workBreaksRepo := repo.NewStaticWorkBreaks()
+	clinicServicesRepo := repo.NewNotionClinicServices(
+		notionClient,
+		cfg.Notion.ServicesDatabaseId,
+		cfg.Notion.RecordsDatabaseId,
 	)
 
+	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
+
 	b.Append(
-		freePeriodsRepo,
+		productionCalendarRepo,
 		telegram_http_server.New(
 			log,
-			clinicDialogUseCase,
-			&telegram_http_server.Config{
-				Token:                cfg.Telegram.Token,
-				CalendarWebAppOrigin: calendarWebAppOrigin,
-				Address:              cfg.Telegram.WebHandlerAddress,
-			},
+			usecase.NewClinicScheduleUseCase(
+				productionCalendarRepo,
+				openingHoursRepo,
+				busyPeriodsRepo,
+				workBreaksRepo,
+				presenter.NewTelegramClinicScheduleQueryPresenter(
+					cfg.Telegram.CalendarWebAppUrl,
+					calendarWebHandlerUrl,
+				),
+			),
+			query,
+			cfg.Telegram.WebHandlerAddress,
+			cfg.Telegram.Token,
+			calendarWebAppOrigin,
 		),
 		telegram_bot.New(
 			log,
-			usecase.NewClinicUseCase(
-				notion_repo.NewClinic(
-					notionClient,
-					cfg.Notion.ServicesDatabaseId,
-					cfg.Notion.RecordsDatabaseId,
-				),
-				presenter.NewTelegramClinic(),
+			cfg.Telegram.Token,
+			usecase.NewClinicGreetUseCase(
+				presenter.NewTelegramClinicGreet(),
 			),
-			clinicDialogUseCase,
-			&telegram_bot.Config{
-				Token:         cfg.Telegram.Token,
-				PollerTimeout: cfg.Telegram.PollerTimeout,
-			},
+			usecase.NewClinicServices(
+				clinicServicesRepo,
+				presenter.NewTelegramClinicServices(),
+			),
+			usecase.NewClinicScheduleUseCase(
+				productionCalendarRepo,
+				openingHoursRepo,
+				busyPeriodsRepo,
+				workBreaksRepo,
+				presenter.NewTelegramClinicScheduleTextPresenter(
+					cfg.Telegram.CalendarWebAppUrl,
+					calendarWebHandlerUrl,
+				),
+			),
+			cfg.Telegram.PollerTimeout,
 		),
 	)
 

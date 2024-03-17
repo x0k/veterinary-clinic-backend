@@ -1,4 +1,4 @@
-package notion_repo
+package repo
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 
 var ErrLoadingBusyPeriodsFailed = errors.New("failed to load busy periods")
 
-type BusyPeriods struct {
+type BusyPeriodsRepo struct {
 	log               *logger.Logger
 	client            *notionapi.Client
 	recordsDatabaseId notionapi.DatabaseID
@@ -23,15 +23,15 @@ func NewBusyPeriods(
 	log *logger.Logger,
 	client *notionapi.Client,
 	recordsDatabaseId notionapi.DatabaseID,
-) *BusyPeriods {
-	return &BusyPeriods{
+) *BusyPeriodsRepo {
+	return &BusyPeriodsRepo{
 		log:               log,
 		client:            client,
 		recordsDatabaseId: recordsDatabaseId,
 	}
 }
 
-func (s *BusyPeriods) BusyPeriods(ctx context.Context, t time.Time) ([]entity.TimePeriod, error) {
+func (s *BusyPeriodsRepo) BusyPeriods(ctx context.Context, t time.Time) (entity.BusyPeriods, error) {
 	after := t.Add(
 		-(time.Duration(t.Hour())*time.Hour + time.Duration(t.Minute())*time.Minute + time.Duration(t.Second())*time.Second),
 	)

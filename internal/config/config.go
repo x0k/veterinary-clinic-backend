@@ -58,7 +58,7 @@ type TelegramConfig struct {
 }
 
 type ProductionCalendarConfig struct {
-	Url string `yaml:"url" env:"PRODUCTION_CALENDAR_URL" env-required:"true"`
+	Url adapters.ProductionCalendarUrl `yaml:"url" env:"PRODUCTION_CALENDAR_URL" env-required:"true"`
 }
 
 type Config struct {

@@ -16,7 +16,7 @@ type OpeningHoursRepo interface {
 }
 
 type BusyPeriodsRepo interface {
-	BusyPeriods(ctx context.Context, t time.Time) ([]entity.TimePeriod, error)
+	BusyPeriods(ctx context.Context, t time.Time) (entity.BusyPeriods, error)
 }
 
 type WorkBreaksRepo interface {

@@ -8,4 +8,6 @@ type CalendarWebAppUrl string
 
 type CalendarWebHandlerUrl string
 
+type ProductionCalendarUrl string
+
 const CalendarWebHandlerPath = "/calendar-input"
