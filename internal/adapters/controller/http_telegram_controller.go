@@ -75,7 +75,7 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-		clinicDialog.FinishScheduleDialog(
+		clinicDialog.HandleScheduleDialog(
 			r.Context(),
 			entity.Dialog{
 				Id:     entity.DialogId(data.QueryID),

@@ -12,6 +12,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"gopkg.in/telebot.v3"
+	"gopkg.in/telebot.v3/middleware"
 )
 
 type Config struct {
@@ -55,6 +56,10 @@ func (b *Bot) Start(ctx context.Context) error {
 	} else {
 		b.bot = bot
 	}
+	b.bot.Use(
+		middleware.Logger(slog.NewLogLogger(b.log.Logger.Handler(), slog.LevelDebug)),
+		middleware.AutoRespond(),
+	)
 	controller.UseTelegramBotRouter(ctx, &b.wg, b.log, b.bot, b.clinic, b.clinicDialog)
 	context.AfterFunc(ctx, func() {
 		b.bot.Stop()

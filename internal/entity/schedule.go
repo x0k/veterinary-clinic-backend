@@ -21,15 +21,23 @@ type TitledTimePeriod struct {
 type SchedulePeriods []TitledTimePeriod
 
 type Schedule struct {
-	Date    Date
-	Periods SchedulePeriods
+	Date     time.Time
+	Periods  SchedulePeriods
+	NextDate *time.Time
+	PrevDate *time.Time
 }
 
 func NewSchedule(t time.Time, periods []TitledTimePeriod) Schedule {
 	return Schedule{
-		Date:    GoTimeToDate(t),
+		Date:    t,
 		Periods: periods,
 	}
+}
+
+func (s Schedule) SetDates(next *time.Time, prev *time.Time) Schedule {
+	s.NextDate = next
+	s.PrevDate = prev
+	return s
 }
 
 func CalculateSchedulePeriods(

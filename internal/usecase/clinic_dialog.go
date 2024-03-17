@@ -17,11 +17,12 @@ var ErrLoadingWorkBreaksFailed = errors.New("loading work breaks failed")
 var ErrLoadingBusyPeriodsFailed = errors.New("loading busy periods failed")
 var ErrLoadingFreePeriodsFailed = errors.New("loading free periods failed")
 var ErrNextAvailableDayCalculationFailed = errors.New("next available day calculation failed")
+var ErrPrevAvailableDayCalculationFailed = errors.New("prev available day calculation failed")
 
 type DialogPresenter[R any] interface {
 	RenderGreeting() (R, error)
-	RenderDatePicker(time.Time) (R, error)
 	RenderSchedule(entity.Schedule) (R, error)
+	RenderSendableSchedule(entity.Schedule) (R, error)
 	RenderError(error) (R, error)
 }
 
@@ -36,6 +37,7 @@ type BusyPeriodsRepo interface {
 type FreePeriodsRepo interface {
 	FreePeriods(ctx context.Context, t time.Time) ([]entity.TimePeriod, error)
 	NextAvailableDay(ctx context.Context, t time.Time) (time.Time, error)
+	PrevAvailableDay(ctx context.Context, t time.Time) (*time.Time, error)
 }
 
 type ClinicDialogUseCase[R any] struct {
@@ -86,47 +88,68 @@ func (u *ClinicDialogUseCase[R]) GreetUser(ctx context.Context) (R, error) {
 	return u.dialogPresenter.RenderGreeting()
 }
 
-func (u *ClinicDialogUseCase[R]) StartScheduleDialog(ctx context.Context) (R, error) {
-	t, err := u.freePeriodsRepo.NextAvailableDay(ctx, time.Now())
+func (u *ClinicDialogUseCase[R]) Schedule(ctx context.Context, t time.Time) (R, error) {
+	t, err := u.freePeriodsRepo.NextAvailableDay(ctx, t)
 	if err != nil {
 		u.log.Error(ctx, "failed to get next available day", sl.Err(err))
 		return *new(R), ErrNextAvailableDayCalculationFailed
 	}
-	return u.dialogPresenter.RenderDatePicker(t)
+	schedule, err := u.schedule(ctx, t)
+	if err != nil {
+		u.log.Error(ctx, "failed to get schedule", sl.Err(err))
+		return *new(R), ErrScheduleRenderingFailed
+	}
+	return u.dialogPresenter.RenderSchedule(schedule)
 }
 
-func (u *ClinicDialogUseCase[R]) FinishScheduleDialog(
+func (u *ClinicDialogUseCase[R]) HandleScheduleDialog(
 	ctx context.Context,
 	dialog entity.Dialog,
 	t time.Time,
 ) {
-	freePeriods, err := u.freePeriodsRepo.FreePeriods(ctx, t)
+	schedule, err := u.schedule(ctx, t)
 	if err != nil {
-		u.log.Error(ctx, "failed to get free periods", sl.Err(err))
-		u.sendError(ctx, dialog.Id, ErrLoadingFreePeriodsFailed)
+		u.sendError(ctx, dialog.Id, ErrScheduleRenderingFailed)
 		return
 	}
-	workBreaks, err := u.workBreaksRepo.WorkBreaks(ctx, t)
-	if err != nil {
-		u.log.Error(ctx, "failed to get work breaks", sl.Err(err))
-		u.sendError(ctx, dialog.Id, ErrLoadingWorkBreaksFailed)
-		return
-	}
-	busyPeriods, err := u.busyPeriodsRepo.BusyPeriods(ctx, t)
-	if err != nil {
-		u.log.Error(ctx, "failed to get busy periods", sl.Err(err))
-		u.sendError(ctx, dialog.Id, ErrLoadingBusyPeriodsFailed)
-		return
-	}
-	schedulePeriods := entity.CalculateSchedulePeriods(freePeriods, busyPeriods, workBreaks)
-
-	msg, err := u.dialogPresenter.RenderSchedule(
-		entity.NewSchedule(t, schedulePeriods),
-	)
+	msg, err := u.dialogPresenter.RenderSendableSchedule(schedule)
 	if err != nil {
 		u.log.Error(ctx, "failed to render schedule", sl.Err(err))
 		u.sendError(ctx, dialog.Id, ErrScheduleRenderingFailed)
 		return
 	}
 	u.send(dialog.Id, msg)
+}
+
+func (u *ClinicDialogUseCase[R]) schedule(ctx context.Context, scheduleDate time.Time) (entity.Schedule, error) {
+	freePeriods, err := u.freePeriodsRepo.FreePeriods(ctx, scheduleDate)
+	if err != nil {
+		u.log.Error(ctx, "failed to get free periods", sl.Err(err))
+		return entity.Schedule{}, ErrLoadingFreePeriodsFailed
+	}
+	workBreaks, err := u.workBreaksRepo.WorkBreaks(ctx, scheduleDate)
+	if err != nil {
+		u.log.Error(ctx, "failed to get work breaks", sl.Err(err))
+		return entity.Schedule{}, ErrLoadingWorkBreaksFailed
+	}
+	busyPeriods, err := u.busyPeriodsRepo.BusyPeriods(ctx, scheduleDate)
+	if err != nil {
+		u.log.Error(ctx, "failed to get busy periods", sl.Err(err))
+		return entity.Schedule{}, ErrLoadingBusyPeriodsFailed
+	}
+	schedulePeriods := entity.CalculateSchedulePeriods(freePeriods, busyPeriods, workBreaks)
+	next, err := u.freePeriodsRepo.NextAvailableDay(ctx, scheduleDate.AddDate(0, 0, 1))
+	if err != nil {
+		u.log.Error(ctx, "failed to get next available day", sl.Err(err))
+		return entity.Schedule{}, ErrNextAvailableDayCalculationFailed
+	}
+	prev, err := u.freePeriodsRepo.PrevAvailableDay(ctx, scheduleDate.AddDate(0, 0, -1))
+	if err != nil {
+		u.log.Error(ctx, "failed to get next available day", sl.Err(err))
+		return entity.Schedule{}, ErrPrevAvailableDayCalculationFailed
+	}
+	return entity.NewSchedule(scheduleDate, schedulePeriods).SetDates(
+		&next,
+		prev,
+	), nil
 }

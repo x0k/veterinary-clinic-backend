@@ -11,6 +11,7 @@ type TelegramResponseType int
 const (
 	TelegramText TelegramResponseType = iota
 	TelegramQuery
+	TelegramCallback
 )
 
 type TelegramResponse interface {
@@ -38,4 +39,12 @@ type TelegramQueryResponse struct {
 
 func (r TelegramQueryResponse) Type() TelegramResponseType {
 	return TelegramQuery
+}
+
+type TelegramCallbackResponse struct {
+	Response *telebot.CallbackResponse
+}
+
+func (r TelegramCallbackResponse) Type() TelegramResponseType {
+	return TelegramCallback
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
@@ -58,6 +59,14 @@ func UseTelegramBotRouter(
 		return c.Send(msg.Text, msg.Options)
 	}
 
+	edit := func(c telebot.Context, response adapters.TelegramResponse) error {
+		msg, ok := response.(adapters.TelegramTextResponse)
+		if !ok {
+			return ErrUnexpectedMessageType
+		}
+		return c.Edit(msg.Text, msg.Options)
+	}
+
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := clinicDialog.GreetUser(ctx)
 		if err != nil {
@@ -75,10 +84,22 @@ func UseTelegramBotRouter(
 	})
 
 	bot.Handle("/s", func(c telebot.Context) error {
-		res, err := clinicDialog.StartScheduleDialog(ctx)
+		res, err := clinicDialog.Schedule(ctx, time.Now())
 		if err != nil {
 			return err
 		}
 		return send(c, res)
+	})
+
+	bot.Handle(adapters.NextScheduleBtn, func(c telebot.Context) error {
+		date, err := time.Parse(time.DateOnly, c.Data())
+		if err != nil {
+			return err
+		}
+		res, err := clinicDialog.Schedule(ctx, date)
+		if err != nil {
+			return err
+		}
+		return edit(c, res)
 	})
 }

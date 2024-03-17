@@ -9,5 +9,5 @@ const (
 )
 
 func IsNonWorkingDayType(dayType DayType) bool {
-	return dayType == Holiday || dayType == PreHoliday
+	return dayType == Holiday || dayType == Weekend
 }

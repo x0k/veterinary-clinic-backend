@@ -1,6 +1,8 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type NextAvailableDayCalculator struct {
 	productionCalendar ProductionCalendar
@@ -19,10 +21,10 @@ func (c *NextAvailableDayCalculator) Calculate(
 ) time.Time {
 	nextDay := today
 	for {
-		nextDay = nextDay.AddDate(0, 0, 1)
 		nextDayJson := GoTimeToJsonDate(nextDay)
 		if dayType, ok := c.productionCalendar[nextDayJson]; !ok || !IsNonWorkingDayType(dayType) {
 			return nextDay
 		}
+		nextDay = nextDay.AddDate(0, 0, 1)
 	}
 }
