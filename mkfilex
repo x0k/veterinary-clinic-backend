@@ -5,10 +5,10 @@ all:
         NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token) \
         NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id) \
         NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id) \
-        go run cmd/app/*.go --config config/config.yml
+        air -- --config config/config.yml
 
 build:
-    CGO_ENABLED=1 go build -o bin/app cmd/app/*.go
+    CGO_ENABLED=1 go build -o bin/app cmd/app/main.go
 
 run:
     TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
