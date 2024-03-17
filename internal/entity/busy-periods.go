@@ -1,3 +1,3 @@
 package entity
 
-type BusyPeriods []DateTimePeriod
+type BusyPeriods []TimePeriod

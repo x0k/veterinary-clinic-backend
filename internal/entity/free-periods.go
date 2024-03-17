@@ -8,6 +8,8 @@ import (
 
 var ErrUnknownDayType = errors.New("unknown day type")
 
+type FreePeriods []TimePeriod
+
 type FreePeriodsCalculator struct {
 	openingHours       OpeningHours
 	productionCalendar ProductionCalendar
@@ -121,7 +123,7 @@ func (c *FreePeriodsCalculator) applyProductionCalendar(data DayTimePeriods) (Da
 
 func (c *FreePeriodsCalculator) Calculate(
 	t time.Time,
-) ([]TimePeriod, error) {
+) (FreePeriods, error) {
 	data, err := c.applyProductionCalendar(
 		c.applyCurrentDateTime(
 			c.getOpeningHours(t),

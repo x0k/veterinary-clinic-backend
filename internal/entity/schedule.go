@@ -41,9 +41,9 @@ func (s Schedule) SetDates(next *time.Time, prev *time.Time) Schedule {
 }
 
 func CalculateSchedulePeriods(
-	freePeriods []TimePeriod,
-	busyPeriods []TimePeriod,
-	workBreaks []WorkBreak,
+	freePeriods FreePeriods,
+	busyPeriods BusyPeriods,
+	workBreaks WorkBreaks,
 ) SchedulePeriods {
 	allBusyPeriods := make([]TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)
