@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/jomei/notionapi"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 )
 
 const (
@@ -41,17 +44,17 @@ type MetricsConfig struct {
 }
 
 type NotionConfig struct {
-	Token              string `yaml:"token" env:"NOTION_TOKEN" env-required:"true"`
-	ServicesDatabaseId string `yaml:"services_database_id" env:"NOTION_SERVICES_DATABASE_ID" env-required:"true"`
-	RecordsDatabaseId  string `yaml:"records_database_id" env:"NOTION_RECORDS_DATABASE_ID" env-required:"true"`
+	Token              notionapi.Token      `yaml:"token" env:"NOTION_TOKEN" env-required:"true"`
+	ServicesDatabaseId notionapi.DatabaseID `yaml:"services_database_id" env:"NOTION_SERVICES_DATABASE_ID" env-required:"true"`
+	RecordsDatabaseId  notionapi.DatabaseID `yaml:"records_database_id" env:"NOTION_RECORDS_DATABASE_ID" env-required:"true"`
 }
 
 type TelegramConfig struct {
-	Token             string        `yaml:"token" env:"TELEGRAM_TOKEN" env-required:"true"`
-	PollerTimeout     time.Duration `yaml:"poller_timeout" env:"TELEGRAM_POLLER_TIMEOUT" env-default:"10s"`
-	WebHandlerAddress string        `yaml:"web_handler_address" env:"TELEGRAM_WEB_HANDLER_ADDRESS" env-required:"true"`
-	WebHandlerOrigin  string        `yaml:"web_handler_origin" env:"TELEGRAM_WEB_HANDLER_ORIGIN" env-required:"true"`
-	CalendarWebAppUrl string        `yaml:"calendar_web_app_url" env:"TELEGRAM_CALENDAR_WEB_APP_URL" env-required:"true"`
+	Token             adapters.TelegramToken          `yaml:"token" env:"TELEGRAM_TOKEN" env-required:"true"`
+	PollerTimeout     time.Duration                   `yaml:"poller_timeout" env:"TELEGRAM_POLLER_TIMEOUT" env-default:"10s"`
+	WebHandlerAddress infra.TelegramHttpServerAddress `yaml:"web_handler_address" env:"TELEGRAM_WEB_HANDLER_ADDRESS" env-required:"true"`
+	WebHandlerOrigin  string                          `yaml:"web_handler_origin" env:"TELEGRAM_WEB_HANDLER_ORIGIN" env-required:"true"`
+	CalendarWebAppUrl adapters.CalendarWebAppUrl      `yaml:"calendar_web_app_url" env:"TELEGRAM_CALENDAR_WEB_APP_URL" env-required:"true"`
 }
 
 type ProductionCalendarConfig struct {

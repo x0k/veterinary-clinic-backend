@@ -49,15 +49,15 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		&http.Client{},
 	)
 
-	calendarWebAppUrl, err := url.Parse(cfg.Telegram.CalendarWebAppUrl)
+	calendarWebAppUrl, err := url.Parse(string(cfg.Telegram.CalendarWebAppUrl))
 	if err != nil {
 		return err
 	}
-	calendarWebAppOrigin := fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host)
+	calendarWebAppOrigin := adapters.CalendarWebAppOrigin(fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host))
 
-	calendarWebHandlerUrl := fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.CalendarInputHandlerPath)
+	calendarWebHandlerUrl := adapters.CalendarWebHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.CalendarWebHandlerPath))
 
-	notionClient := notionapi.NewClient(notionapi.Token(cfg.Notion.Token))
+	notionClient := notionapi.NewClient(cfg.Notion.Token)
 	clinicDialogUseCase := usecase.NewClinicDialogUseCase(
 		log,
 		presenter.NewTelegramDialog(
@@ -68,7 +68,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		notion_repo.NewBusyPeriods(
 			log,
 			notionClient,
-			notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
+			cfg.Notion.RecordsDatabaseId,
 		),
 		freePeriodsRepo,
 	)
@@ -89,8 +89,8 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			usecase.NewClinicUseCase(
 				notion_repo.NewClinic(
 					notionClient,
-					notionapi.DatabaseID(cfg.Notion.ServicesDatabaseId),
-					notionapi.DatabaseID(cfg.Notion.RecordsDatabaseId),
+					cfg.Notion.ServicesDatabaseId,
+					cfg.Notion.RecordsDatabaseId,
 				),
 				presenter.NewTelegramClinic(),
 			),

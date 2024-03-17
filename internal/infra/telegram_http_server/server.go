@@ -5,6 +5,7 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/controller"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
@@ -14,31 +15,27 @@ type Server struct {
 	infra.HttpService
 }
 
-type Config struct {
-	Token                string
-	CalendarWebAppOrigin string
-	Address              string
-}
-
 func New(
 	log *logger.Logger,
-	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
-	cfg *Config,
+	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
+	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
+	telegramHttpServerAddress infra.TelegramHttpServerAddress,
+	telegramToken adapters.TelegramToken,
+	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
 ) *Server {
 	mux := http.NewServeMux()
 	controller.UseHttpTelegramRouter(
 		log, mux,
-		clinicDialog,
-		&controller.HttpTelegramConfig{
-			Token:                cfg.Token,
-			CalendarWebAppOrigin: cfg.CalendarWebAppOrigin,
-		},
+		clinicSchedule,
+		query,
+		telegramToken,
+		calendarWebAppOrigin,
 	)
 	return &Server{
 		HttpService: *infra.NewHttpService(
 			log,
 			&http.Server{
-				Addr:    cfg.Address,
+				Addr:    string(telegramHttpServerAddress),
 				Handler: infra.Logging(log, mux),
 			},
 		),

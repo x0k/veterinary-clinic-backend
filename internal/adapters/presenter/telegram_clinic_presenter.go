@@ -14,7 +14,7 @@ func NewTelegramClinic() *TelegramClinicPresenter {
 	return &TelegramClinicPresenter{}
 }
 
-func (p *TelegramClinicPresenter) RenderServices(services []entity.Service) (adapters.TelegramResponse, error) {
+func (p *TelegramClinicPresenter) RenderServices(services []entity.Service) (adapters.TelegramTextResponse, error) {
 	sb := strings.Builder{}
 	sb.WriteString("Услуги: \n\n")
 	for _, service := range services {

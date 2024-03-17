@@ -9,37 +9,41 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/controller"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
 )
 
-type Config struct {
-	Token         string
-	PollerTimeout time.Duration
-}
-
 type Bot struct {
-	log          *logger.Logger
-	wg           sync.WaitGroup
-	cfg          *Config
-	bot          *telebot.Bot
-	clinic       *usecase.ClinicUseCase[adapters.TelegramResponse]
-	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse]
+	bot *telebot.Bot
+	wg  sync.WaitGroup
+
+	log            *logger.Logger
+	telegramToken  adapters.TelegramToken
+	clinicGreet    *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse]
+	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse]
+	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse]
+	query          <-chan entity.DialogMessage[adapters.TelegramQueryResponse]
+	pollerTimeout  time.Duration
 }
 
 func New(
 	log *logger.Logger,
-	clinic *usecase.ClinicUseCase[adapters.TelegramResponse],
-	clinicDialog *usecase.ClinicDialogUseCase[adapters.TelegramResponse],
-	cfg *Config,
+	telegramToken adapters.TelegramToken,
+	clinicGreet *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse],
+	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
+	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
+	pollerTimeout time.Duration,
 ) *Bot {
 	return &Bot{
-		log:          log.With(slog.String("component", "infra.telegram_bot.Bot")),
-		cfg:          cfg,
-		clinic:       clinic,
-		clinicDialog: clinicDialog,
+		log:            log,
+		telegramToken:  telegramToken,
+		clinicGreet:    clinicGreet,
+		clinicServices: clinicServices,
+		clinicSchedule: clinicSchedule,
+		pollerTimeout:  pollerTimeout,
 	}
 }
 
@@ -47,9 +51,9 @@ func (b *Bot) Start(ctx context.Context) error {
 	const op = "infra.telegram_bot.Bot.Start"
 
 	if bot, err := telebot.NewBot(telebot.Settings{
-		Token: b.cfg.Token,
+		Token: string(b.telegramToken),
 		Poller: &telebot.LongPoller{
-			Timeout: b.cfg.PollerTimeout,
+			Timeout: b.pollerTimeout,
 		},
 	}); err != nil {
 		return fmt.Errorf("%s failed to start: %w", op, err)
@@ -60,7 +64,18 @@ func (b *Bot) Start(ctx context.Context) error {
 		middleware.Logger(slog.NewLogLogger(b.log.Logger.Handler(), slog.LevelDebug)),
 		middleware.AutoRespond(),
 	)
-	controller.UseTelegramBotRouter(ctx, &b.wg, b.log, b.bot, b.clinic, b.clinicDialog)
+	controller.UseTelegramBotRouter(
+		ctx,
+		b.bot,
+		b.clinicGreet,
+		b.clinicServices,
+		b.clinicSchedule,
+	)
+	b.wg.Add(1)
+	go func() {
+		defer b.wg.Done()
+		controller.StartTelegramBotQueryHandler(ctx, b.log, b.bot, b.query)
+	}()
 	context.AfterFunc(ctx, func() {
 		b.bot.Stop()
 	})
