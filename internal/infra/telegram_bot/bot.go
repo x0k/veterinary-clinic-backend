@@ -32,10 +32,11 @@ type Bot struct {
 func New(
 	log *logger.Logger,
 	telegramToken adapters.TelegramToken,
+	pollerTimeout time.Duration,
+	query <-chan entity.DialogMessage[adapters.TelegramQueryResponse],
 	clinicGreet *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse],
 	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
-	pollerTimeout time.Duration,
 ) *Bot {
 	return &Bot{
 		log:            log,
@@ -43,6 +44,7 @@ func New(
 		clinicGreet:    clinicGreet,
 		clinicServices: clinicServices,
 		clinicSchedule: clinicSchedule,
+		query:          query,
 		pollerTimeout:  pollerTimeout,
 	}
 }

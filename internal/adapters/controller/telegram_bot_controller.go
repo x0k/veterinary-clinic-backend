@@ -72,6 +72,7 @@ func StartTelegramBotQueryHandler(
 		case <-ctx.Done():
 			return
 		case msg := <-query:
+			l.Debug(ctx, "received query", slog.String("query_id", string(msg.DialogId)))
 			_, err := bot.AnswerWebApp(
 				&telebot.Query{
 					ID: string(msg.DialogId),

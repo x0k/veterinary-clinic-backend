@@ -81,6 +81,8 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		telegram_bot.New(
 			log,
 			cfg.Telegram.Token,
+			cfg.Telegram.PollerTimeout,
+			query,
 			usecase.NewClinicGreetUseCase(
 				presenter.NewTelegramClinicGreet(),
 			),
@@ -98,7 +100,6 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					calendarWebHandlerUrl,
 				),
 			),
-			cfg.Telegram.PollerTimeout,
 		),
 	)
 
