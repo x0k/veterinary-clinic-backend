@@ -86,7 +86,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			usecase.NewClinicGreetUseCase(
 				presenter.NewTelegramClinicGreet(),
 			),
-			usecase.NewClinicServices(
+			usecase.NewClinicServicesUseCase(
 				clinicServicesRepo,
 				presenter.NewTelegramClinicServices(),
 			),

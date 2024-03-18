@@ -7,15 +7,15 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type clinicServicesLoader interface {
+type ClinicServicesLoader interface {
 	Services(ctx context.Context) ([]entity.Service, error)
 }
 
-type clinicServiceLoader interface {
+type ClinicServiceLoader interface {
 	Load(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error)
 }
 
-type clinicRecordsCreator interface {
+type ClinicRecordsCreator interface {
 	Create(
 		ctx context.Context,
 		user entity.User,
@@ -24,22 +24,22 @@ type clinicRecordsCreator interface {
 	) (entity.Record, error)
 }
 
-type clinicRecordsChecker interface {
+type ClinicRecordsChecker interface {
 	Exists(ctx context.Context, userId entity.UserId) (bool, error)
 }
 
-type productionCalendarRepo interface {
+type ProductionCalendarLoader interface {
 	ProductionCalendar(ctx context.Context) (entity.ProductionCalendar, error)
 }
 
-type openingHoursRepo interface {
+type OpeningHoursLoader interface {
 	OpeningHours(ctx context.Context) (entity.OpeningHours, error)
 }
 
-type busyPeriodsRepo interface {
+type BusyPeriodsLoader interface {
 	BusyPeriods(ctx context.Context, t time.Time) (entity.BusyPeriods, error)
 }
 
-type workBreaksRepo interface {
+type WorkBreaksLoader interface {
 	WorkBreaks(ctx context.Context) (entity.WorkBreaks, error)
 }

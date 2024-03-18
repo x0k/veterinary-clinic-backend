@@ -7,14 +7,14 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-func fetchAndCalculateSchedule(
+func FetchAndCalculateSchedule(
 	ctx context.Context,
 	now time.Time,
 	preferredDate time.Time,
-	productionCalendarRepo productionCalendarRepo,
-	openingHoursRepo openingHoursRepo,
-	busyPeriodsRepo busyPeriodsRepo,
-	workBreaksRepo workBreaksRepo,
+	productionCalendarRepo ProductionCalendarLoader,
+	openingHoursRepo OpeningHoursLoader,
+	busyPeriodsRepo BusyPeriodsLoader,
+	workBreaksRepo WorkBreaksLoader,
 ) (entity.Schedule, error) {
 	productionCalendar, err := productionCalendarRepo.ProductionCalendar(ctx)
 	if err != nil {

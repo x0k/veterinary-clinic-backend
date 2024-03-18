@@ -12,18 +12,18 @@ type clinicSchedulePresenter[R any] interface {
 }
 
 type ClinicScheduleUseCase[R any] struct {
-	productionCalendarRepo productionCalendarRepo
-	openingHoursRepo       openingHoursRepo
-	busyPeriodsRepo        busyPeriodsRepo
-	workBreaksRepo         workBreaksRepo
+	productionCalendarRepo ProductionCalendarLoader
+	openingHoursRepo       OpeningHoursLoader
+	busyPeriodsRepo        BusyPeriodsLoader
+	workBreaksRepo         WorkBreaksLoader
 	presenter              clinicSchedulePresenter[R]
 }
 
 func NewClinicScheduleUseCase[R any](
-	productionCalendarRepo productionCalendarRepo,
-	openingHoursRepo openingHoursRepo,
-	busyPeriodsRepo busyPeriodsRepo,
-	workBreaksRepo workBreaksRepo,
+	productionCalendarRepo ProductionCalendarLoader,
+	openingHoursRepo OpeningHoursLoader,
+	busyPeriodsRepo BusyPeriodsLoader,
+	workBreaksRepo WorkBreaksLoader,
 	schedulePresenter clinicSchedulePresenter[R],
 ) *ClinicScheduleUseCase[R] {
 	return &ClinicScheduleUseCase[R]{
@@ -36,7 +36,7 @@ func NewClinicScheduleUseCase[R any](
 }
 
 func (u *ClinicScheduleUseCase[R]) Schedule(ctx context.Context, now, preferredDate time.Time) (R, error) {
-	schedule, err := fetchAndCalculateSchedule(
+	schedule, err := FetchAndCalculateSchedule(
 		ctx,
 		now,
 		preferredDate,

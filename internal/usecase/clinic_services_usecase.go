@@ -11,12 +11,12 @@ type clinicServicesPresenter[R any] interface {
 }
 
 type ClinicServicesUseCase[R any] struct {
-	servicesRepo clinicServicesLoader
+	servicesRepo ClinicServicesLoader
 	presenter    clinicServicesPresenter[R]
 }
 
-func NewClinicServices[R any](
-	servicesRepo clinicServicesLoader,
+func NewClinicServicesUseCase[R any](
+	servicesRepo ClinicServicesLoader,
 	servicesPresenter clinicServicesPresenter[R],
 ) *ClinicServicesUseCase[R] {
 	return &ClinicServicesUseCase[R]{
