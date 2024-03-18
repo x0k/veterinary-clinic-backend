@@ -6,13 +6,16 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter/telegram_clinic_make_appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
@@ -21,6 +24,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
 )
 
 func Run(cfg *config.Config) {
@@ -59,6 +63,8 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
 
+	telegramClinicServiceIdCodec := adapters.NewTelegramServiceIdCodec()
+
 	b.Append(
 		productionCalendarRepo,
 		telegram_http_server.New(
@@ -75,8 +81,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			),
 			query,
 			cfg.Telegram.WebHandlerAddress,
-			cfg.Telegram.Token,
 			calendarWebAppOrigin,
+			infra.NewTelegramInitData(
+				cfg.Telegram.Token,
+				24*time.Hour,
+			),
 		),
 		telegram_bot.New(
 			log,
@@ -100,6 +109,13 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					calendarWebHandlerUrl,
 				),
 			),
+			clinic_make_appointment.NewServicePickerUseCase(
+				clinicServicesRepo,
+				telegram_clinic_make_appointment.NewTelegramServicePickerPresenter(
+					telegramClinicServiceIdCodec,
+				),
+			),
+			telegramClinicServiceIdCodec,
 		),
 	)
 

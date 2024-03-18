@@ -11,3 +11,7 @@ type CalendarWebHandlerUrl string
 type ProductionCalendarUrl string
 
 const CalendarWebHandlerPath = "/calendar-input"
+
+const ClinicMakeAppointmentService = "clinic-make-appointment-service"
+
+const ClinicMakeAppointmentServiceCallback = "\f" + ClinicMakeAppointmentService

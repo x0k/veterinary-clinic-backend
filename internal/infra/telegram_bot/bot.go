@@ -12,6 +12,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
 	"gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
 )
@@ -20,13 +21,15 @@ type Bot struct {
 	bot *telebot.Bot
 	wg  sync.WaitGroup
 
-	log            *logger.Logger
-	telegramToken  adapters.TelegramToken
-	clinicGreet    *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse]
-	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse]
-	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse]
-	query          <-chan entity.DialogMessage[adapters.TelegramQueryResponse]
-	pollerTimeout  time.Duration
+	log                                *logger.Logger
+	telegramToken                      adapters.TelegramToken
+	clinicGreet                        *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse]
+	clinicServices                     *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse]
+	clinicSchedule                     *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse]
+	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse]
+	clinicServiceIdDecoder             controller.TelegramClinicServiceIdDecoder
+	query                              <-chan entity.DialogMessage[adapters.TelegramQueryResponse]
+	pollerTimeout                      time.Duration
 }
 
 func New(
@@ -37,15 +40,19 @@ func New(
 	clinicGreet *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse],
 	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
+	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse],
+	clinicServiceIdDecoder controller.TelegramClinicServiceIdDecoder,
 ) *Bot {
 	return &Bot{
-		log:            log,
-		telegramToken:  telegramToken,
-		clinicGreet:    clinicGreet,
-		clinicServices: clinicServices,
-		clinicSchedule: clinicSchedule,
-		query:          query,
-		pollerTimeout:  pollerTimeout,
+		log:                                log,
+		telegramToken:                      telegramToken,
+		query:                              query,
+		pollerTimeout:                      pollerTimeout,
+		clinicGreet:                        clinicGreet,
+		clinicServices:                     clinicServices,
+		clinicSchedule:                     clinicSchedule,
+		clinicMakeAppointmentServicePicker: clinicMakeAppointmentServicePicker,
+		clinicServiceIdDecoder:             clinicServiceIdDecoder,
 	}
 }
 
@@ -72,6 +79,8 @@ func (b *Bot) Start(ctx context.Context) error {
 		b.clinicGreet,
 		b.clinicServices,
 		b.clinicSchedule,
+		b.clinicMakeAppointmentServicePicker,
+		b.clinicServiceIdDecoder,
 	); err != nil {
 		return fmt.Errorf("%s failed to start router: %w", op, err)
 	}

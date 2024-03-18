@@ -20,16 +20,16 @@ func New(
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
 	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
 	telegramHttpServerAddress infra.TelegramHttpServerAddress,
-	telegramToken adapters.TelegramToken,
 	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
+	telegramInitDataParser controller.TelegramInitDataParser,
 ) *Server {
 	mux := http.NewServeMux()
 	controller.UseHttpTelegramRouter(
 		log, mux,
 		clinicSchedule,
 		query,
-		telegramToken,
 		calendarWebAppOrigin,
+		telegramInitDataParser,
 	)
 	return &Server{
 		HttpService: *infra.NewHttpService(

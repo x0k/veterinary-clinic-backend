@@ -19,10 +19,15 @@ var (
 		Text:   "График работы",
 		Unique: "clinic-schedule",
 	}
+	ClinicAppointmentBtn = &telebot.InlineButton{
+		Text:   "Записаться",
+		Unique: "clinic-appointment",
+	}
 	BotMenu = &telebot.ReplyMarkup{
 		InlineKeyboard: [][]telebot.InlineButton{
 			{*ClinicScheduleBtn},
 			{*ClinicServiceBtn},
+			{*ClinicAppointmentBtn},
 		},
 	}
 )

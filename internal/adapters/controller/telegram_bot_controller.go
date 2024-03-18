@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -11,10 +12,16 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
 	"gopkg.in/telebot.v3"
 )
 
 var ErrUnexpectedMessageType = errors.New("unexpected message type")
+var ErrUnknownService = errors.New("unknown service")
+
+type TelegramClinicServiceIdDecoder interface {
+	Decode(id string) (entity.ServiceId, bool)
+}
 
 func UseTelegramBotRouter(
 	ctx context.Context,
@@ -22,6 +29,8 @@ func UseTelegramBotRouter(
 	clinicGreet *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse],
 	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
+	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse],
+	clinicServiceIdDecoder TelegramClinicServiceIdDecoder,
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := clinicGreet.GreetUser(ctx)
@@ -64,6 +73,27 @@ func UseTelegramBotRouter(
 		return c.Edit(res.Text, res.Options)
 	})
 
+	clinicAppointmentHandler := func(c telebot.Context) error {
+		picker, err := clinicMakeAppointmentServicePicker.ServicesPicker(ctx)
+		if err != nil {
+			return err
+		}
+		return c.Send(picker.Text, picker.Options)
+	}
+	bot.Handle("/appointment", clinicAppointmentHandler)
+	bot.Handle(adapters.ClinicAppointmentBtn, clinicAppointmentHandler)
+
+	bot.Handle(adapters.ClinicMakeAppointmentServiceCallback, func(c telebot.Context) error {
+		serviceId, ok := clinicServiceIdDecoder.Decode(
+			c.Callback().Data,
+		)
+		if !ok {
+			return ErrUnknownService
+		}
+		fmt.Println(serviceId)
+		return nil
+	})
+
 	return bot.SetCommands([]telebot.Command{
 		{
 			Text:        "/start",
@@ -76,6 +106,10 @@ func UseTelegramBotRouter(
 		{
 			Text:        "/schedule",
 			Description: "График работы",
+		},
+		{
+			Text:        "/appointment",
+			Description: "Записаться на прием",
 		},
 	})
 }

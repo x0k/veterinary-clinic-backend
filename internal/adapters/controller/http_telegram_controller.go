@@ -25,13 +25,12 @@ func UseHttpTelegramRouter(
 	mux *http.ServeMux,
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
 	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
-	telegramToken adapters.TelegramToken,
 	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
+	telegramInitDataParser TelegramInitDataParser,
 ) {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,
 	}
-	initDataParser := NewTelegramInitData(telegramToken, time.Hour*24)
 
 	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", adapters.CalendarWebHandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", string(calendarWebAppOrigin))
@@ -50,11 +49,11 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-		if err := initDataParser.Validate(res.WebAppInitData); err != nil {
+		if err := telegramInitDataParser.Validate(res.WebAppInitData); err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-		data, err := initDataParser.Parse(res.WebAppInitData)
+		data, err := telegramInitDataParser.Parse(res.WebAppInitData)
 		if err != nil {
 			log.Error(
 				r.Context(),
