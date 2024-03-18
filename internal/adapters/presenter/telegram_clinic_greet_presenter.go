@@ -15,7 +15,8 @@ func (p *TelegramClinicGreetPresenter) RenderGreeting() (adapters.TelegramTextRe
 	return adapters.TelegramTextResponse{
 		Text: adapters.EscapeTelegramMarkdownString("Привет!"),
 		Options: &telebot.SendOptions{
-			ParseMode: telebot.ModeMarkdownV2,
+			ParseMode:   telebot.ModeMarkdownV2,
+			ReplyMarkup: adapters.BotMenu,
 		},
 	}, nil
 }

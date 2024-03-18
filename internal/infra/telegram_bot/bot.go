@@ -66,13 +66,15 @@ func (b *Bot) Start(ctx context.Context) error {
 		middleware.Logger(slog.NewLogLogger(b.log.Logger.Handler(), slog.LevelDebug)),
 		middleware.AutoRespond(),
 	)
-	controller.UseTelegramBotRouter(
+	if err := controller.UseTelegramBotRouter(
 		ctx,
 		b.bot,
 		b.clinicGreet,
 		b.clinicServices,
 		b.clinicSchedule,
-	)
+	); err != nil {
+		return fmt.Errorf("%s failed to start router: %w", op, err)
+	}
 	b.wg.Add(1)
 	go func() {
 		defer b.wg.Done()

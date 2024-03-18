@@ -3,12 +3,26 @@ package adapters
 import "gopkg.in/telebot.v3"
 
 var (
-	NextScheduleBtn = &telebot.InlineButton{
+	NextClinicScheduleBtn = &telebot.InlineButton{
 		Text:   "➡",
 		Unique: "next-schedule",
 	}
-	PreviousScheduleBtn = &telebot.InlineButton{
+	PreviousClinicScheduleBtn = &telebot.InlineButton{
 		Text:   "⬅",
 		Unique: "next-schedule",
+	}
+	ClinicServiceBtn = &telebot.InlineButton{
+		Text:   "Услуги",
+		Unique: "clinic-services",
+	}
+	ClinicScheduleBtn = &telebot.InlineButton{
+		Text:   "График работы",
+		Unique: "clinic-schedule",
+	}
+	BotMenu = &telebot.ReplyMarkup{
+		InlineKeyboard: [][]telebot.InlineButton{
+			{*ClinicScheduleBtn},
+			{*ClinicServiceBtn},
+		},
 	}
 )

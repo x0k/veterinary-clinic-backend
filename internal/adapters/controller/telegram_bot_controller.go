@@ -22,7 +22,7 @@ func UseTelegramBotRouter(
 	clinicGreet *usecase.ClinicGreetUseCase[adapters.TelegramTextResponse],
 	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
-) {
+) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := clinicGreet.GreetUser(ctx)
 		if err != nil {
@@ -31,23 +31,27 @@ func UseTelegramBotRouter(
 		return c.Send(res.Text, res.Options)
 	})
 
-	bot.Handle("/services", func(c telebot.Context) error {
+	clinicServiceHandler := func(c telebot.Context) error {
 		res, err := clinicServices.Services(ctx)
 		if err != nil {
 			return err
 		}
 		return c.Send(res.Text, res.Options)
-	})
+	}
+	bot.Handle("/services", clinicServiceHandler)
+	bot.Handle(adapters.ClinicServiceBtn, clinicServiceHandler)
 
-	bot.Handle("/s", func(c telebot.Context) error {
+	clinicScheduleHandler := func(c telebot.Context) error {
 		res, err := clinicSchedule.Schedule(ctx, time.Now())
 		if err != nil {
 			return err
 		}
 		return c.Send(res.Text, res.Options)
-	})
+	}
+	bot.Handle("/schedule", clinicScheduleHandler)
+	bot.Handle(adapters.ClinicScheduleBtn, clinicScheduleHandler)
 
-	bot.Handle(adapters.NextScheduleBtn, func(c telebot.Context) error {
+	bot.Handle(adapters.NextClinicScheduleBtn, func(c telebot.Context) error {
 		date, err := time.Parse(time.DateOnly, c.Data())
 		if err != nil {
 			return err
@@ -57,6 +61,21 @@ func UseTelegramBotRouter(
 			return err
 		}
 		return c.Edit(res.Text, res.Options)
+	})
+
+	return bot.SetCommands([]telebot.Command{
+		{
+			Text:        "/start",
+			Description: "Показать приветствие",
+		},
+		{
+			Text:        "/services",
+			Description: "Список услуг",
+		},
+		{
+			Text:        "/schedule",
+			Description: "График работы",
+		},
 	})
 }
 

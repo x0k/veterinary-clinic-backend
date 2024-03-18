@@ -31,7 +31,7 @@ func newTelegramClinicSchedulePresenter(
 func (p *telegramClinicSchedulePresenter) scheduleButtons(schedule entity.Schedule) []telebot.InlineButton {
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if schedule.PrevDate != nil {
-		buttons = append(buttons, *adapters.PreviousScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
+		buttons = append(buttons, *adapters.PreviousClinicScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
 	}
 	webAppParams := url.Values{}
 	webAppParams.Add("r", p.calendarInputRequestOptions)
@@ -49,7 +49,7 @@ func (p *telegramClinicSchedulePresenter) scheduleButtons(schedule entity.Schedu
 		},
 	})
 	if schedule.NextDate != nil {
-		buttons = append(buttons, *adapters.NextScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
+		buttons = append(buttons, *adapters.NextClinicScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
 	}
 	return buttons
 }
