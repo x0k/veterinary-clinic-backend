@@ -92,14 +92,14 @@ func (c *FreePeriodsCalculator) applyProductionCalendar(data DayTimePeriods) (Da
 			return data, nil
 		}
 		periods := TimePeriodApi.SortAndUnitePeriods(data.Periods)
-		minutesToReduce := -60
+		minutesToReduce := DurationInMinutes(-60)
 		i := len(periods)
 		var reducedLastPeriod TimePeriod
 		for minutesToReduce < 0 && i > 0 {
 			i--
 			lastPeriod := periods[i]
 			shift := MakeTimeShifter(Time{
-				Minutes: minutesToReduce,
+				Minutes: int(minutesToReduce),
 			})
 			reducedLastPeriod = TimePeriod{
 				Start: lastPeriod.Start,
@@ -133,4 +133,17 @@ func (c *FreePeriodsCalculator) Calculate(
 		return nil, err
 	}
 	return data.Periods, nil
+}
+
+func CalculateFreePeriods(
+	productionCalendar ProductionCalendar,
+	openingHours OpeningHours,
+	now time.Time,
+	forDate time.Time,
+) (FreePeriods, error) {
+	return NewFreePeriodsCalculator(
+		openingHours,
+		productionCalendar,
+		GoTimeToDateTime(now),
+	).Calculate(forDate)
 }

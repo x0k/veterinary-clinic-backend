@@ -20,6 +20,8 @@ type WorkBreak struct {
 
 type WorkBreaks []WorkBreak
 
+type CalculatedWorkBreaks []WorkBreak
+
 type WorkBreaksCalculator struct {
 	workBreaks WorkBreaks
 }
@@ -36,9 +38,9 @@ const date_format = "2006-01-02T15:04:05"
 
 func (c *WorkBreaksCalculator) Calculate(
 	t time.Time,
-) (WorkBreaks, error) {
+) (CalculatedWorkBreaks, error) {
 	dateString := fmt.Sprintf("%d %s", t.Weekday(), t.Format(date_format))
-	breaks := make(WorkBreaks, 0, len(c.workBreaks))
+	breaks := make(CalculatedWorkBreaks, 0, len(c.workBreaks))
 	for _, wb := range c.workBreaks {
 		expr, err := regexp.Compile(wb.MatchExpression)
 		if err != nil {
@@ -49,4 +51,8 @@ func (c *WorkBreaksCalculator) Calculate(
 		}
 	}
 	return breaks, nil
+}
+
+func CalculateWorkBreaks(workBreaks WorkBreaks, date time.Time) (CalculatedWorkBreaks, error) {
+	return NewWorkBreaksCalculator(workBreaks).Calculate(date)
 }

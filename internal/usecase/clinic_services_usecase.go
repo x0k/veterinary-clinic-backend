@@ -6,26 +6,22 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type ClinicServicesRepo interface {
-	Services(ctx context.Context) ([]entity.Service, error)
-}
-
-type ClinicServicesPresenter[R any] interface {
+type clinicServicesPresenter[R any] interface {
 	RenderServices(services []entity.Service) (R, error)
 }
 
 type ClinicServicesUseCase[R any] struct {
-	servicesRepo      ClinicServicesRepo
-	servicesPresenter ClinicServicesPresenter[R]
+	servicesRepo clinicServicesLoader
+	presenter    clinicServicesPresenter[R]
 }
 
 func NewClinicServices[R any](
-	servicesRepo ClinicServicesRepo,
-	servicesPresenter ClinicServicesPresenter[R],
+	servicesRepo clinicServicesLoader,
+	servicesPresenter clinicServicesPresenter[R],
 ) *ClinicServicesUseCase[R] {
 	return &ClinicServicesUseCase[R]{
-		servicesRepo:      servicesRepo,
-		servicesPresenter: servicesPresenter,
+		servicesRepo: servicesRepo,
+		presenter:    servicesPresenter,
 	}
 }
 
@@ -34,5 +30,5 @@ func (u *ClinicServicesUseCase[R]) Services(ctx context.Context) (R, error) {
 	if err != nil {
 		return *new(R), err
 	}
-	return u.servicesPresenter.RenderServices(services)
+	return u.presenter.RenderServices(services)
 }

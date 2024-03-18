@@ -2,20 +2,20 @@ package usecase
 
 import "context"
 
-type ClinicGreetPresenter[R any] interface {
+type clinicGreetPresenter[R any] interface {
 	RenderGreeting() (R, error)
 }
 
 type ClinicGreetUseCase[R any] struct {
-	dialogPresenter ClinicGreetPresenter[R]
+	presenter clinicGreetPresenter[R]
 }
 
-func NewClinicGreetUseCase[R any](dialogPresenter ClinicGreetPresenter[R]) *ClinicGreetUseCase[R] {
+func NewClinicGreetUseCase[R any](dialogPresenter clinicGreetPresenter[R]) *ClinicGreetUseCase[R] {
 	return &ClinicGreetUseCase[R]{
-		dialogPresenter: dialogPresenter,
+		presenter: dialogPresenter,
 	}
 }
 
 func (u *ClinicGreetUseCase[R]) GreetUser(ctx context.Context) (R, error) {
-	return u.dialogPresenter.RenderGreeting()
+	return u.presenter.RenderGreeting()
 }

@@ -42,7 +42,8 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.ClinicServiceBtn, clinicServiceHandler)
 
 	clinicScheduleHandler := func(c telebot.Context) error {
-		res, err := clinicSchedule.Schedule(ctx, time.Now())
+		now := time.Now()
+		res, err := clinicSchedule.Schedule(ctx, now, now)
 		if err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ func UseTelegramBotRouter(
 		if err != nil {
 			return err
 		}
-		res, err := clinicSchedule.Schedule(ctx, date)
+		res, err := clinicSchedule.Schedule(ctx, time.Now(), date)
 		if err != nil {
 			return err
 		}

@@ -5,7 +5,7 @@ type ServiceId string
 type Service struct {
 	Id                ServiceId
 	Title             string
-	DurationInMinutes int
+	DurationInMinutes DurationInMinutes
 	Description       string
 	CostDescription   string
 }

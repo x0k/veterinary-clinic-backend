@@ -63,7 +63,7 @@ func Service(page notionapi.Page) entity.Service {
 	return entity.Service{
 		Id:                entity.ServiceId(page.ID),
 		Title:             Title(page.Properties, ServiceTitle),
-		DurationInMinutes: int(Number(page.Properties, ServiceDurationInMinutes)),
+		DurationInMinutes: entity.DurationInMinutes(Number(page.Properties, ServiceDurationInMinutes)),
 		Description:       Text(page.Properties, ServiceDescription),
 		CostDescription:   Text(page.Properties, ServiceCost),
 	}

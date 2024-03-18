@@ -1,29 +1,45 @@
 package usecase
 
 import (
+	"context"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-func nextAvailableDay(productionCalendar entity.ProductionCalendar, from time.Time) time.Time {
-	return entity.NewNextAvailableDayCalculator(productionCalendar).Calculate(from)
-}
-
-func prevAvailableDay(productionCalendar entity.ProductionCalendar, now time.Time, from time.Time) *time.Time {
-	return entity.NewPrevAvailableDayCalculator(productionCalendar, now).Calculate(from)
-}
-
-func schedule(
-	productionCalendar entity.ProductionCalendar,
-	freePeriods entity.FreePeriods,
-	busyPeriods entity.BusyPeriods,
-	workBreaks entity.WorkBreaks,
+func fetchAndCalculateSchedule(
+	ctx context.Context,
 	now time.Time,
-	date time.Time,
-) entity.Schedule {
-	schedulePeriods := entity.CalculateSchedulePeriods(freePeriods, busyPeriods, workBreaks)
-	next := nextAvailableDay(productionCalendar, date.AddDate(0, 0, 1))
-	prev := prevAvailableDay(productionCalendar, now, date.AddDate(0, 0, -1))
-	return entity.NewSchedule(date, schedulePeriods).SetDates(&next, prev)
+	preferredDate time.Time,
+	productionCalendarRepo productionCalendarRepo,
+	openingHoursRepo openingHoursRepo,
+	busyPeriodsRepo busyPeriodsRepo,
+	workBreaksRepo workBreaksRepo,
+) (entity.Schedule, error) {
+	productionCalendar, err := productionCalendarRepo.ProductionCalendar(ctx)
+	if err != nil {
+		return entity.Schedule{}, err
+	}
+	date := entity.CalculateNextAvailableDay(productionCalendar, preferredDate)
+	openingHours, err := openingHoursRepo.OpeningHours(ctx)
+	if err != nil {
+		return entity.Schedule{}, err
+	}
+	freePeriods, err := entity.CalculateFreePeriods(productionCalendar, openingHours, now, date)
+	if err != nil {
+		return entity.Schedule{}, err
+	}
+	busyPeriods, err := busyPeriodsRepo.BusyPeriods(ctx, date)
+	if err != nil {
+		return entity.Schedule{}, err
+	}
+	allWorkBreaks, err := workBreaksRepo.WorkBreaks(ctx)
+	if err != nil {
+		return entity.Schedule{}, err
+	}
+	workBreaks, err := entity.CalculateWorkBreaks(allWorkBreaks, date)
+	if err != nil {
+		return entity.Schedule{}, err
+	}
+	return entity.CalculateSchedule(productionCalendar, freePeriods, busyPeriods, workBreaks, now, date), nil
 }

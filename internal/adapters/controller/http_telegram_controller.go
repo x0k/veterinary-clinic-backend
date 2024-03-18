@@ -69,7 +69,7 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-		schedule, err := clinicSchedule.Schedule(r.Context(), t)
+		schedule, err := clinicSchedule.Schedule(r.Context(), time.Now(), t)
 		if err != nil {
 			log.Error(
 				r.Context(),

@@ -43,7 +43,7 @@ func (s Schedule) SetDates(next *time.Time, prev *time.Time) Schedule {
 func CalculateSchedulePeriods(
 	freePeriods FreePeriods,
 	busyPeriods BusyPeriods,
-	workBreaks WorkBreaks,
+	workBreaks CalculatedWorkBreaks,
 ) SchedulePeriods {
 	allBusyPeriods := make([]TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)
@@ -84,4 +84,26 @@ func CalculateSchedulePeriods(
 		return TimePeriodApi.ComparePeriods(a.TimePeriod, b.TimePeriod)
 	})
 	return schedule
+}
+
+func CalculateNextAvailableDay(productionCalendar ProductionCalendar, from time.Time) time.Time {
+	return NewNextAvailableDayCalculator(productionCalendar).Calculate(from)
+}
+
+func CalculatePrevAvailableDay(productionCalendar ProductionCalendar, now time.Time, from time.Time) *time.Time {
+	return NewPrevAvailableDayCalculator(productionCalendar, now).Calculate(from)
+}
+
+func CalculateSchedule(
+	productionCalendar ProductionCalendar,
+	freePeriods FreePeriods,
+	busyPeriods BusyPeriods,
+	workBreaks CalculatedWorkBreaks,
+	now time.Time,
+	date time.Time,
+) Schedule {
+	schedulePeriods := CalculateSchedulePeriods(freePeriods, busyPeriods, workBreaks)
+	next := CalculateNextAvailableDay(productionCalendar, date.AddDate(0, 0, 1))
+	prev := CalculatePrevAvailableDay(productionCalendar, now, date.AddDate(0, 0, -1))
+	return NewSchedule(date, schedulePeriods).SetDates(&next, prev)
 }
