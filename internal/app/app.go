@@ -187,6 +187,12 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 							datePickerStateContainer,
 						),
 					),
+					make_appointment.NewAppointmentConfirmationUseCase(
+						servicesRepo,
+						telegram_make_appointment.NewTelegramConfirmationPresenter(
+							datePickerStateContainer,
+						),
+					),
 				); err != nil {
 					return err
 				}

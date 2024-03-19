@@ -31,6 +31,7 @@ func UseTelegramBotRouter(
 	makeAppointmentDatePicker *make_appointment.DatePickerUseCase[adapters.TelegramTextResponse],
 	datePickerStateLoader adapters.StateLoader[adapters.TelegramDatePickerState],
 	makeAppointmentTimePicker *make_appointment.TimeSlotPickerUseCase[adapters.TelegramTextResponse],
+	makeAppointmentConfirmation *make_appointment.AppointmentConfirmationUseCase[adapters.TelegramTextResponse],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := greet.GreetUser(ctx)
@@ -100,7 +101,7 @@ func UseTelegramBotRouter(
 		if err != nil {
 			return err
 		}
-		return c.Send(datePicker.Text, datePicker.Options)
+		return c.Edit(datePicker.Text, datePicker.Options)
 	})
 
 	bot.Handle(adapters.NextMakeAppointmentDateBtn, func(c telebot.Context) error {
@@ -148,7 +149,25 @@ func UseTelegramBotRouter(
 		if !ok {
 			return ErrUnknownDatePickerState
 		}
-		fmt.Println(state)
+		confirmation, err := makeAppointmentConfirmation.Confirmation(
+			ctx,
+			state.ServiceId,
+			state.Date,
+		)
+		if err != nil {
+			return err
+		}
+		return c.Edit(confirmation.Text, confirmation.Options)
+	})
+
+	bot.Handle(adapters.ConfirmMakeAppointmentBtn, func(c telebot.Context) error {
+		state, ok := datePickerStateLoader.Load(
+			adapters.StateId(c.Callback().Data),
+		)
+		if !ok {
+			return ErrUnknownDatePickerState
+		}
+		fmt.Println("confirming appointment", state)
 		return nil
 	})
 

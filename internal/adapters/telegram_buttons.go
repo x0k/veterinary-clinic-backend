@@ -42,4 +42,8 @@ var (
 		Text:   "Продолжить",
 		Unique: "slc-mk-app-dt",
 	}
+	ConfirmMakeAppointmentBtn = &telebot.InlineButton{
+		Text:   "Подтвердить",
+		Unique: "cnf-mk-app",
+	}
 )
