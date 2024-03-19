@@ -63,10 +63,15 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
 
-	telegramClinicServiceIdCodec := adapters.NewTelegramServiceIdCodec()
+	seed := uint64(time.Now().UnixNano())
+	clinicServiceIdContainer := infra.NewMemoryExpirableStateContainer[entity.ServiceId](
+		seed,
+		1*time.Hour,
+	)
 
 	b.Append(
 		productionCalendarRepo,
+		clinicServiceIdContainer,
 		telegram_http_server.New(
 			log,
 			usecase.NewClinicScheduleUseCase(
@@ -112,10 +117,10 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			clinic_make_appointment.NewServicePickerUseCase(
 				clinicServicesRepo,
 				telegram_clinic_make_appointment.NewTelegramServicePickerPresenter(
-					telegramClinicServiceIdCodec,
+					clinicServiceIdContainer,
 				),
 			),
-			telegramClinicServiceIdCodec,
+			clinicServiceIdContainer,
 		),
 	)
 

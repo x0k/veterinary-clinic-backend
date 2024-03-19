@@ -27,7 +27,7 @@ type Bot struct {
 	clinicServices                     *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse]
 	clinicSchedule                     *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse]
 	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse]
-	clinicServiceIdDecoder             controller.TelegramClinicServiceIdDecoder
+	clinicServiceIdLoader              adapters.StateLoader[entity.ServiceId]
 	query                              <-chan entity.DialogMessage[adapters.TelegramQueryResponse]
 	pollerTimeout                      time.Duration
 }
@@ -41,7 +41,7 @@ func New(
 	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
 	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse],
-	clinicServiceIdDecoder controller.TelegramClinicServiceIdDecoder,
+	clinicServiceIdLoader adapters.StateLoader[entity.ServiceId],
 ) *Bot {
 	return &Bot{
 		log:                                log,
@@ -52,7 +52,7 @@ func New(
 		clinicServices:                     clinicServices,
 		clinicSchedule:                     clinicSchedule,
 		clinicMakeAppointmentServicePicker: clinicMakeAppointmentServicePicker,
-		clinicServiceIdDecoder:             clinicServiceIdDecoder,
+		clinicServiceIdLoader:              clinicServiceIdLoader,
 	}
 }
 
@@ -80,7 +80,7 @@ func (b *Bot) Start(ctx context.Context) error {
 		b.clinicServices,
 		b.clinicSchedule,
 		b.clinicMakeAppointmentServicePicker,
-		b.clinicServiceIdDecoder,
+		b.clinicServiceIdLoader,
 	); err != nil {
 		return fmt.Errorf("%s failed to start router: %w", op, err)
 	}

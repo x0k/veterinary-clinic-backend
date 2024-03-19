@@ -6,19 +6,15 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type telegramClinicServiceIdEncoder interface {
-	Encode(id entity.ServiceId) string
-}
-
 type TelegramServicePickerPresenter struct {
-	encoder telegramClinicServiceIdEncoder
+	stateSaver adapters.StateSaver[entity.ServiceId]
 }
 
 func NewTelegramServicePickerPresenter(
-	encoder telegramClinicServiceIdEncoder,
+	stateSaver adapters.StateSaver[entity.ServiceId],
 ) *TelegramServicePickerPresenter {
 	return &TelegramServicePickerPresenter{
-		encoder: encoder,
+		stateSaver: stateSaver,
 	}
 }
 
@@ -28,7 +24,7 @@ func (s *TelegramServicePickerPresenter) RenderServicesList(services []entity.Se
 		buttons = append(buttons, []telebot.InlineButton{{
 			Text:   service.Title,
 			Unique: adapters.ClinicMakeAppointmentService,
-			Data:   s.encoder.Encode(service.Id),
+			Data:   string(s.stateSaver.Save(service.Id)),
 		}})
 	}
 	return adapters.TelegramTextResponse{

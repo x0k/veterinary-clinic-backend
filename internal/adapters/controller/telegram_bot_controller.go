@@ -19,10 +19,6 @@ import (
 var ErrUnexpectedMessageType = errors.New("unexpected message type")
 var ErrUnknownService = errors.New("unknown service")
 
-type TelegramClinicServiceIdDecoder interface {
-	Decode(id string) (entity.ServiceId, bool)
-}
-
 func UseTelegramBotRouter(
 	ctx context.Context,
 	bot *telebot.Bot,
@@ -30,7 +26,7 @@ func UseTelegramBotRouter(
 	clinicServices *usecase.ClinicServicesUseCase[adapters.TelegramTextResponse],
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
 	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse],
-	clinicServiceIdDecoder TelegramClinicServiceIdDecoder,
+	clinicServiceIdLoader adapters.StateLoader[entity.ServiceId],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := clinicGreet.GreetUser(ctx)
@@ -84,8 +80,8 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.ClinicAppointmentBtn, clinicAppointmentHandler)
 
 	bot.Handle(adapters.ClinicMakeAppointmentServiceCallback, func(c telebot.Context) error {
-		serviceId, ok := clinicServiceIdDecoder.Decode(
-			c.Callback().Data,
+		serviceId, ok := clinicServiceIdLoader.Load(
+			adapters.StateId(c.Callback().Data),
 		)
 		if !ok {
 			return ErrUnknownService
