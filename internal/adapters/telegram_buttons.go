@@ -30,4 +30,16 @@ var (
 			{*ClinicAppointmentBtn},
 		},
 	}
+	NextMakeAppointmentDateBtn = &telebot.InlineButton{
+		Text:   "➡",
+		Unique: "nx-mk-app-dt",
+	}
+	PrevMakeAppointmentDateBtn = &telebot.InlineButton{
+		Text:   "⬅",
+		Unique: "nx-mk-app-dt",
+	}
+	SelectMakeAppointmentDateBtn = &telebot.InlineButton{
+		Text:   "Продолжить",
+		Unique: "slc-mk-app-dt",
+	}
 )

@@ -40,11 +40,12 @@ func (u *DatePickerUseCase[R]) DatePicker(
 	ctx context.Context,
 	serviceId entity.ServiceId,
 	now time.Time,
+	preferredDate time.Time,
 ) (R, error) {
 	schedule, err := usecase.FetchAndCalculateSchedule(
 		ctx,
 		now,
-		now,
+		preferredDate,
 		u.productionCalendarRepo,
 		u.openingHoursRepo,
 		u.busyPeriodsRepo,

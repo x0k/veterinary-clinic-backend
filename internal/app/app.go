@@ -49,6 +49,8 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	calendarWebHandlerUrl := adapters.CalendarWebHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.CalendarWebHandlerPath))
 
+	makeAppointmentDatePickerHandlerUrl := adapters.MakeAppointmentDatePickerHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.MakeAppointmentDatePickerHandlerPath))
+
 	notionClient := notionapi.NewClient(cfg.Notion.Token)
 
 	productionCalendarRepo := repo.NewHttpProductionCalendar(log, cfg.ProductionCalendar.Url, &http.Client{})
@@ -66,14 +68,22 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	seed := uint64(time.Now().UnixNano())
 	clinicServiceIdContainer := infra.NewMemoryExpirableStateContainer[entity.ServiceId](
 		seed,
-		1*time.Hour,
+		10*time.Minute,
+	)
+	clinicDatePickerStateContainer := infra.NewMemoryExpirableStateContainer[telegram_clinic_make_appointment.TelegramDatePickerState](
+		seed,
+		10*time.Minute,
 	)
 
 	b.Append(
 		productionCalendarRepo,
 		clinicServiceIdContainer,
+		clinicDatePickerStateContainer,
 		telegram_http_server.New(
 			log,
+			query,
+			cfg.Telegram.WebHandlerAddress,
+			calendarWebAppOrigin,
 			usecase.NewClinicScheduleUseCase(
 				productionCalendarRepo,
 				openingHoursRepo,
@@ -84,12 +94,20 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					calendarWebHandlerUrl,
 				),
 			),
-			query,
-			cfg.Telegram.WebHandlerAddress,
-			calendarWebAppOrigin,
 			infra.NewTelegramInitData(
 				cfg.Telegram.Token,
 				24*time.Hour,
+			),
+			clinic_make_appointment.NewDatePickerUseCase(
+				productionCalendarRepo,
+				openingHoursRepo,
+				busyPeriodsRepo,
+				workBreaksRepo,
+				telegram_clinic_make_appointment.NewTelegramDatePickerQueryPresenter(
+					cfg.Telegram.CalendarWebAppUrl,
+					makeAppointmentDatePickerHandlerUrl,
+					clinicDatePickerStateContainer,
+				),
 			),
 		),
 		telegram_bot.New(
@@ -121,6 +139,18 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 				),
 			),
 			clinicServiceIdContainer,
+			clinic_make_appointment.NewDatePickerUseCase(
+				productionCalendarRepo,
+				openingHoursRepo,
+				busyPeriodsRepo,
+				workBreaksRepo,
+				telegram_clinic_make_appointment.NewTelegramDatePickerTextPresenter(
+					cfg.Telegram.CalendarWebAppUrl,
+					makeAppointmentDatePickerHandlerUrl,
+					clinicDatePickerStateContainer,
+				),
+			),
+			clinicDatePickerStateContainer,
 		),
 	)
 

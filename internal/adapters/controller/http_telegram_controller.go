@@ -11,6 +11,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
 )
 
 type WebAppResultResponse struct {
@@ -18,15 +19,17 @@ type WebAppResultResponse struct {
 		SelectedDates []string `json:"selectedDates"`
 	} `json:"data"`
 	WebAppInitData string `json:"webAppInitData"`
+	State          string `json:"state"`
 }
 
 func UseHttpTelegramRouter(
-	log *logger.Logger,
 	mux *http.ServeMux,
-	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
+	log *logger.Logger,
 	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
 	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
 	telegramInitDataParser TelegramInitDataParser,
+	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
+	makeAppointmentDatePicker *clinic_make_appointment.DatePickerUseCase[adapters.TelegramQueryResponse],
 ) {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,
@@ -81,6 +84,63 @@ func UseHttpTelegramRouter(
 		query <- entity.DialogMessage[adapters.TelegramQueryResponse]{
 			DialogId: entity.DialogId(data.QueryID),
 			Message:  schedule,
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", adapters.MakeAppointmentDatePickerHandlerPath), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", string(calendarWebAppOrigin))
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("POST %s", adapters.MakeAppointmentDatePickerHandlerPath), func(w http.ResponseWriter, r *http.Request) {
+		res, httpErr := httpx.JSONBody[WebAppResultResponse](log.Logger, jsonBodyDecoder, w, r)
+		if httpErr != nil {
+			http.Error(w, httpErr.Text, httpErr.Status)
+			return
+		}
+		if len(res.Data.SelectedDates) == 0 {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		if res.State == "" {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		if err := telegramInitDataParser.Validate(res.WebAppInitData); err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		data, err := telegramInitDataParser.Parse(res.WebAppInitData)
+		if err != nil {
+			log.Error(
+				r.Context(),
+				"failed to parse init data",
+				sl.Err(err),
+			)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		selectedDate, err := time.Parse(time.DateOnly, res.Data.SelectedDates[0])
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		datePicker, err := makeAppointmentDatePicker.DatePicker(r.Context(), entity.ServiceId(res.State), time.Now(), selectedDate)
+		if err != nil {
+			log.Error(
+				r.Context(),
+				"failed to get date picker",
+				sl.Err(err),
+			)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		query <- entity.DialogMessage[adapters.TelegramQueryResponse]{
+			DialogId: entity.DialogId(data.QueryID),
+			Message:  datePicker,
 		}
 		w.WriteHeader(http.StatusOK)
 	})

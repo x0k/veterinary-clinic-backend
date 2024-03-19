@@ -3,15 +3,12 @@ package presenter
 import (
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"gopkg.in/telebot.v3"
 )
-
-const calendarInputValidationSchema = `{"type":"object","properties":{"selectedDates":{"type":"array","minItems":1}},"required":["selectedDates"]}`
 
 type telegramClinicSchedulePresenter struct {
 	calendarWebAppUrl           adapters.CalendarWebAppUrl
@@ -24,7 +21,7 @@ func newTelegramClinicSchedulePresenter(
 ) telegramClinicSchedulePresenter {
 	return telegramClinicSchedulePresenter{
 		calendarWebAppUrl:           calendarWebAppUrl,
-		calendarInputRequestOptions: fmt.Sprintf(`{"url":"%s"}`, string(calendarWebHandlerUrl)),
+		calendarInputRequestOptions: fmt.Sprintf(`{"url":"%s"}`, calendarWebHandlerUrl),
 	}
 }
 
@@ -35,9 +32,9 @@ func (p *telegramClinicSchedulePresenter) scheduleButtons(schedule entity.Schedu
 	}
 	webAppParams := url.Values{}
 	webAppParams.Add("r", p.calendarInputRequestOptions)
-	webAppParams.Add("v", calendarInputValidationSchema)
+	webAppParams.Add("v", CalendarInputValidationSchema)
 	webAppParams.Add("w", fmt.Sprintf(
-		`{"date":{"min":"%s"},"settings":{"selected":{"dates":["%s"]}}}`,
+		CalendarWebAppOptionsTemplate,
 		time.Now().Format(time.DateOnly),
 		schedule.Date.Format(time.DateOnly),
 	))
@@ -52,28 +49,6 @@ func (p *telegramClinicSchedulePresenter) scheduleButtons(schedule entity.Schedu
 		buttons = append(buttons, *adapters.NextClinicScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
 	}
 	return buttons
-}
-
-func (p *telegramClinicSchedulePresenter) schedule(schedule entity.Schedule) string {
-	sb := strings.Builder{}
-	sb.WriteString("График работы на ")
-	sb.WriteString(adapters.EscapeTelegramMarkdownString(
-		schedule.Date.Format("02.01.2006")),
-	)
-	sb.WriteString(":\n\n")
-	for _, period := range schedule.Periods {
-		sb.WriteByte('*')
-		sb.WriteString(period.Start.String())
-		sb.WriteString(" \\- ")
-		sb.WriteString(period.End.String())
-		sb.WriteString("*\n")
-		sb.WriteString(adapters.EscapeTelegramMarkdownString(period.Title))
-		sb.WriteString("\n\n")
-	}
-	if len(schedule.Periods) == 0 {
-		sb.WriteString("Нет записей\n\n")
-	}
-	return sb.String()
 }
 
 type TelegramClinicScheduleTextPresenter struct {
@@ -94,7 +69,7 @@ func NewTelegramClinicScheduleTextPresenter(
 
 func (p *TelegramClinicScheduleTextPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramTextResponse, error) {
 	return adapters.TelegramTextResponse{
-		Text: p.schedule(schedule),
+		Text: RenderSchedule(schedule),
 		Options: &telebot.SendOptions{
 			ParseMode: telebot.ModeMarkdownV2,
 			ReplyMarkup: &telebot.ReplyMarkup{
@@ -136,7 +111,7 @@ func (p *TelegramClinicScheduleQueryPresenter) RenderSchedule(schedule entity.Sc
 				},
 			},
 			Title: "График работы",
-			Text:  p.schedule(schedule),
+			Text:  RenderSchedule(schedule),
 		},
 	}, nil
 }

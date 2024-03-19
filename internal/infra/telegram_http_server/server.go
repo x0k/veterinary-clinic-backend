@@ -9,6 +9,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
 )
 
 type Server struct {
@@ -17,19 +18,22 @@ type Server struct {
 
 func New(
 	log *logger.Logger,
-	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
 	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
 	telegramHttpServerAddress infra.TelegramHttpServerAddress,
 	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
+	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
 	telegramInitDataParser controller.TelegramInitDataParser,
+	makeAppointmentDatePicker *clinic_make_appointment.DatePickerUseCase[adapters.TelegramQueryResponse],
 ) *Server {
 	mux := http.NewServeMux()
 	controller.UseHttpTelegramRouter(
-		log, mux,
-		clinicSchedule,
+		mux,
+		log,
 		query,
 		calendarWebAppOrigin,
 		telegramInitDataParser,
+		clinicSchedule,
+		makeAppointmentDatePicker,
 	)
 	return &Server{
 		HttpService: *infra.NewHttpService(

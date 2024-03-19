@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter/telegram_clinic_make_appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
@@ -18,6 +19,7 @@ import (
 
 var ErrUnexpectedMessageType = errors.New("unexpected message type")
 var ErrUnknownService = errors.New("unknown service")
+var ErrUnknownDatePickerState = errors.New("unknown date picker state")
 
 func UseTelegramBotRouter(
 	ctx context.Context,
@@ -27,6 +29,8 @@ func UseTelegramBotRouter(
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramTextResponse],
 	clinicMakeAppointmentServicePicker *clinic_make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse],
 	clinicServiceIdLoader adapters.StateLoader[entity.ServiceId],
+	clinicMakeAppointmentDatePicker *clinic_make_appointment.DatePickerUseCase[adapters.TelegramTextResponse],
+	clinicDatePickerStateLoader adapters.StateLoader[telegram_clinic_make_appointment.TelegramDatePickerState],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := clinicGreet.GreetUser(ctx)
@@ -86,7 +90,46 @@ func UseTelegramBotRouter(
 		if !ok {
 			return ErrUnknownService
 		}
-		fmt.Println(serviceId)
+		now := time.Now()
+		datePicker, err := clinicMakeAppointmentDatePicker.DatePicker(
+			ctx,
+			serviceId,
+			now,
+			now,
+		)
+		if err != nil {
+			return err
+		}
+		return c.Send(datePicker.Text, datePicker.Options)
+	})
+
+	bot.Handle(adapters.NextMakeAppointmentDateBtn, func(c telebot.Context) error {
+		state, ok := clinicDatePickerStateLoader.Load(
+			adapters.StateId(c.Callback().Data),
+		)
+		if !ok {
+			return ErrUnknownDatePickerState
+		}
+		res, err := clinicMakeAppointmentDatePicker.DatePicker(
+			ctx,
+			state.ServiceId,
+			time.Now(),
+			state.Date,
+		)
+		if err != nil {
+			return err
+		}
+		return c.Edit(res.Text, res.Options)
+	})
+
+	bot.Handle(adapters.SelectMakeAppointmentDateBtn, func(c telebot.Context) error {
+		state, ok := clinicDatePickerStateLoader.Load(
+			adapters.StateId(c.Callback().Data),
+		)
+		if !ok {
+			return ErrUnknownDatePickerState
+		}
+		fmt.Println(state)
 		return nil
 	})
 
