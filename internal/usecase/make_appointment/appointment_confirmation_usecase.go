@@ -32,7 +32,7 @@ func (u *AppointmentConfirmationUseCase[R]) AppointmentConfirmation(
 	serviceId entity.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
-	service, err := u.servicesRepo.Load(ctx, serviceId)
+	service, err := u.servicesRepo.Service(ctx, serviceId)
 	if err != nil {
 		return *new(R), err
 	}

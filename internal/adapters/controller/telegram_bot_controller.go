@@ -30,6 +30,7 @@ func UseTelegramBotRouter(
 	serviceIdLoader adapters.StateLoader[entity.ServiceId],
 	makeAppointmentDatePicker *make_appointment.DatePickerUseCase[adapters.TelegramTextResponse],
 	datePickerStateLoader adapters.StateLoader[adapters.TelegramDatePickerState],
+	makeAppointmentTimePicker *make_appointment.TimeSlotPickerUseCase[adapters.TelegramTextResponse],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := greet.GreetUser(ctx)
@@ -122,6 +123,25 @@ func UseTelegramBotRouter(
 	})
 
 	bot.Handle(adapters.SelectMakeAppointmentDateBtn, func(c telebot.Context) error {
+		state, ok := datePickerStateLoader.Load(
+			adapters.StateId(c.Callback().Data),
+		)
+		if !ok {
+			return ErrUnknownDatePickerState
+		}
+		timePicker, err := makeAppointmentTimePicker.TimePicker(
+			ctx,
+			state.ServiceId,
+			time.Now(),
+			state.Date,
+		)
+		if err != nil {
+			return err
+		}
+		return c.Edit(timePicker.Text, timePicker.Options)
+	})
+
+	bot.Handle(adapters.MakeAppointmentTimeCallback, func(c telebot.Context) error {
 		state, ok := datePickerStateLoader.Load(
 			adapters.StateId(c.Callback().Data),
 		)

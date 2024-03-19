@@ -176,6 +176,17 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 						),
 					),
 					datePickerStateContainer,
+					make_appointment.NewTimeSlotPickerUseCase(
+						entity.SampleRateInMinutes(30),
+						productionCalendarRepo,
+						openingHoursRepo,
+						busyPeriodsRepo,
+						workBreaksRepo,
+						servicesRepo,
+						telegram_make_appointment.NewTelegramTimeSlotsPickerPresenter(
+							datePickerStateContainer,
+						),
+					),
 				); err != nil {
 					return err
 				}

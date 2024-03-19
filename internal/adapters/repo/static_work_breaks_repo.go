@@ -18,7 +18,7 @@ var allWorkBreaks = entity.WorkBreaks{
 			},
 			End: entity.Time{
 				Hours:   13,
-				Minutes: 0,
+				Minutes: 30,
 			},
 		},
 	},

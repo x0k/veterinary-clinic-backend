@@ -71,6 +71,17 @@ func (s *NotionServicesRepo) Services(ctx context.Context) ([]entity.Service, er
 	return services, nil
 }
 
+func (s *NotionServicesRepo) Service(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error) {
+	r, err := s.client.Page.Get(ctx, notionapi.PageID(serviceId))
+	if err != nil {
+		return entity.Service{}, err
+	}
+	if r == nil {
+		return entity.Service{}, ErrNotFound
+	}
+	return Service(*r), nil
+}
+
 func (s *NotionServicesRepo) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
 	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, s.actualRecordsDatabaseQueryRequest)
 	if err != nil {

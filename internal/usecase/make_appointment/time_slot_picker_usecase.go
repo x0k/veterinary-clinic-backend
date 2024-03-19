@@ -82,7 +82,7 @@ func (u *TimeSlotPickerUseCase[R]) TimePicker(
 		busyPeriods,
 		workBreaks,
 	)
-	service, err := u.servicesRepo.Load(ctx, serviceId)
+	service, err := u.servicesRepo.Service(ctx, serviceId)
 	if err != nil {
 		return *new(R), err
 	}

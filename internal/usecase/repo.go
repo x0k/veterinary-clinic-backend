@@ -12,7 +12,7 @@ type ServicesLoader interface {
 }
 
 type ServiceLoader interface {
-	Load(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error)
+	Service(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error)
 }
 
 type RecordsCreator interface {
