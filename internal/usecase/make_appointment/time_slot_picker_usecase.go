@@ -1,4 +1,4 @@
-package clinic_make_appointment
+package make_appointment
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type TimeSlotPickerUseCase[R any] struct {
 	openingHoursRepo       usecase.OpeningHoursLoader
 	busyPeriodsRepo        usecase.BusyPeriodsLoader
 	workBreaksRepo         usecase.WorkBreaksLoader
-	clinicServicesRepo     usecase.ClinicServiceLoader
+	servicesRepo           usecase.ServiceLoader
 	presenter              timeSlotPickerPresenter[R]
 }
 
@@ -28,7 +28,7 @@ func NewTimeSlotPickerUseCase[R any](
 	openingHoursRepo usecase.OpeningHoursLoader,
 	busyPeriodsRepo usecase.BusyPeriodsLoader,
 	workBreaksRepo usecase.WorkBreaksLoader,
-	clinicServicesRepo usecase.ClinicServiceLoader,
+	servicesRepo usecase.ServiceLoader,
 	presenter timeSlotPickerPresenter[R],
 ) *TimeSlotPickerUseCase[R] {
 	return &TimeSlotPickerUseCase[R]{
@@ -37,7 +37,7 @@ func NewTimeSlotPickerUseCase[R any](
 		openingHoursRepo:       openingHoursRepo,
 		busyPeriodsRepo:        busyPeriodsRepo,
 		workBreaksRepo:         workBreaksRepo,
-		clinicServicesRepo:     clinicServicesRepo,
+		servicesRepo:           servicesRepo,
 		presenter:              presenter,
 	}
 }
@@ -82,12 +82,12 @@ func (u *TimeSlotPickerUseCase[R]) TimePicker(
 		busyPeriods,
 		workBreaks,
 	)
-	clinicService, err := u.clinicServicesRepo.Load(ctx, serviceId)
+	service, err := u.servicesRepo.Load(ctx, serviceId)
 	if err != nil {
 		return *new(R), err
 	}
 	return u.presenter.RenderTimePicker(serviceId, appointmentDate, entity.SampleFreeTimeSlots(
-		clinicService.DurationInMinutes,
+		service.DurationInMinutes,
 		u.sampleRateInMinutes,
 		freeTimeSlots,
 	))

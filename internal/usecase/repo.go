@@ -7,15 +7,15 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type ClinicServicesLoader interface {
+type ServicesLoader interface {
 	Services(ctx context.Context) ([]entity.Service, error)
 }
 
-type ClinicServiceLoader interface {
+type ServiceLoader interface {
 	Load(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error)
 }
 
-type ClinicRecordsCreator interface {
+type RecordsCreator interface {
 	Create(
 		ctx context.Context,
 		user entity.User,
@@ -24,7 +24,7 @@ type ClinicRecordsCreator interface {
 	) (entity.Record, error)
 }
 
-type ClinicRecordsChecker interface {
+type RecordsChecker interface {
 	Exists(ctx context.Context, userId entity.UserId) (bool, error)
 }
 

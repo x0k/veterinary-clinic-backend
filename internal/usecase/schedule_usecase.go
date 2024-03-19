@@ -7,26 +7,26 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type clinicSchedulePresenter[R any] interface {
+type schedulePresenter[R any] interface {
 	RenderSchedule(schedule entity.Schedule) (R, error)
 }
 
-type ClinicScheduleUseCase[R any] struct {
+type ScheduleUseCase[R any] struct {
 	productionCalendarRepo ProductionCalendarLoader
 	openingHoursRepo       OpeningHoursLoader
 	busyPeriodsRepo        BusyPeriodsLoader
 	workBreaksRepo         WorkBreaksLoader
-	presenter              clinicSchedulePresenter[R]
+	presenter              schedulePresenter[R]
 }
 
-func NewClinicScheduleUseCase[R any](
+func NewScheduleUseCase[R any](
 	productionCalendarRepo ProductionCalendarLoader,
 	openingHoursRepo OpeningHoursLoader,
 	busyPeriodsRepo BusyPeriodsLoader,
 	workBreaksRepo WorkBreaksLoader,
-	schedulePresenter clinicSchedulePresenter[R],
-) *ClinicScheduleUseCase[R] {
-	return &ClinicScheduleUseCase[R]{
+	schedulePresenter schedulePresenter[R],
+) *ScheduleUseCase[R] {
+	return &ScheduleUseCase[R]{
 		productionCalendarRepo: productionCalendarRepo,
 		openingHoursRepo:       openingHoursRepo,
 		busyPeriodsRepo:        busyPeriodsRepo,
@@ -35,7 +35,7 @@ func NewClinicScheduleUseCase[R any](
 	}
 }
 
-func (u *ClinicScheduleUseCase[R]) Schedule(ctx context.Context, now, preferredDate time.Time) (R, error) {
+func (u *ScheduleUseCase[R]) Schedule(ctx context.Context, now, preferredDate time.Time) (R, error) {
 	schedule, err := FetchAndCalculateSchedule(
 		ctx,
 		now,

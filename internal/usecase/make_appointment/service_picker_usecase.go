@@ -1,4 +1,4 @@
-package clinic_make_appointment
+package make_appointment
 
 import (
 	"context"
@@ -12,22 +12,22 @@ type servicePickerPresenter[R any] interface {
 }
 
 type ServicePickerUseCase[R any] struct {
-	clinicServicesRepo usecase.ClinicServicesLoader
-	presenter          servicePickerPresenter[R]
+	servicesRepo usecase.ServicesLoader
+	presenter    servicePickerPresenter[R]
 }
 
 func NewServicePickerUseCase[R any](
-	clinicServicesRepo usecase.ClinicServicesLoader,
+	servicesRepo usecase.ServicesLoader,
 	presenter servicePickerPresenter[R],
 ) *ServicePickerUseCase[R] {
 	return &ServicePickerUseCase[R]{
-		clinicServicesRepo: clinicServicesRepo,
-		presenter:          presenter,
+		servicesRepo: servicesRepo,
+		presenter:    presenter,
 	}
 }
 
 func (u *ServicePickerUseCase[R]) ServicesPicker(ctx context.Context) (R, error) {
-	services, err := u.clinicServicesRepo.Services(ctx)
+	services, err := u.servicesRepo.Services(ctx)
 	if err != nil {
 		return *new(R), err
 	}

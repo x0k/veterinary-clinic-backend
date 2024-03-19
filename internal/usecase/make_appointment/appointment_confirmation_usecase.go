@@ -1,4 +1,4 @@
-package clinic_make_appointment
+package make_appointment
 
 import (
 	"context"
@@ -13,17 +13,17 @@ type appointmentConfirmationPresenter[R any] interface {
 }
 
 type AppointmentConfirmationUseCase[R any] struct {
-	clinicServicesRepo usecase.ClinicServiceLoader
-	presenter          appointmentConfirmationPresenter[R]
+	servicesRepo usecase.ServiceLoader
+	presenter    appointmentConfirmationPresenter[R]
 }
 
 func NewAppointmentConfirmationUseCase[R any](
-	clinicServicesRepo usecase.ClinicServiceLoader,
+	servicesRepo usecase.ServiceLoader,
 	presenter appointmentConfirmationPresenter[R],
 ) *AppointmentConfirmationUseCase[R] {
 	return &AppointmentConfirmationUseCase[R]{
-		clinicServicesRepo: clinicServicesRepo,
-		presenter:          presenter,
+		servicesRepo: servicesRepo,
+		presenter:    presenter,
 	}
 }
 
@@ -32,7 +32,7 @@ func (u *AppointmentConfirmationUseCase[R]) AppointmentConfirmation(
 	serviceId entity.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
-	service, err := u.clinicServicesRepo.Load(ctx, serviceId)
+	service, err := u.servicesRepo.Load(ctx, serviceId)
 	if err != nil {
 		return *new(R), err
 	}

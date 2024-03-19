@@ -26,10 +26,10 @@ const (
 )
 
 const (
-	ClinicRecordAwaits    = "Ожидает"
-	ClinicRecordInWork    = "В работе"
-	ClinicRecordDone      = "Выполнено"
-	ClinicRecordNotAppear = "Не пришел"
+	RecordAwaits    = "Ожидает"
+	RecordInWork    = "В работе"
+	RecordDone      = "Выполнено"
+	RecordNotAppear = "Не пришел"
 )
 
 func RichTextValue(richText []notionapi.RichText) string {
@@ -82,7 +82,7 @@ func UserIdFromRecord(properties notionapi.Properties, currentUserId *entity.Use
 
 func ActualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
 	status := properties[RecordState].(*notionapi.SelectProperty).Select.Name
-	if status == ClinicRecordInWork {
+	if status == RecordInWork {
 		return entity.RecordInWork
 	}
 	return entity.RecordAwaits

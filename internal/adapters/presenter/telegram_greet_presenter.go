@@ -5,13 +5,13 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type TelegramClinicGreetPresenter struct{}
+type TelegramGreetPresenter struct{}
 
-func NewTelegramClinicGreet() *TelegramClinicGreetPresenter {
-	return &TelegramClinicGreetPresenter{}
+func NewTelegramGreet() *TelegramGreetPresenter {
+	return &TelegramGreetPresenter{}
 }
 
-func (p *TelegramClinicGreetPresenter) RenderGreeting() (adapters.TelegramTextResponse, error) {
+func (p *TelegramGreetPresenter) RenderGreeting() (adapters.TelegramTextResponse, error) {
 	return adapters.TelegramTextResponse{
 		Text: adapters.EscapeTelegramMarkdownString("Привет!"),
 		Options: &telebot.SendOptions{

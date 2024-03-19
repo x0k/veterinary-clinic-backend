@@ -50,13 +50,13 @@ func (s *BusyPeriodsRepo) BusyPeriods(ctx context.Context, t time.Time) (entity.
 				notionapi.PropertyFilter{
 					Property: RecordState,
 					Select: &notionapi.SelectFilterCondition{
-						Equals: ClinicRecordInWork,
+						Equals: RecordInWork,
 					},
 				},
 				notionapi.PropertyFilter{
 					Property: RecordState,
 					Select: &notionapi.SelectFilterCondition{
-						Equals: ClinicRecordAwaits,
+						Equals: RecordAwaits,
 					},
 				},
 			},

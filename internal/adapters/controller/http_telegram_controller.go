@@ -11,7 +11,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
-	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/make_appointment"
 )
 
 type WebAppResultResponse struct {
@@ -28,8 +28,8 @@ func UseHttpTelegramRouter(
 	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
 	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
 	telegramInitDataParser TelegramInitDataParser,
-	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
-	makeAppointmentDatePicker *clinic_make_appointment.DatePickerUseCase[adapters.TelegramQueryResponse],
+	schedule *usecase.ScheduleUseCase[adapters.TelegramQueryResponse],
+	makeAppointmentDatePicker *make_appointment.DatePickerUseCase[adapters.TelegramQueryResponse],
 ) *http.ServeMux {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,
@@ -71,7 +71,7 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-		schedule, err := clinicSchedule.Schedule(r.Context(), time.Now(), t)
+		schedule, err := schedule.Schedule(r.Context(), time.Now(), t)
 		if err != nil {
 			log.Error(
 				r.Context(),

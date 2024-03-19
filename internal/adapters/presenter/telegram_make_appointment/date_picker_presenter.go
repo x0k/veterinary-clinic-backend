@@ -1,4 +1,4 @@
-package telegram_clinic_make_appointment
+package telegram_make_appointment
 
 import (
 	"fmt"
@@ -11,21 +11,16 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type TelegramDatePickerState struct {
-	ServiceId entity.ServiceId
-	Date      time.Time
-}
-
 type telegramDatePickerPresenter struct {
 	calendarWebAppUrl           adapters.CalendarWebAppUrl
 	calendarInputRequestOptions string
-	stateSaver                  adapters.StateSaver[TelegramDatePickerState]
+	stateSaver                  adapters.StateSaver[adapters.TelegramDatePickerState]
 }
 
 func newTelegramDatePickerPresenter(
 	calendarWebAppUrl adapters.CalendarWebAppUrl,
 	makeAppointmentDatePickerHandlerUrl adapters.MakeAppointmentDatePickerHandlerUrl,
-	stateSaver adapters.StateSaver[TelegramDatePickerState],
+	stateSaver adapters.StateSaver[adapters.TelegramDatePickerState],
 ) telegramDatePickerPresenter {
 	return telegramDatePickerPresenter{
 		calendarWebAppUrl:           calendarWebAppUrl,
@@ -38,7 +33,7 @@ func (p *telegramDatePickerPresenter) buttons(serviceId entity.ServiceId, schedu
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if schedule.PrevDate != nil {
 		buttons = append(buttons, *adapters.PrevMakeAppointmentDateBtn.With(string(
-			p.stateSaver.Save(TelegramDatePickerState{
+			p.stateSaver.Save(adapters.TelegramDatePickerState{
 				ServiceId: serviceId,
 				Date:      *schedule.PrevDate,
 			}),
@@ -62,7 +57,7 @@ func (p *telegramDatePickerPresenter) buttons(serviceId entity.ServiceId, schedu
 	})
 	if schedule.NextDate != nil {
 		buttons = append(buttons, *adapters.NextMakeAppointmentDateBtn.With(string(
-			p.stateSaver.Save(TelegramDatePickerState{
+			p.stateSaver.Save(adapters.TelegramDatePickerState{
 				ServiceId: serviceId,
 				Date:      *schedule.NextDate,
 			}),
@@ -72,7 +67,7 @@ func (p *telegramDatePickerPresenter) buttons(serviceId entity.ServiceId, schedu
 		buttons,
 		{
 			*adapters.SelectMakeAppointmentDateBtn.With(string(
-				p.stateSaver.Save(TelegramDatePickerState{
+				p.stateSaver.Save(adapters.TelegramDatePickerState{
 					ServiceId: serviceId,
 					Date:      schedule.Date,
 				}),
@@ -88,7 +83,7 @@ type TelegramDatePickerTextPresenter struct {
 func NewTelegramDatePickerTextPresenter(
 	calendarWebAppUrl adapters.CalendarWebAppUrl,
 	makeAppointmentDatePickerHandlerUrl adapters.MakeAppointmentDatePickerHandlerUrl,
-	stateSaver adapters.StateSaver[TelegramDatePickerState],
+	stateSaver adapters.StateSaver[adapters.TelegramDatePickerState],
 ) *TelegramDatePickerTextPresenter {
 	return &TelegramDatePickerTextPresenter{
 		telegramDatePickerPresenter: newTelegramDatePickerPresenter(
@@ -118,7 +113,7 @@ type TelegramDatePickerQueryPresenter struct {
 func NewTelegramDatePickerQueryPresenter(
 	calendarWebAppUrl adapters.CalendarWebAppUrl,
 	makeAppointmentDatePickerHandlerUrl adapters.MakeAppointmentDatePickerHandlerUrl,
-	stateSaver adapters.StateSaver[TelegramDatePickerState],
+	stateSaver adapters.StateSaver[adapters.TelegramDatePickerState],
 ) *TelegramDatePickerQueryPresenter {
 	return &TelegramDatePickerQueryPresenter{
 		telegramDatePickerPresenter: newTelegramDatePickerPresenter(

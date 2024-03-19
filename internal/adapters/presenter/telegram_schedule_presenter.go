@@ -10,25 +10,25 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type telegramClinicSchedulePresenter struct {
+type telegramSchedulePresenter struct {
 	calendarWebAppUrl           adapters.CalendarWebAppUrl
 	calendarInputRequestOptions string
 }
 
-func newTelegramClinicSchedulePresenter(
+func newTelegramSchedulePresenter(
 	calendarWebAppUrl adapters.CalendarWebAppUrl,
 	calendarWebHandlerUrl adapters.CalendarWebHandlerUrl,
-) telegramClinicSchedulePresenter {
-	return telegramClinicSchedulePresenter{
+) telegramSchedulePresenter {
+	return telegramSchedulePresenter{
 		calendarWebAppUrl:           calendarWebAppUrl,
 		calendarInputRequestOptions: fmt.Sprintf(`{"url":"%s"}`, calendarWebHandlerUrl),
 	}
 }
 
-func (p *telegramClinicSchedulePresenter) scheduleButtons(schedule entity.Schedule) []telebot.InlineButton {
+func (p *telegramSchedulePresenter) scheduleButtons(schedule entity.Schedule) []telebot.InlineButton {
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if schedule.PrevDate != nil {
-		buttons = append(buttons, *adapters.PreviousClinicScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
+		buttons = append(buttons, *adapters.PreviousScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
 	}
 	webAppParams := url.Values{}
 	webAppParams.Add("r", p.calendarInputRequestOptions)
@@ -46,28 +46,28 @@ func (p *telegramClinicSchedulePresenter) scheduleButtons(schedule entity.Schedu
 		},
 	})
 	if schedule.NextDate != nil {
-		buttons = append(buttons, *adapters.NextClinicScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
+		buttons = append(buttons, *adapters.NextScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
 	}
 	return buttons
 }
 
-type TelegramClinicScheduleTextPresenter struct {
-	telegramClinicSchedulePresenter
+type TelegramScheduleTextPresenter struct {
+	telegramSchedulePresenter
 }
 
-func NewTelegramClinicScheduleTextPresenter(
+func NewTelegramScheduleTextPresenter(
 	calendarWebAppUrl adapters.CalendarWebAppUrl,
 	calendarWebHandlerUrl adapters.CalendarWebHandlerUrl,
-) *TelegramClinicScheduleTextPresenter {
-	return &TelegramClinicScheduleTextPresenter{
-		telegramClinicSchedulePresenter: newTelegramClinicSchedulePresenter(
+) *TelegramScheduleTextPresenter {
+	return &TelegramScheduleTextPresenter{
+		telegramSchedulePresenter: newTelegramSchedulePresenter(
 			calendarWebAppUrl,
 			calendarWebHandlerUrl,
 		),
 	}
 }
 
-func (p *TelegramClinicScheduleTextPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramTextResponse, error) {
+func (p *TelegramScheduleTextPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramTextResponse, error) {
 	return adapters.TelegramTextResponse{
 		Text: RenderSchedule(schedule),
 		Options: &telebot.SendOptions{
@@ -81,23 +81,23 @@ func (p *TelegramClinicScheduleTextPresenter) RenderSchedule(schedule entity.Sch
 	}, nil
 }
 
-type TelegramClinicScheduleQueryPresenter struct {
-	telegramClinicSchedulePresenter
+type TelegramScheduleQueryPresenter struct {
+	telegramSchedulePresenter
 }
 
-func NewTelegramClinicScheduleQueryPresenter(
+func NewTelegramScheduleQueryPresenter(
 	calendarWebAppUrl adapters.CalendarWebAppUrl,
 	calendarWebHandlerUrl adapters.CalendarWebHandlerUrl,
-) *TelegramClinicScheduleQueryPresenter {
-	return &TelegramClinicScheduleQueryPresenter{
-		telegramClinicSchedulePresenter: newTelegramClinicSchedulePresenter(
+) *TelegramScheduleQueryPresenter {
+	return &TelegramScheduleQueryPresenter{
+		telegramSchedulePresenter: newTelegramSchedulePresenter(
 			calendarWebAppUrl,
 			calendarWebHandlerUrl,
 		),
 	}
 }
 
-func (p *TelegramClinicScheduleQueryPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramQueryResponse, error) {
+func (p *TelegramScheduleQueryPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramQueryResponse, error) {
 	return adapters.TelegramQueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{

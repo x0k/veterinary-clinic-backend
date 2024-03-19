@@ -10,19 +10,19 @@ import (
 
 var ErrFailedToCreateRecord = errors.New("failed to create record")
 
-type NotionClinicServicesRepo struct {
+type NotionServicesRepo struct {
 	servicesDatabaseId                notionapi.DatabaseID
 	recordsDatabaseId                 notionapi.DatabaseID
 	client                            *notionapi.Client
 	actualRecordsDatabaseQueryRequest *notionapi.DatabaseQueryRequest
 }
 
-func NewNotionClinicServices(
+func NewNotionServices(
 	client *notionapi.Client,
 	servicesDatabaseId notionapi.DatabaseID,
 	recordsDatabaseId notionapi.DatabaseID,
-) *NotionClinicServicesRepo {
-	return &NotionClinicServicesRepo{
+) *NotionServicesRepo {
+	return &NotionServicesRepo{
 		client:             client,
 		servicesDatabaseId: servicesDatabaseId,
 		recordsDatabaseId:  recordsDatabaseId,
@@ -38,13 +38,13 @@ func NewNotionClinicServices(
 					notionapi.PropertyFilter{
 						Property: RecordState,
 						Select: &notionapi.SelectFilterCondition{
-							Equals: ClinicRecordInWork,
+							Equals: RecordInWork,
 						},
 					},
 					notionapi.PropertyFilter{
 						Property: RecordState,
 						Select: &notionapi.SelectFilterCondition{
-							Equals: ClinicRecordAwaits,
+							Equals: RecordAwaits,
 						},
 					},
 				},
@@ -59,7 +59,7 @@ func NewNotionClinicServices(
 	}
 }
 
-func (s *NotionClinicServicesRepo) Services(ctx context.Context) ([]entity.Service, error) {
+func (s *NotionServicesRepo) Services(ctx context.Context) ([]entity.Service, error) {
 	r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (s *NotionClinicServicesRepo) Services(ctx context.Context) ([]entity.Servi
 	return services, nil
 }
 
-func (s *NotionClinicServicesRepo) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
+func (s *NotionServicesRepo) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
 	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, s.actualRecordsDatabaseQueryRequest)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (s *NotionClinicServicesRepo) FetchActualRecords(ctx context.Context, curre
 	return records, nil
 }
 
-func (s *NotionClinicServicesRepo) CreateRecord(
+func (s *NotionServicesRepo) CreateRecord(
 	ctx context.Context,
 	userId entity.UserId,
 	serviceId entity.ServiceId,
@@ -131,7 +131,7 @@ func (s *NotionClinicServicesRepo) CreateRecord(
 			RecordState: notionapi.SelectProperty{
 				Type: notionapi.PropertyTypeSelect,
 				Select: notionapi.Option{
-					Name: ClinicRecordAwaits,
+					Name: RecordAwaits,
 				},
 			},
 			RecordUserId: notionapi.RichTextProperty{
@@ -152,7 +152,7 @@ func (s *NotionClinicServicesRepo) CreateRecord(
 	return entity.Record{}, ErrFailedToCreateRecord
 }
 
-func (s *NotionClinicServicesRepo) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
+func (s *NotionServicesRepo) RemoveRecord(ctx context.Context, recordId entity.RecordId) error {
 	_, err := s.client.Page.Update(ctx, notionapi.PageID(recordId), &notionapi.PageUpdateRequest{
 		Archived: true,
 	})

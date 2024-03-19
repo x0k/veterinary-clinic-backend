@@ -1,4 +1,4 @@
-package clinic_make_appointment
+package make_appointment
 
 import (
 	"context"

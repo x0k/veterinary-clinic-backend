@@ -16,10 +16,10 @@ type MakeAppointmentDatePickerHandlerUrl string
 
 const MakeAppointmentDatePickerHandlerPath = "/make-appointment-date"
 
-const ClinicMakeAppointmentService = "cl-mk-app-srv"
+const MakeAppointmentService = "mk-app-srv"
 
-const ClinicMakeAppointmentServiceCallback = "\f" + ClinicMakeAppointmentService
+const MakeAppointmentServiceCallback = "\f" + MakeAppointmentService
 
-const ClinicMakeAppointmentDate = "cl-mk-app-dt"
+const MakeAppointmentDate = "mk-app-dt"
 
-const ClinicMakeAppointmentDateCallback = "\f" + ClinicMakeAppointmentDate
+const MakeAppointmentDateCallback = "\f" + MakeAppointmentDate

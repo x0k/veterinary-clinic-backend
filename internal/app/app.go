@@ -13,7 +13,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/controller"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
-	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter/telegram_clinic_make_appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter/telegram_make_appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
 	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
@@ -23,7 +23,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
-	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase/make_appointment"
 	"gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
 )
@@ -58,7 +58,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	openingHoursRepo := repo.NewStaticOpeningHoursRepo()
 	busyPeriodsRepo := repo.NewBusyPeriods(log, notionClient, cfg.Notion.RecordsDatabaseId)
 	workBreaksRepo := repo.NewStaticWorkBreaks()
-	clinicServicesRepo := repo.NewNotionClinicServices(
+	servicesRepo := repo.NewNotionServices(
 		notionClient,
 		cfg.Notion.ServicesDatabaseId,
 		cfg.Notion.RecordsDatabaseId,
@@ -67,11 +67,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
 
 	seed := uint64(time.Now().UnixNano())
-	clinicServiceIdContainer := infra.NewMemoryExpirableStateContainer[entity.ServiceId](
+	serviceIdContainer := infra.NewMemoryExpirableStateContainer[entity.ServiceId](
 		seed,
 		10*time.Minute,
 	)
-	clinicDatePickerStateContainer := infra.NewMemoryExpirableStateContainer[telegram_clinic_make_appointment.TelegramDatePickerState](
+	datePickerStateContainer := infra.NewMemoryExpirableStateContainer[adapters.TelegramDatePickerState](
 		seed,
 		10*time.Minute,
 	)
@@ -88,8 +88,8 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	b.Append(
 		productionCalendarRepo,
-		clinicServiceIdContainer,
-		clinicDatePickerStateContainer,
+		serviceIdContainer,
+		datePickerStateContainer,
 		infra.NewHttpService(
 			log,
 			&http.Server{
@@ -105,25 +105,25 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 							cfg.Telegram.Token,
 							24*time.Hour,
 						),
-						usecase.NewClinicScheduleUseCase(
+						usecase.NewScheduleUseCase(
 							productionCalendarRepo,
 							openingHoursRepo,
 							busyPeriodsRepo,
 							workBreaksRepo,
-							presenter.NewTelegramClinicScheduleQueryPresenter(
+							presenter.NewTelegramScheduleQueryPresenter(
 								cfg.Telegram.CalendarWebAppUrl,
 								calendarWebHandlerUrl,
 							),
 						),
-						clinic_make_appointment.NewDatePickerUseCase(
+						make_appointment.NewDatePickerUseCase(
 							productionCalendarRepo,
 							openingHoursRepo,
 							busyPeriodsRepo,
 							workBreaksRepo,
-							telegram_clinic_make_appointment.NewTelegramDatePickerQueryPresenter(
+							telegram_make_appointment.NewTelegramDatePickerQueryPresenter(
 								cfg.Telegram.CalendarWebAppUrl,
 								makeAppointmentDatePickerHandlerUrl,
-								clinicDatePickerStateContainer,
+								datePickerStateContainer,
 							),
 						),
 					),
@@ -140,42 +140,42 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 				if err := controller.UseTelegramBotRouter(
 					ctx,
 					bot,
-					usecase.NewClinicGreetUseCase(
-						presenter.NewTelegramClinicGreet(),
+					usecase.NewGreetUseCase(
+						presenter.NewTelegramGreet(),
 					),
-					usecase.NewClinicServicesUseCase(
-						clinicServicesRepo,
-						presenter.NewTelegramClinicServices(),
+					usecase.NewServicesUseCase(
+						servicesRepo,
+						presenter.NewTelegramServices(),
 					),
-					usecase.NewClinicScheduleUseCase(
+					usecase.NewScheduleUseCase(
 						productionCalendarRepo,
 						openingHoursRepo,
 						busyPeriodsRepo,
 						workBreaksRepo,
-						presenter.NewTelegramClinicScheduleTextPresenter(
+						presenter.NewTelegramScheduleTextPresenter(
 							cfg.Telegram.CalendarWebAppUrl,
 							calendarWebHandlerUrl,
 						),
 					),
-					clinic_make_appointment.NewServicePickerUseCase(
-						clinicServicesRepo,
-						telegram_clinic_make_appointment.NewTelegramServicePickerPresenter(
-							clinicServiceIdContainer,
+					make_appointment.NewServicePickerUseCase(
+						servicesRepo,
+						telegram_make_appointment.NewTelegramServicePickerPresenter(
+							serviceIdContainer,
 						),
 					),
-					clinicServiceIdContainer,
-					clinic_make_appointment.NewDatePickerUseCase(
+					serviceIdContainer,
+					make_appointment.NewDatePickerUseCase(
 						productionCalendarRepo,
 						openingHoursRepo,
 						busyPeriodsRepo,
 						workBreaksRepo,
-						telegram_clinic_make_appointment.NewTelegramDatePickerTextPresenter(
+						telegram_make_appointment.NewTelegramDatePickerTextPresenter(
 							cfg.Telegram.CalendarWebAppUrl,
 							makeAppointmentDatePickerHandlerUrl,
-							clinicDatePickerStateContainer,
+							datePickerStateContainer,
 						),
 					),
-					clinicDatePickerStateContainer,
+					datePickerStateContainer,
 				); err != nil {
 					return err
 				}

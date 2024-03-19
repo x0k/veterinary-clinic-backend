@@ -1,4 +1,4 @@
-package clinic_make_appointment
+package make_appointment
 
 import (
 	"context"
@@ -8,18 +8,18 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
-type clinicMakeAppointmentPresenter[R any] interface {
+type makeAppointmentPresenter[R any] interface {
 	RenderAppointmentInfo(appointment entity.Record) (R, error)
 }
 
 type MakeAppointmentUseCase[R any] struct {
-	recordsRepo usecase.ClinicRecordsCreator
-	presenter   clinicMakeAppointmentPresenter[R]
+	recordsRepo usecase.RecordsCreator
+	presenter   makeAppointmentPresenter[R]
 }
 
 func NewMakeAppointmentUseCase[R any](
-	recordsRepo usecase.ClinicRecordsCreator,
-	presenter clinicMakeAppointmentPresenter[R],
+	recordsRepo usecase.RecordsCreator,
+	presenter makeAppointmentPresenter[R],
 ) *MakeAppointmentUseCase[R] {
 	return &MakeAppointmentUseCase[R]{
 		recordsRepo: recordsRepo,

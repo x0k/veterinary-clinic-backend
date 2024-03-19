@@ -1,4 +1,4 @@
-package telegram_clinic_make_appointment
+package telegram_make_appointment
 
 import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
@@ -23,7 +23,7 @@ func (s *TelegramServicePickerPresenter) RenderServicesList(services []entity.Se
 	for _, service := range services {
 		buttons = append(buttons, []telebot.InlineButton{{
 			Text:   service.Title,
-			Unique: adapters.ClinicMakeAppointmentService,
+			Unique: adapters.MakeAppointmentService,
 			Data:   string(s.stateSaver.Save(service.Id)),
 		}})
 	}
