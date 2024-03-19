@@ -10,11 +10,11 @@ import (
 )
 
 type TelegramConfirmationPresenter struct {
-	stateSaver adapters.StateSaver[adapters.TelegramDatePickerState]
+	stateSaver adapters.ManualStateSaver[adapters.TelegramDatePickerState]
 }
 
 func NewTelegramConfirmationPresenter(
-	stateSaver adapters.StateSaver[adapters.TelegramDatePickerState],
+	stateSaver adapters.ManualStateSaver[adapters.TelegramDatePickerState],
 ) *TelegramConfirmationPresenter {
 	return &TelegramConfirmationPresenter{
 		stateSaver: stateSaver,
@@ -22,39 +22,25 @@ func NewTelegramConfirmationPresenter(
 }
 
 func (p *TelegramConfirmationPresenter) RenderConfirmation(
+	userId entity.UserId,
 	service entity.Service,
 	appointmentDateTime time.Time,
 ) (adapters.TelegramTextResponse, error) {
 	sb := strings.Builder{}
 	sb.WriteString("Подтвердите запись:\n\n")
-	sb.WriteString(adapters.EscapeTelegramMarkdownString(service.Title))
-	sb.WriteString("\n\n")
-	if service.Description != "" {
-		sb.WriteString(adapters.EscapeTelegramMarkdownString(service.Description))
-		sb.WriteString("\n\n")
-	}
-	sb.WriteString(adapters.EscapeTelegramMarkdownString(service.CostDescription))
-	sb.WriteString("\n\n")
-	sb.WriteString(adapters.EscapeTelegramMarkdownString(appointmentDateTime.Format("02.01.2006 15:04")))
-	sb.WriteString(" \\- ")
-	sb.WriteString(adapters.EscapeTelegramMarkdownString(
-		appointmentDateTime.Add(time.Duration(service.DurationInMinutes) * time.Minute).Format("15:04"),
-	))
-
+	WriteAppointment(&sb, service, appointmentDateTime)
+	p.stateSaver.SaveByKey(adapters.StateId(userId), adapters.TelegramDatePickerState{
+		ServiceId: service.Id,
+		Date:      appointmentDateTime,
+	})
 	return adapters.TelegramTextResponse{
 		Text: sb.String(),
 		Options: &telebot.SendOptions{
 			ParseMode: telebot.ModeMarkdownV2,
 			ReplyMarkup: &telebot.ReplyMarkup{
 				InlineKeyboard: [][]telebot.InlineButton{
-					{
-						*adapters.ConfirmMakeAppointmentBtn.With(string(p.stateSaver.Save(
-							adapters.TelegramDatePickerState{
-								ServiceId: service.Id,
-								Date:      appointmentDateTime,
-							},
-						))),
-					},
+					{*adapters.ConfirmMakeAppointmentBtn},
+					{*adapters.CancelConfirmationAppointmentBtn},
 				},
 			},
 		},

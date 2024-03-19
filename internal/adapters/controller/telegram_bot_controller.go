@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
@@ -32,6 +33,8 @@ func UseTelegramBotRouter(
 	datePickerStateLoader adapters.StateLoader[adapters.TelegramDatePickerState],
 	makeAppointmentTimePicker *make_appointment.TimeSlotPickerUseCase[adapters.TelegramTextResponse],
 	makeAppointmentConfirmation *make_appointment.AppointmentConfirmationUseCase[adapters.TelegramTextResponse],
+	makeAppointment *make_appointment.MakeAppointmentUseCase[adapters.TelegramTextResponse],
+	confirmationData adapters.StateLoader[adapters.TelegramDatePickerState],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := greet.GreetUser(ctx)
@@ -151,6 +154,7 @@ func UseTelegramBotRouter(
 		}
 		confirmation, err := makeAppointmentConfirmation.Confirmation(
 			ctx,
+			entity.UserId(strconv.FormatInt(c.Sender().ID, 10)),
 			state.ServiceId,
 			state.Date,
 		)
@@ -161,14 +165,28 @@ func UseTelegramBotRouter(
 	})
 
 	bot.Handle(adapters.ConfirmMakeAppointmentBtn, func(c telebot.Context) error {
-		state, ok := datePickerStateLoader.Load(
-			adapters.StateId(c.Callback().Data),
+		userId := strconv.FormatInt(c.Sender().ID, 10)
+		state, ok := confirmationData.Load(
+			adapters.StateId(userId),
 		)
 		if !ok {
 			return ErrUnknownDatePickerState
 		}
-		fmt.Println("confirming appointment", state)
-		return nil
+		res, err := makeAppointment.Make(
+			ctx,
+			entity.User{
+				Id:          entity.UserId(userId),
+				Name:        fmt.Sprintf("%s %s", c.Sender().FirstName, c.Sender().LastName),
+				PhoneNumber: "",
+				Email:       fmt.Sprintf("@%s", c.Sender().Username),
+			},
+			state.ServiceId,
+			state.Date,
+		)
+		if err != nil {
+			return err
+		}
+		return c.Edit(res.Text, res.Options)
 	})
 
 	return bot.SetCommands([]telebot.Command{

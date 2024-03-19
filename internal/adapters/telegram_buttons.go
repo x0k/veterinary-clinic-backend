@@ -43,7 +43,15 @@ var (
 		Unique: "slc-mk-app-dt",
 	}
 	ConfirmMakeAppointmentBtn = &telebot.InlineButton{
-		Text:   "Подтвердить",
+		Text:   "Подтвердить запись",
 		Unique: "cnf-mk-app",
+	}
+	CancelConfirmationAppointmentBtn = &telebot.InlineButton{
+		Text:   "Назад",
+		Unique: "cncl-mk-app",
+	}
+	CancelAppointmentBtn = &telebot.InlineButton{
+		Text:   "Отменить запись",
+		Unique: "cncl-app",
 	}
 )

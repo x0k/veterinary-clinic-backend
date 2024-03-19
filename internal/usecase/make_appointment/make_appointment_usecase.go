@@ -9,37 +9,45 @@ import (
 )
 
 type makeAppointmentPresenter[R any] interface {
-	RenderAppointmentInfo(appointment entity.Record) (R, error)
+	RenderInfo(appointment entity.Record, service entity.Service) (R, error)
 }
 
 type MakeAppointmentUseCase[R any] struct {
-	recordsRepo usecase.RecordsCreator
-	presenter   makeAppointmentPresenter[R]
+	recordsRepo  usecase.RecordsCreator
+	servicesRepo usecase.ServiceLoader
+	presenter    makeAppointmentPresenter[R]
 }
 
 func NewMakeAppointmentUseCase[R any](
 	recordsRepo usecase.RecordsCreator,
+	servicesRepo usecase.ServiceLoader,
 	presenter makeAppointmentPresenter[R],
 ) *MakeAppointmentUseCase[R] {
 	return &MakeAppointmentUseCase[R]{
-		recordsRepo: recordsRepo,
+		recordsRepo:  recordsRepo,
+		servicesRepo: servicesRepo,
+		presenter:    presenter,
 	}
 }
 
-func (u *MakeAppointmentUseCase[R]) MakeAppointment(
+func (u *MakeAppointmentUseCase[R]) Make(
 	ctx context.Context,
 	user entity.User,
 	serviceId entity.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
+	service, err := u.servicesRepo.Service(ctx, serviceId)
+	if err != nil {
+		return *new(R), err
+	}
 	record, err := u.recordsRepo.Create(
 		ctx,
 		user,
-		serviceId,
+		service,
 		appointmentDateTime,
 	)
 	if err != nil {
 		return *new(R), err
 	}
-	return u.presenter.RenderAppointmentInfo(record)
+	return u.presenter.RenderInfo(record, service)
 }

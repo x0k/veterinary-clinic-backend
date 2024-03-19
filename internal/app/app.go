@@ -63,6 +63,10 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		cfg.Notion.ServicesDatabaseId,
 		cfg.Notion.RecordsDatabaseId,
 	)
+	recordsRepo := repo.NewNotionRecords(
+		notionClient,
+		cfg.Notion.RecordsDatabaseId,
+	)
 
 	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
 
@@ -72,6 +76,10 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		10*time.Minute,
 	)
 	datePickerStateContainer := infra.NewMemoryExpirableStateContainer[adapters.TelegramDatePickerState](
+		seed,
+		10*time.Minute,
+	)
+	confirmationDataContainer := infra.NewMemoryExpirableStateContainer[adapters.TelegramDatePickerState](
 		seed,
 		10*time.Minute,
 	)
@@ -90,6 +98,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		productionCalendarRepo,
 		serviceIdContainer,
 		datePickerStateContainer,
+		confirmationDataContainer,
 		infra.NewHttpService(
 			log,
 			&http.Server{
@@ -190,9 +199,15 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					make_appointment.NewAppointmentConfirmationUseCase(
 						servicesRepo,
 						telegram_make_appointment.NewTelegramConfirmationPresenter(
-							datePickerStateContainer,
+							confirmationDataContainer,
 						),
 					),
+					make_appointment.NewMakeAppointmentUseCase(
+						recordsRepo,
+						servicesRepo,
+						telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
+					),
+					confirmationDataContainer,
 				); err != nil {
 					return err
 				}

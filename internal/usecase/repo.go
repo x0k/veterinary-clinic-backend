@@ -19,7 +19,7 @@ type RecordsCreator interface {
 	Create(
 		ctx context.Context,
 		user entity.User,
-		serviceId entity.ServiceId,
+		service entity.Service,
 		dateTime time.Time,
 	) (entity.Record, error)
 }

@@ -64,3 +64,10 @@ func (c *MemoryExpirableStateContainer[S]) Save(value S) adapters.StateId {
 	c.values[key] = value
 	return key
 }
+
+func (c *MemoryExpirableStateContainer[S]) SaveByKey(key adapters.StateId, value S) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.keys.Push(key)
+	c.values[key] = value
+}
