@@ -6,10 +6,12 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters/controller"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter/telegram_clinic_make_appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/repo"
@@ -18,13 +20,12 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/profiler_http_server"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_bot"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/telegram_http_server"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase/clinic_make_appointment"
+	"gopkg.in/telebot.v3"
+	"gopkg.in/telebot.v3/middleware"
 )
 
 func Run(cfg *config.Config) {
@@ -75,87 +76,133 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		10*time.Minute,
 	)
 
+	bot, err := telebot.NewBot(telebot.Settings{
+		Token: string(cfg.Telegram.Token),
+		Poller: &telebot.LongPoller{
+			Timeout: cfg.Telegram.PollerTimeout,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
 	b.Append(
 		productionCalendarRepo,
 		clinicServiceIdContainer,
 		clinicDatePickerStateContainer,
-		telegram_http_server.New(
+		infra.NewHttpService(
 			log,
-			query,
-			cfg.Telegram.WebHandlerAddress,
-			calendarWebAppOrigin,
-			usecase.NewClinicScheduleUseCase(
-				productionCalendarRepo,
-				openingHoursRepo,
-				busyPeriodsRepo,
-				workBreaksRepo,
-				presenter.NewTelegramClinicScheduleQueryPresenter(
-					cfg.Telegram.CalendarWebAppUrl,
-					calendarWebHandlerUrl,
+			&http.Server{
+				Addr: cfg.Telegram.WebHandlerAddress,
+				Handler: infra.Logging(
+					log,
+					controller.UseHttpTelegramRouter(
+						http.NewServeMux(),
+						log,
+						query,
+						calendarWebAppOrigin,
+						infra.NewTelegramInitData(
+							cfg.Telegram.Token,
+							24*time.Hour,
+						),
+						usecase.NewClinicScheduleUseCase(
+							productionCalendarRepo,
+							openingHoursRepo,
+							busyPeriodsRepo,
+							workBreaksRepo,
+							presenter.NewTelegramClinicScheduleQueryPresenter(
+								cfg.Telegram.CalendarWebAppUrl,
+								calendarWebHandlerUrl,
+							),
+						),
+						clinic_make_appointment.NewDatePickerUseCase(
+							productionCalendarRepo,
+							openingHoursRepo,
+							busyPeriodsRepo,
+							workBreaksRepo,
+							telegram_clinic_make_appointment.NewTelegramDatePickerQueryPresenter(
+								cfg.Telegram.CalendarWebAppUrl,
+								makeAppointmentDatePickerHandlerUrl,
+								clinicDatePickerStateContainer,
+							),
+						),
+					),
 				),
-			),
-			infra.NewTelegramInitData(
-				cfg.Telegram.Token,
-				24*time.Hour,
-			),
-			clinic_make_appointment.NewDatePickerUseCase(
-				productionCalendarRepo,
-				openingHoursRepo,
-				busyPeriodsRepo,
-				workBreaksRepo,
-				telegram_clinic_make_appointment.NewTelegramDatePickerQueryPresenter(
-					cfg.Telegram.CalendarWebAppUrl,
-					makeAppointmentDatePickerHandlerUrl,
-					clinicDatePickerStateContainer,
-				),
-			),
+			},
 		),
-		telegram_bot.New(
-			log,
-			cfg.Telegram.Token,
-			cfg.Telegram.PollerTimeout,
-			query,
-			usecase.NewClinicGreetUseCase(
-				presenter.NewTelegramClinicGreet(),
-			),
-			usecase.NewClinicServicesUseCase(
-				clinicServicesRepo,
-				presenter.NewTelegramClinicServices(),
-			),
-			usecase.NewClinicScheduleUseCase(
-				productionCalendarRepo,
-				openingHoursRepo,
-				busyPeriodsRepo,
-				workBreaksRepo,
-				presenter.NewTelegramClinicScheduleTextPresenter(
-					cfg.Telegram.CalendarWebAppUrl,
-					calendarWebHandlerUrl,
-				),
-			),
-			clinic_make_appointment.NewServicePickerUseCase(
-				clinicServicesRepo,
-				telegram_clinic_make_appointment.NewTelegramServicePickerPresenter(
+		infra.NewTelegramBot(
+			bot,
+			func(ctx context.Context, bot *telebot.Bot) error {
+				bot.Use(
+					middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelDebug)),
+					middleware.AutoRespond(),
+				)
+				if err := controller.UseTelegramBotRouter(
+					ctx,
+					bot,
+					usecase.NewClinicGreetUseCase(
+						presenter.NewTelegramClinicGreet(),
+					),
+					usecase.NewClinicServicesUseCase(
+						clinicServicesRepo,
+						presenter.NewTelegramClinicServices(),
+					),
+					usecase.NewClinicScheduleUseCase(
+						productionCalendarRepo,
+						openingHoursRepo,
+						busyPeriodsRepo,
+						workBreaksRepo,
+						presenter.NewTelegramClinicScheduleTextPresenter(
+							cfg.Telegram.CalendarWebAppUrl,
+							calendarWebHandlerUrl,
+						),
+					),
+					clinic_make_appointment.NewServicePickerUseCase(
+						clinicServicesRepo,
+						telegram_clinic_make_appointment.NewTelegramServicePickerPresenter(
+							clinicServiceIdContainer,
+						),
+					),
 					clinicServiceIdContainer,
-				),
-			),
-			clinicServiceIdContainer,
-			clinic_make_appointment.NewDatePickerUseCase(
-				productionCalendarRepo,
-				openingHoursRepo,
-				busyPeriodsRepo,
-				workBreaksRepo,
-				telegram_clinic_make_appointment.NewTelegramDatePickerTextPresenter(
-					cfg.Telegram.CalendarWebAppUrl,
-					makeAppointmentDatePickerHandlerUrl,
+					clinic_make_appointment.NewDatePickerUseCase(
+						productionCalendarRepo,
+						openingHoursRepo,
+						busyPeriodsRepo,
+						workBreaksRepo,
+						telegram_clinic_make_appointment.NewTelegramDatePickerTextPresenter(
+							cfg.Telegram.CalendarWebAppUrl,
+							makeAppointmentDatePickerHandlerUrl,
+							clinicDatePickerStateContainer,
+						),
+					),
 					clinicDatePickerStateContainer,
-				),
-			),
-			clinicDatePickerStateContainer,
+				); err != nil {
+					return err
+				}
+				wg := sync.WaitGroup{}
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					controller.StartTelegramBotQueryHandler(ctx, log, bot, query)
+				}()
+				context.AfterFunc(ctx, func() {
+					bot.Stop()
+				})
+				bot.Start()
+				wg.Wait()
+				return nil
+			},
 		),
 	)
 
 	if cfg.Profiler.Enabled {
-		b.Append(profiler_http_server.New(log, &cfg.Profiler))
+		b.Append(infra.NewHttpService(
+			log,
+			&http.Server{
+				Addr:    cfg.Profiler.Address,
+				Handler: controller.UseHttpProfilerRouter(http.NewServeMux()),
+			},
+		))
 	}
 
 	b.Start(ctx)

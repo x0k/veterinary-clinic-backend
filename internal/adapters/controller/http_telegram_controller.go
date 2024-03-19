@@ -30,7 +30,7 @@ func UseHttpTelegramRouter(
 	telegramInitDataParser TelegramInitDataParser,
 	clinicSchedule *usecase.ClinicScheduleUseCase[adapters.TelegramQueryResponse],
 	makeAppointmentDatePicker *clinic_make_appointment.DatePickerUseCase[adapters.TelegramQueryResponse],
-) {
+) *http.ServeMux {
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{
 		MaxBytes: 1 * 1024 * 1024,
 	}
@@ -144,4 +144,6 @@ func UseHttpTelegramRouter(
 		}
 		w.WriteHeader(http.StatusOK)
 	})
+
+	return mux
 }
