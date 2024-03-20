@@ -15,14 +15,14 @@ func StartTelegramBotNotificationHandler(
 	ctx context.Context,
 	log *logger.Logger,
 	bot *telebot.Bot,
-	notifications <-chan entity.NotificationMessage[adapters.TelegramTextResponse],
+	notification <-chan entity.NotificationMessage[adapters.TelegramTextResponse],
 ) {
 	l := log.With(slog.String("component", "adapters.controller.StartTelegramBotNotificationHandler"))
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case msg := <-notifications:
+		case msg := <-notification:
 			tgId, err := entity.UserIdToTelegramUserId(msg.UserId)
 			if err != nil {
 				l.Error(ctx, "failed to convert user id to telegram user id", sl.Err(err))

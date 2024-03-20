@@ -78,6 +78,14 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		10*time.Minute,
 	)
 
+	notification := make(chan entity.NotificationMessage[adapters.TelegramTextResponse])
+	appointmentChangeDetector := usecase.NewAppointmentChangeDetectorUseCase(
+		entity.TelegramUserIdToUserId(cfg.Telegram.AdminUserId),
+		recordsRepo,
+		notification,
+		presenter.NewTelegramChangePresenter(),
+	)
+
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token: string(cfg.Telegram.Token),
 		Poller: &telebot.LongPoller{
@@ -217,6 +225,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			controller.StartTelegramBotQueryHandler(ctx, log, bot, query)
 			return nil
 		}),
+		infra.Starter(func(ctx context.Context) error {
+			controller.StartTelegramBotNotificationHandler(ctx, log, bot, notification)
+			return nil
+		}),
+		controller.NewCron(log, time.Minute, appointmentChangeDetector.DetectChanges),
 	)
 
 	if cfg.Profiler.Enabled {

@@ -8,6 +8,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
 const (
@@ -54,6 +55,7 @@ type TelegramConfig struct {
 	WebHandlerAddress string                     `yaml:"web_handler_address" env:"TELEGRAM_WEB_HANDLER_ADDRESS" env-required:"true"`
 	WebHandlerOrigin  string                     `yaml:"web_handler_origin" env:"TELEGRAM_WEB_HANDLER_ORIGIN" env-required:"true"`
 	CalendarWebAppUrl adapters.CalendarWebAppUrl `yaml:"calendar_web_app_url" env:"TELEGRAM_CALENDAR_WEB_APP_URL" env-required:"true"`
+	AdminUserId       entity.TelegramUserId      `yaml:"admin_user_id" env:"TELEGRAM_ADMIN_USER_ID" env-required:"true"`
 }
 
 type ProductionCalendarConfig struct {
