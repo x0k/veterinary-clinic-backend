@@ -34,6 +34,7 @@ func UseTelegramBotRouter(
 	makeAppointmentTimePicker *make_appointment.TimeSlotPickerUseCase[adapters.TelegramTextResponse],
 	makeAppointmentConfirmation *make_appointment.AppointmentConfirmationUseCase[adapters.TelegramTextResponse],
 	makeAppointment *make_appointment.MakeAppointmentUseCase[adapters.TelegramTextResponse],
+	cancelAppointment *usecase.CancelAppointmentUseCase[adapters.TelegramCallbackResponse],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := greet.GreetUser(ctx)
@@ -199,6 +200,18 @@ func UseTelegramBotRouter(
 	})
 
 	bot.Handle(adapters.CancelConfirmationAppointmentBtn, makeAppointmentTimePickerHandler)
+
+	bot.Handle(adapters.CancelAppointmentBtn, func(c telebot.Context) error {
+		recordId := entity.RecordId(c.Callback().Data)
+		res, err := cancelAppointment.Cancel(ctx, recordId)
+		if err != nil {
+			return err
+		}
+		if err := c.Respond(res.Response); err != nil {
+			return err
+		}
+		return c.Delete()
+	})
 
 	return bot.SetCommands([]telebot.Command{
 		{

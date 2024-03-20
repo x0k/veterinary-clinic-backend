@@ -91,3 +91,11 @@ func (s *NotionRecordsRepo) Create(
 	}
 	return entity.Record{}, ErrFailedToCreateRecord
 }
+
+func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId) error {
+	_, err := s.client.Page.Update(ctx, notionapi.PageID(recordId), &notionapi.PageUpdateRequest{
+		Properties: notionapi.Properties{},
+		Archived:   true,
+	})
+	return err
+}

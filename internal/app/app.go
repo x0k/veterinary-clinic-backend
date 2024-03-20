@@ -202,6 +202,10 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 						servicesRepo,
 						telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
 					),
+					usecase.NewCancelAppointmentUseCase(
+						recordsRepo,
+						presenter.NewTelegramCancelAppointmentPresenter(),
+					),
 				); err != nil {
 					return err
 				}

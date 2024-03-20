@@ -28,6 +28,10 @@ type RecordsChecker interface {
 	Exists(ctx context.Context, userId entity.UserId) (bool, error)
 }
 
+type RecordsRemover interface {
+	Remove(ctx context.Context, recordId entity.RecordId) error
+}
+
 type ProductionCalendarLoader interface {
 	ProductionCalendar(ctx context.Context) (entity.ProductionCalendar, error)
 }
