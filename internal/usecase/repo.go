@@ -31,6 +31,10 @@ type RecordByUserLoader interface {
 	RecordByUserId(ctx context.Context, userId entity.UserId) (entity.Record, error)
 }
 
+type ActualRecordsLoader interface {
+	LoadActualRecords(ctx context.Context, time time.Time) ([]entity.Record, error)
+}
+
 type RecordsRemover interface {
 	Remove(ctx context.Context, recordId entity.RecordId) error
 }

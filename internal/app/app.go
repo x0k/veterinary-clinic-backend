@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/jomei/notionapi"
@@ -133,97 +132,91 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 				),
 			},
 		),
-		infra.NewTelegramBot(
-			bot,
-			func(ctx context.Context, bot *telebot.Bot) error {
-				bot.Use(
-					middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelDebug)),
-					middleware.AutoRespond(),
-				)
-				if err := controller.UseTelegramBotRouter(
-					ctx,
-					bot,
-					usecase.NewGreetUseCase(
-						presenter.NewTelegramGreet(),
+		infra.Starter(func(ctx context.Context) error {
+			bot.Use(
+				middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelDebug)),
+				middleware.AutoRespond(),
+			)
+			if err := controller.UseTelegramBotRouter(
+				ctx,
+				bot,
+				usecase.NewGreetUseCase(
+					presenter.NewTelegramGreet(),
+				),
+				usecase.NewServicesUseCase(
+					servicesRepo,
+					presenter.NewTelegramServices(),
+				),
+				usecase.NewScheduleUseCase(
+					productionCalendarRepo,
+					openingHoursRepo,
+					busyPeriodsRepo,
+					workBreaksRepo,
+					presenter.NewTelegramScheduleTextPresenter(
+						cfg.Telegram.CalendarWebAppUrl,
+						calendarWebHandlerUrl,
 					),
-					usecase.NewServicesUseCase(
-						servicesRepo,
-						presenter.NewTelegramServices(),
+				),
+				make_appointment.NewServicePickerUseCase(
+					servicesRepo,
+					recordsRepo,
+					telegram_make_appointment.NewTelegramServicePickerPresenter(
+						serviceIdContainer,
 					),
-					usecase.NewScheduleUseCase(
-						productionCalendarRepo,
-						openingHoursRepo,
-						busyPeriodsRepo,
-						workBreaksRepo,
-						presenter.NewTelegramScheduleTextPresenter(
-							cfg.Telegram.CalendarWebAppUrl,
-							calendarWebHandlerUrl,
-						),
+					telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
+				),
+				serviceIdContainer,
+				make_appointment.NewDatePickerUseCase(
+					productionCalendarRepo,
+					openingHoursRepo,
+					busyPeriodsRepo,
+					workBreaksRepo,
+					telegram_make_appointment.NewTelegramDatePickerTextPresenter(
+						cfg.Telegram.CalendarWebAppUrl,
+						makeAppointmentDatePickerHandlerUrl,
+						datePickerStateContainer,
 					),
-					make_appointment.NewServicePickerUseCase(
-						servicesRepo,
-						recordsRepo,
-						telegram_make_appointment.NewTelegramServicePickerPresenter(
-							serviceIdContainer,
-						),
-						telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
+				),
+				datePickerStateContainer,
+				make_appointment.NewTimeSlotPickerUseCase(
+					entity.SampleRateInMinutes(30),
+					productionCalendarRepo,
+					openingHoursRepo,
+					busyPeriodsRepo,
+					workBreaksRepo,
+					servicesRepo,
+					telegram_make_appointment.NewTelegramTimeSlotsPickerPresenter(
+						datePickerStateContainer,
 					),
-					serviceIdContainer,
-					make_appointment.NewDatePickerUseCase(
-						productionCalendarRepo,
-						openingHoursRepo,
-						busyPeriodsRepo,
-						workBreaksRepo,
-						telegram_make_appointment.NewTelegramDatePickerTextPresenter(
-							cfg.Telegram.CalendarWebAppUrl,
-							makeAppointmentDatePickerHandlerUrl,
-							datePickerStateContainer,
-						),
+				),
+				make_appointment.NewAppointmentConfirmationUseCase(
+					servicesRepo,
+					telegram_make_appointment.NewTelegramConfirmationPresenter(
+						datePickerStateContainer,
 					),
-					datePickerStateContainer,
-					make_appointment.NewTimeSlotPickerUseCase(
-						entity.SampleRateInMinutes(30),
-						productionCalendarRepo,
-						openingHoursRepo,
-						busyPeriodsRepo,
-						workBreaksRepo,
-						servicesRepo,
-						telegram_make_appointment.NewTelegramTimeSlotsPickerPresenter(
-							datePickerStateContainer,
-						),
-					),
-					make_appointment.NewAppointmentConfirmationUseCase(
-						servicesRepo,
-						telegram_make_appointment.NewTelegramConfirmationPresenter(
-							datePickerStateContainer,
-						),
-					),
-					make_appointment.NewMakeAppointmentUseCase(
-						recordsRepo,
-						servicesRepo,
-						telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
-					),
-					usecase.NewCancelAppointmentUseCase(
-						recordsRepo,
-						presenter.NewTelegramCancelAppointmentPresenter(),
-					),
-				); err != nil {
-					return err
-				}
-				wg := sync.WaitGroup{}
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					controller.StartTelegramBotQueryHandler(ctx, log, bot, query)
-				}()
-				context.AfterFunc(ctx, func() {
-					bot.Stop()
-				})
-				bot.Start()
-				wg.Wait()
-				return nil
-			},
-		),
+				),
+				make_appointment.NewMakeAppointmentUseCase(
+					recordsRepo,
+					servicesRepo,
+					telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
+				),
+				usecase.NewCancelAppointmentUseCase(
+					recordsRepo,
+					presenter.NewTelegramCancelAppointmentPresenter(),
+				),
+			); err != nil {
+				return err
+			}
+			context.AfterFunc(ctx, func() {
+				bot.Stop()
+			})
+			bot.Start()
+			return nil
+		}),
+		infra.Starter(func(ctx context.Context) error {
+			controller.StartTelegramBotQueryHandler(ctx, log, bot, query)
+			return nil
+		}),
 	)
 
 	if cfg.Profiler.Enabled {

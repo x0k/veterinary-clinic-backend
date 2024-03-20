@@ -1,8 +1,13 @@
 package entity
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
+
+var ErrNotTelegramUser = errors.New("not a telegram user")
 
 type UserId string
 
@@ -34,4 +39,19 @@ func NewTelegramUser(
 		PhoneNumber: "",
 		Email:       fmt.Sprintf("@%s", username),
 	}
+}
+
+func IsTelegramUserId(userId UserId) bool {
+	return strings.HasPrefix("tg-", string(userId))
+}
+
+func UserIdToTelegramUserId(userId UserId) (TelegramUserId, error) {
+	if !IsTelegramUserId(userId) {
+		return 0, ErrNotTelegramUser
+	}
+	id, err := strconv.ParseInt(string(userId)[3:], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return TelegramUserId(id), nil
 }
