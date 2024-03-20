@@ -20,7 +20,7 @@ var (
 		Unique: "schedule",
 	}
 	AppointmentBtn = &telebot.InlineButton{
-		Text:   "Записаться",
+		Text:   "Запись на прием",
 		Unique: "appointment",
 	}
 	BotMenu = &telebot.ReplyMarkup{

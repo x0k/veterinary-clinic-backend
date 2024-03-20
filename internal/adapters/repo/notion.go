@@ -59,6 +59,10 @@ func Date(properties notionapi.Properties, dateKey string) *notionapi.DateObject
 	return properties[dateKey].(*notionapi.DateProperty).Date
 }
 
+func Relations(properties notionapi.Properties, relationKey string) []notionapi.Relation {
+	return properties[relationKey].(*notionapi.RelationProperty).Relation
+}
+
 func Service(page notionapi.Page) entity.Service {
 	return entity.Service{
 		Id:                entity.ServiceId(page.ID),
@@ -107,7 +111,7 @@ func DateTimePeriodFromRecord(properties notionapi.Properties) *entity.DateTimeP
 	}
 }
 
-func ActualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Record {
+func ActualRecord(page notionapi.Page, currentUserId *entity.UserId, service entity.Service) *entity.Record {
 	dateTimePeriod := DateTimePeriodFromRecord(page.Properties)
 	if dateTimePeriod == nil {
 		return nil
@@ -117,6 +121,7 @@ func ActualRecord(page notionapi.Page, currentUserId *entity.UserId) *entity.Rec
 		UserId:         UserIdFromRecord(page.Properties, currentUserId),
 		Status:         ActualRecordStatus(page.Properties),
 		DateTimePeriod: *dateTimePeriod,
+		Service:        service,
 	}
 }
 

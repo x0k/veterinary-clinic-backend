@@ -2,26 +2,32 @@ package make_appointment
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
-type makeAppointmentPresenter[R any] interface {
-	RenderInfo(appointment entity.Record, service entity.Service) (R, error)
+type appointmentInfoPresenter[R any] interface {
+	RenderInfo(appointment entity.Record) (R, error)
+}
+
+type makeAppointmentRecordsRepo interface {
+	usecase.RecordsCreator
+	usecase.RecordByUserLoader
 }
 
 type MakeAppointmentUseCase[R any] struct {
-	recordsRepo  usecase.RecordsCreator
+	recordsRepo  makeAppointmentRecordsRepo
 	servicesRepo usecase.ServiceLoader
-	presenter    makeAppointmentPresenter[R]
+	presenter    appointmentInfoPresenter[R]
 }
 
 func NewMakeAppointmentUseCase[R any](
-	recordsRepo usecase.RecordsCreator,
+	recordsRepo makeAppointmentRecordsRepo,
 	servicesRepo usecase.ServiceLoader,
-	presenter makeAppointmentPresenter[R],
+	presenter appointmentInfoPresenter[R],
 ) *MakeAppointmentUseCase[R] {
 	return &MakeAppointmentUseCase[R]{
 		recordsRepo:  recordsRepo,
@@ -36,6 +42,12 @@ func (u *MakeAppointmentUseCase[R]) Make(
 	serviceId entity.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
+	if rec, err := u.recordsRepo.RecordByUserId(ctx, user.Id); !errors.Is(err, usecase.ErrNotFound) {
+		if err != nil {
+			return *new(R), err
+		}
+		return u.presenter.RenderInfo(rec)
+	}
 	service, err := u.servicesRepo.Service(ctx, serviceId)
 	if err != nil {
 		return *new(R), err
@@ -49,5 +61,5 @@ func (u *MakeAppointmentUseCase[R]) Make(
 	if err != nil {
 		return *new(R), err
 	}
-	return u.presenter.RenderInfo(record, service)
+	return u.presenter.RenderInfo(record)
 }

@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/jomei/notionapi"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 type NotionRecordsRepo struct {
@@ -86,7 +88,7 @@ func (s *NotionRecordsRepo) Create(
 	if res == nil {
 		return entity.Record{}, ErrFailedToCreateRecord
 	}
-	if rec := ActualRecord(*res, &user.Id); rec != nil {
+	if rec := ActualRecord(*res, &user.Id, service); rec != nil {
 		return *rec, nil
 	}
 	return entity.Record{}, ErrFailedToCreateRecord
@@ -98,4 +100,54 @@ func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId
 		Archived:   true,
 	})
 	return err
+}
+
+func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.UserId) (entity.Record, error) {
+	res, err := s.recordDbRespByUserId(ctx, userId)
+	if err != nil {
+		return entity.Record{}, err
+	}
+	if len(res.Results) == 0 {
+		return entity.Record{}, usecase.ErrNotFound
+	}
+	page := res.Results[0]
+	relations := Relations(page.Properties, RecordService)
+	if len(relations) == 0 {
+		return entity.Record{}, adapters.ErrInvalidRecord
+	}
+	service, err := s.client.Page.Get(ctx, notionapi.PageID(relations[0].ID))
+	if err != nil {
+		return entity.Record{}, err
+	}
+	if service == nil {
+		return entity.Record{}, usecase.ErrNotFound
+	}
+	return *ActualRecord(page, &userId, Service(*service)), nil
+}
+
+func (s *NotionRecordsRepo) recordDbRespByUserId(ctx context.Context, userId entity.UserId) (*notionapi.DatabaseQueryResponse, error) {
+	return s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: notionapi.AndCompoundFilter{
+			notionapi.OrCompoundFilter{
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordInWork,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordAwaits,
+					},
+				},
+			},
+			notionapi.PropertyFilter{
+				Property: RecordUserId,
+				RichText: &notionapi.TextFilterCondition{
+					Equals: string(userId),
+				},
+			},
+		},
+	})
 }

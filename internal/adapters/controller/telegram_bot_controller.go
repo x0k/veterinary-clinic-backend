@@ -3,9 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
@@ -78,7 +76,10 @@ func UseTelegramBotRouter(
 	})
 
 	makeAppointmentServicePickerHandler := func(c telebot.Context) error {
-		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(ctx)
+		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(
+			ctx,
+			entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID)),
+		)
 		if err != nil {
 			return err
 		}
@@ -128,7 +129,10 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.NextMakeAppointmentDateBtn, makeAppointmentNextDatePickerHandler)
 
 	bot.Handle(adapters.CancelMakeAppointmentDateBtn, func(c telebot.Context) error {
-		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(ctx)
+		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(
+			ctx,
+			entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID)),
+		)
 		if err != nil {
 			return err
 		}
@@ -184,12 +188,12 @@ func UseTelegramBotRouter(
 		}
 		res, err := makeAppointment.Make(
 			ctx,
-			entity.User{
-				Id:          entity.UserId(strconv.FormatInt(c.Sender().ID, 10)),
-				Name:        fmt.Sprintf("%s %s", c.Sender().FirstName, c.Sender().LastName),
-				PhoneNumber: "",
-				Email:       fmt.Sprintf("@%s", c.Sender().Username),
-			},
+			entity.NewTelegramUser(
+				entity.TelegramUserId(c.Sender().ID),
+				entity.TelegramUsername(c.Sender().Username),
+				entity.TelegramFirstName(c.Sender().FirstName),
+				entity.TelegramLastName(c.Sender().LastName),
+			),
 			state.ServiceId,
 			state.Date,
 		)
@@ -228,7 +232,7 @@ func UseTelegramBotRouter(
 		},
 		{
 			Text:        "/appointment",
-			Description: "Записаться на прием",
+			Description: "Запись на прием",
 		},
 	})
 }

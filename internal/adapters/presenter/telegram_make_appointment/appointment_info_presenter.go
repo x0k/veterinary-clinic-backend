@@ -17,11 +17,10 @@ func NewTelegramAppointmentInfoPresenter() *TelegramAppointmentInfoPresenter {
 
 func (p *TelegramAppointmentInfoPresenter) RenderInfo(
 	record entity.Record,
-	service entity.Service,
 ) (adapters.TelegramTextResponse, error) {
 	sb := strings.Builder{}
 	sb.WriteString("Ваша запись:\n\n")
-	WriteAppointment(&sb, service, entity.DateTimeToGoTime(record.DateTimePeriod.Start))
+	WriteAppointment(&sb, record.Service, entity.DateTimeToGoTime(record.DateTimePeriod.Start))
 	return adapters.TelegramTextResponse{
 		Text: sb.String(),
 		Options: &telebot.SendOptions{

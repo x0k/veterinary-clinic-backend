@@ -61,7 +61,6 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	servicesRepo := repo.NewNotionServices(
 		notionClient,
 		cfg.Notion.ServicesDatabaseId,
-		cfg.Notion.RecordsDatabaseId,
 	)
 	recordsRepo := repo.NewNotionRecords(
 		notionClient,
@@ -163,9 +162,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					),
 					make_appointment.NewServicePickerUseCase(
 						servicesRepo,
+						recordsRepo,
 						telegram_make_appointment.NewTelegramServicePickerPresenter(
 							serviceIdContainer,
 						),
+						telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
 					),
 					serviceIdContainer,
 					make_appointment.NewDatePickerUseCase(

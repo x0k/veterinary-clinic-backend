@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type ServicesLoader interface {
 	Services(ctx context.Context) ([]entity.Service, error)
@@ -24,8 +27,8 @@ type RecordsCreator interface {
 	) (entity.Record, error)
 }
 
-type RecordsChecker interface {
-	Exists(ctx context.Context, userId entity.UserId) (bool, error)
+type RecordByUserLoader interface {
+	RecordByUserId(ctx context.Context, userId entity.UserId) (entity.Record, error)
 }
 
 type RecordsRemover interface {

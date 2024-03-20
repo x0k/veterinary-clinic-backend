@@ -6,56 +6,23 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 var ErrFailedToCreateRecord = errors.New("failed to create record")
 
 type NotionServicesRepo struct {
-	servicesDatabaseId                notionapi.DatabaseID
-	recordsDatabaseId                 notionapi.DatabaseID
-	client                            *notionapi.Client
-	actualRecordsDatabaseQueryRequest *notionapi.DatabaseQueryRequest
+	servicesDatabaseId notionapi.DatabaseID
+	client             *notionapi.Client
 }
 
 func NewNotionServices(
 	client *notionapi.Client,
 	servicesDatabaseId notionapi.DatabaseID,
-	recordsDatabaseId notionapi.DatabaseID,
 ) *NotionServicesRepo {
 	return &NotionServicesRepo{
 		client:             client,
 		servicesDatabaseId: servicesDatabaseId,
-		recordsDatabaseId:  recordsDatabaseId,
-		actualRecordsDatabaseQueryRequest: &notionapi.DatabaseQueryRequest{
-			Filter: notionapi.AndCompoundFilter{
-				notionapi.PropertyFilter{
-					Property: RecordDateTimePeriod,
-					Date: &notionapi.DateFilterCondition{
-						IsNotEmpty: true,
-					},
-				},
-				notionapi.OrCompoundFilter{
-					notionapi.PropertyFilter{
-						Property: RecordState,
-						Select: &notionapi.SelectFilterCondition{
-							Equals: RecordInWork,
-						},
-					},
-					notionapi.PropertyFilter{
-						Property: RecordState,
-						Select: &notionapi.SelectFilterCondition{
-							Equals: RecordAwaits,
-						},
-					},
-				},
-			},
-			Sorts: []notionapi.SortObject{
-				{
-					Property:  RecordDateTimePeriod,
-					Direction: notionapi.SortOrderASC,
-				},
-			},
-		},
 	}
 }
 
@@ -77,21 +44,7 @@ func (s *NotionServicesRepo) Service(ctx context.Context, serviceId entity.Servi
 		return entity.Service{}, err
 	}
 	if r == nil {
-		return entity.Service{}, ErrNotFound
+		return entity.Service{}, usecase.ErrNotFound
 	}
 	return Service(*r), nil
-}
-
-func (s *NotionServicesRepo) FetchActualRecords(ctx context.Context, currentUserId *entity.UserId) ([]entity.Record, error) {
-	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, s.actualRecordsDatabaseQueryRequest)
-	if err != nil {
-		return nil, err
-	}
-	records := make([]entity.Record, 0, len(r.Results))
-	for _, result := range r.Results {
-		if rec := ActualRecord(result, currentUserId); rec != nil {
-			records = append(records, *rec)
-		}
-	}
-	return records, nil
 }

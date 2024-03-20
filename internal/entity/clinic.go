@@ -24,4 +24,5 @@ type Record struct {
 	Status         RecordStatus
 	DateTimePeriod DateTimePeriod
 	UserId         *UserId
+	Service        Service
 }
