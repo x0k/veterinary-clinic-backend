@@ -38,9 +38,17 @@ var (
 		Text:   "⬅",
 		Unique: "nx-mk-app-dt",
 	}
+	CancelMakeAppointmentDateBtn = &telebot.InlineButton{
+		Text:   "Назад",
+		Unique: "cncl-mk-app-dt",
+	}
 	SelectMakeAppointmentDateBtn = &telebot.InlineButton{
 		Text:   "Продолжить",
 		Unique: "slc-mk-app-dt",
+	}
+	CancelMakeAppointmentTimeBtn = &telebot.InlineButton{
+		Text:   "Назад",
+		Unique: "cncl-mk-app-tm",
 	}
 	ConfirmMakeAppointmentBtn = &telebot.InlineButton{
 		Text:   "Подтвердить запись",

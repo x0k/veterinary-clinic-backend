@@ -9,7 +9,7 @@ import (
 )
 
 type appointmentConfirmationPresenter[R any] interface {
-	RenderConfirmation(userId entity.UserId, service entity.Service, appointmentDateTime time.Time) (R, error)
+	RenderConfirmation(service entity.Service, appointmentDateTime time.Time) (R, error)
 }
 
 type AppointmentConfirmationUseCase[R any] struct {
@@ -29,7 +29,6 @@ func NewAppointmentConfirmationUseCase[R any](
 
 func (u *AppointmentConfirmationUseCase[R]) Confirmation(
 	ctx context.Context,
-	userId entity.UserId,
 	serviceId entity.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
@@ -37,5 +36,5 @@ func (u *AppointmentConfirmationUseCase[R]) Confirmation(
 	if err != nil {
 		return *new(R), err
 	}
-	return u.presenter.RenderConfirmation(userId, service, appointmentDateTime)
+	return u.presenter.RenderConfirmation(service, appointmentDateTime)
 }

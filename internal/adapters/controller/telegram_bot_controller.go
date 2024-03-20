@@ -34,7 +34,6 @@ func UseTelegramBotRouter(
 	makeAppointmentTimePicker *make_appointment.TimeSlotPickerUseCase[adapters.TelegramTextResponse],
 	makeAppointmentConfirmation *make_appointment.AppointmentConfirmationUseCase[adapters.TelegramTextResponse],
 	makeAppointment *make_appointment.MakeAppointmentUseCase[adapters.TelegramTextResponse],
-	confirmationData adapters.StateLoader[adapters.TelegramDatePickerState],
 ) error {
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := greet.GreetUser(ctx)
@@ -77,15 +76,15 @@ func UseTelegramBotRouter(
 		return c.Edit(res.Text, res.Options)
 	})
 
-	makeAppointmentHandler := func(c telebot.Context) error {
-		picker, err := makeAppointmentServicePicker.ServicesPicker(ctx)
+	makeAppointmentServicePickerHandler := func(c telebot.Context) error {
+		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(ctx)
 		if err != nil {
 			return err
 		}
-		return c.Send(picker.Text, picker.Options)
+		return c.Send(servicePicker.Text, servicePicker.Options)
 	}
-	bot.Handle("/appointment", makeAppointmentHandler)
-	bot.Handle(adapters.AppointmentBtn, makeAppointmentHandler)
+	bot.Handle("/appointment", makeAppointmentServicePickerHandler)
+	bot.Handle(adapters.AppointmentBtn, makeAppointmentServicePickerHandler)
 
 	bot.Handle(adapters.MakeAppointmentServiceCallback, func(c telebot.Context) error {
 		serviceId, ok := serviceIdLoader.Load(
@@ -107,14 +106,14 @@ func UseTelegramBotRouter(
 		return c.Edit(datePicker.Text, datePicker.Options)
 	})
 
-	bot.Handle(adapters.NextMakeAppointmentDateBtn, func(c telebot.Context) error {
+	makeAppointmentNextDatePickerHandler := func(c telebot.Context) error {
 		state, ok := datePickerStateLoader.Load(
 			adapters.StateId(c.Callback().Data),
 		)
 		if !ok {
 			return ErrUnknownDatePickerState
 		}
-		res, err := makeAppointmentDatePicker.DatePicker(
+		datePicker, err := makeAppointmentDatePicker.DatePicker(
 			ctx,
 			state.ServiceId,
 			time.Now(),
@@ -123,10 +122,19 @@ func UseTelegramBotRouter(
 		if err != nil {
 			return err
 		}
-		return c.Edit(res.Text, res.Options)
+		return c.Edit(datePicker.Text, datePicker.Options)
+	}
+	bot.Handle(adapters.NextMakeAppointmentDateBtn, makeAppointmentNextDatePickerHandler)
+
+	bot.Handle(adapters.CancelMakeAppointmentDateBtn, func(c telebot.Context) error {
+		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(ctx)
+		if err != nil {
+			return err
+		}
+		return c.Edit(servicePicker.Text, servicePicker.Options)
 	})
 
-	bot.Handle(adapters.SelectMakeAppointmentDateBtn, func(c telebot.Context) error {
+	makeAppointmentTimePickerHandler := func(c telebot.Context) error {
 		state, ok := datePickerStateLoader.Load(
 			adapters.StateId(c.Callback().Data),
 		)
@@ -143,7 +151,8 @@ func UseTelegramBotRouter(
 			return err
 		}
 		return c.Edit(timePicker.Text, timePicker.Options)
-	})
+	}
+	bot.Handle(adapters.SelectMakeAppointmentDateBtn, makeAppointmentTimePickerHandler)
 
 	bot.Handle(adapters.MakeAppointmentTimeCallback, func(c telebot.Context) error {
 		state, ok := datePickerStateLoader.Load(
@@ -154,7 +163,6 @@ func UseTelegramBotRouter(
 		}
 		confirmation, err := makeAppointmentConfirmation.Confirmation(
 			ctx,
-			entity.UserId(strconv.FormatInt(c.Sender().ID, 10)),
 			state.ServiceId,
 			state.Date,
 		)
@@ -164,10 +172,11 @@ func UseTelegramBotRouter(
 		return c.Edit(confirmation.Text, confirmation.Options)
 	})
 
+	bot.Handle(adapters.CancelMakeAppointmentTimeBtn, makeAppointmentNextDatePickerHandler)
+
 	bot.Handle(adapters.ConfirmMakeAppointmentBtn, func(c telebot.Context) error {
-		userId := strconv.FormatInt(c.Sender().ID, 10)
-		state, ok := confirmationData.Load(
-			adapters.StateId(userId),
+		state, ok := datePickerStateLoader.Load(
+			adapters.StateId(c.Callback().Data),
 		)
 		if !ok {
 			return ErrUnknownDatePickerState
@@ -175,7 +184,7 @@ func UseTelegramBotRouter(
 		res, err := makeAppointment.Make(
 			ctx,
 			entity.User{
-				Id:          entity.UserId(userId),
+				Id:          entity.UserId(strconv.FormatInt(c.Sender().ID, 10)),
 				Name:        fmt.Sprintf("%s %s", c.Sender().FirstName, c.Sender().LastName),
 				PhoneNumber: "",
 				Email:       fmt.Sprintf("@%s", c.Sender().Username),
@@ -188,6 +197,8 @@ func UseTelegramBotRouter(
 		}
 		return c.Edit(res.Text, res.Options)
 	})
+
+	bot.Handle(adapters.CancelConfirmationAppointmentBtn, makeAppointmentTimePickerHandler)
 
 	return bot.SetCommands([]telebot.Command{
 		{

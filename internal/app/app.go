@@ -79,10 +79,6 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		seed,
 		10*time.Minute,
 	)
-	confirmationDataContainer := infra.NewMemoryExpirableStateContainer[adapters.TelegramDatePickerState](
-		seed,
-		10*time.Minute,
-	)
 
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token: string(cfg.Telegram.Token),
@@ -98,7 +94,6 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		productionCalendarRepo,
 		serviceIdContainer,
 		datePickerStateContainer,
-		confirmationDataContainer,
 		infra.NewHttpService(
 			log,
 			&http.Server{
@@ -199,7 +194,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					make_appointment.NewAppointmentConfirmationUseCase(
 						servicesRepo,
 						telegram_make_appointment.NewTelegramConfirmationPresenter(
-							confirmationDataContainer,
+							datePickerStateContainer,
 						),
 					),
 					make_appointment.NewMakeAppointmentUseCase(
@@ -207,7 +202,6 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 						servicesRepo,
 						telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
 					),
-					confirmationDataContainer,
 				); err != nil {
 					return err
 				}

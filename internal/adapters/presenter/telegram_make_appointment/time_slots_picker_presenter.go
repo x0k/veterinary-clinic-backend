@@ -26,7 +26,7 @@ func (p *TimeSlotsPickerPresenter) RenderTimePicker(
 	appointmentDate time.Time,
 	slots entity.SampledFreeTimeSlots,
 ) (adapters.TelegramTextResponse, error) {
-	buttons := make([][]telebot.InlineButton, 0, len(slots))
+	buttons := make([][]telebot.InlineButton, 0, len(slots)+1)
 	for _, slot := range slots {
 		buttons = append(buttons, []telebot.InlineButton{{
 			Text:   fmt.Sprintf("%s - %s", slot.Start.String(), slot.End.String()),
@@ -46,6 +46,14 @@ func (p *TimeSlotsPickerPresenter) RenderTimePicker(
 			})),
 		}})
 	}
+	buttons = append(buttons, []telebot.InlineButton{
+		*adapters.CancelMakeAppointmentTimeBtn.With(string(
+			p.stateSaver.Save(adapters.TelegramDatePickerState{
+				ServiceId: serviceId,
+				Date:      appointmentDate,
+			}),
+		)),
+	})
 	return adapters.TelegramTextResponse{
 		Text: "Выберите время:",
 		Options: &telebot.SendOptions{

@@ -66,6 +66,7 @@ func (p *telegramDatePickerPresenter) buttons(serviceId entity.ServiceId, schedu
 	return [][]telebot.InlineButton{
 		buttons,
 		{
+			*adapters.CancelMakeAppointmentDateBtn,
 			*adapters.SelectMakeAppointmentDateBtn.With(string(
 				p.stateSaver.Save(adapters.TelegramDatePickerState{
 					ServiceId: serviceId,
