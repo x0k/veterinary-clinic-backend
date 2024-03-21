@@ -9,6 +9,7 @@ import (
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
@@ -22,6 +23,7 @@ type NotionRecordsRepo struct {
 	recordsDatabaseId  notionapi.DatabaseID
 	servicesDatabaseId notionapi.DatabaseID
 	client             *notionapi.Client
+	servicesCache      *containers.Expiable[[]entity.Service]
 }
 
 func NewNotionRecords(
@@ -35,7 +37,13 @@ func NewNotionRecords(
 		client:             client,
 		recordsDatabaseId:  recordsDatabaseId,
 		servicesDatabaseId: servicesDatabaseId,
+		servicesCache:      containers.NewExpiable[[]entity.Service](time.Hour),
 	}
+}
+
+func (s *NotionRecordsRepo) Start(ctx context.Context) error {
+	s.servicesCache.Start(ctx)
+	return nil
 }
 
 func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entity.BusyPeriods, error) {
@@ -92,15 +100,17 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 }
 
 func (s *NotionRecordsRepo) Services(ctx context.Context) ([]entity.Service, error) {
-	r, err := s.servicesPages(ctx)
-	if err != nil {
-		return nil, err
-	}
-	services := make([]entity.Service, 0, len(r.Results))
-	for _, result := range r.Results {
-		services = append(services, Service(result))
-	}
-	return services, nil
+	return s.servicesCache.Load(func() ([]entity.Service, error) {
+		r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
+		if err != nil {
+			return nil, err
+		}
+		services := make([]entity.Service, 0, len(r.Results))
+		for _, result := range r.Results {
+			services = append(services, Service(result))
+		}
+		return services, nil
+	})
 }
 
 func (s *NotionRecordsRepo) Service(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error) {
@@ -204,14 +214,11 @@ func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.Us
 	if len(relations) == 0 {
 		return entity.Record{}, adapters.ErrInvalidRecord
 	}
-	service, err := s.client.Page.Get(ctx, notionapi.PageID(relations[0].ID))
+	service, err := s.Service(ctx, entity.ServiceId((relations[0].ID)))
 	if err != nil {
 		return entity.Record{}, err
 	}
-	if service == nil {
-		return entity.Record{}, usecase.ErrNotFound
-	}
-	if rec := ActualRecord(page, &userId, Service(*service)); rec != nil {
+	if rec := ActualRecord(page, &userId, service); rec != nil {
 		return *rec, nil
 	}
 	return entity.Record{}, ErrFailedToCreateRecord
@@ -283,13 +290,12 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 	if len(res.Results) == 0 {
 		return nil, nil
 	}
-	services, err := s.servicesPages(ctx)
+	services, err := s.Services(ctx)
 	if err != nil {
 		return nil, err
 	}
-	servicesMap := make(map[entity.ServiceId]entity.Service, len(services.Results))
-	for _, service := range services.Results {
-		service := Service(service)
+	servicesMap := make(map[entity.ServiceId]entity.Service, len(services))
+	for _, service := range services {
 		servicesMap[service.Id] = service
 	}
 	records := make([]entity.Record, 0, len(res.Results))
@@ -313,8 +319,4 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 		records = append(records, rec)
 	}
 	return records, errors.Join(errs...)
-}
-
-func (s *NotionRecordsRepo) servicesPages(ctx context.Context) (*notionapi.DatabaseQueryResponse, error) {
-	return s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 }

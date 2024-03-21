@@ -95,6 +95,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	b.Append(
 		productionCalendarRepo,
+		recordsRepo,
 		serviceIdContainer,
 		datePickerStateContainer,
 		infra.NewHttpService(
