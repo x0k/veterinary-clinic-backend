@@ -47,9 +47,9 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	}
 	calendarWebAppOrigin := adapters.CalendarWebAppOrigin(fmt.Sprintf("%s://%s", calendarWebAppUrl.Scheme, calendarWebAppUrl.Host))
 
-	calendarWebHandlerUrl := adapters.CalendarWebHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.CalendarWebHandlerPath))
+	calendarWebHandlerUrl := adapters.CalendarWebHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerUrl, adapters.CalendarWebHandlerPath))
 
-	makeAppointmentDatePickerHandlerUrl := adapters.MakeAppointmentDatePickerHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerOrigin, adapters.MakeAppointmentDatePickerHandlerPath))
+	makeAppointmentDatePickerHandlerUrl := adapters.MakeAppointmentDatePickerHandlerUrl(fmt.Sprintf("%s%s", cfg.Telegram.WebHandlerUrl, adapters.MakeAppointmentDatePickerHandlerPath))
 
 	notionClient := notionapi.NewClient(cfg.Notion.Token)
 
