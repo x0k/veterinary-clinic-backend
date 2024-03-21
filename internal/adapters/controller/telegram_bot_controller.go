@@ -203,8 +203,8 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.CancelConfirmationAppointmentBtn, makeAppointmentTimePickerHandler)
 
 	bot.Handle(adapters.CancelAppointmentBtn, func(c telebot.Context) error {
-		recordId := entity.RecordId(c.Callback().Data)
-		res, err := cancelAppointment.Cancel(ctx, recordId)
+		userId := entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID))
+		res, err := cancelAppointment.Cancel(ctx, userId)
 		if err != nil {
 			return err
 		}

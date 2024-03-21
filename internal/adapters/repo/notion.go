@@ -125,6 +125,21 @@ func ActualRecord(page notionapi.Page, currentUserId *entity.UserId, service ent
 	}
 }
 
+func PrivateActualRecord(page notionapi.Page, service entity.Service) (entity.Record, error) {
+	dateTimePeriod := DateTimePeriodFromRecord(page.Properties)
+	if dateTimePeriod == nil {
+		return entity.Record{}, ErrFailedToCreateRecord
+	}
+	uid := entity.UserId(Text(page.Properties, RecordUserId))
+	return entity.Record{
+		Id:             entity.RecordId(page.ID),
+		UserId:         &uid,
+		Status:         ActualRecordStatus(page.Properties),
+		DateTimePeriod: *dateTimePeriod,
+		Service:        service,
+	}, nil
+}
+
 func RichText(value string) []notionapi.RichText {
 	return []notionapi.RichText{
 		{

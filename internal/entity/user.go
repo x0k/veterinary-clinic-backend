@@ -42,11 +42,12 @@ func NewTelegramUser(
 }
 
 func IsTelegramUserId(userId UserId) bool {
-	return strings.HasPrefix("tg-", string(userId))
+	return strings.HasPrefix(string(userId), "tg-")
 }
 
 func UserIdToTelegramUserId(userId UserId) (TelegramUserId, error) {
 	if !IsTelegramUserId(userId) {
+		fmt.Println(string(userId))
 		return 0, ErrNotTelegramUser
 	}
 	id, err := strconv.ParseInt(string(userId)[3:], 10, 64)

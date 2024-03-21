@@ -18,3 +18,11 @@ func (p *TelegramCancelAppointmentPresenter) RenderCancel() (adapters.TelegramCa
 		},
 	}, nil
 }
+
+func (p *TelegramCancelAppointmentPresenter) RenderError() (adapters.TelegramCallbackResponse, error) {
+	return adapters.TelegramCallbackResponse{
+		Response: &telebot.CallbackResponse{
+			Text: "Эта запись не может быть отменена",
+		},
+	}, nil
+}

@@ -55,15 +55,12 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	productionCalendarRepo := repo.NewHttpProductionCalendar(log, cfg.ProductionCalendar.Url, &http.Client{})
 	openingHoursRepo := repo.NewStaticOpeningHoursRepo()
-	busyPeriodsRepo := repo.NewBusyPeriods(log, notionClient, cfg.Notion.RecordsDatabaseId)
 	workBreaksRepo := repo.NewStaticWorkBreaks()
-	servicesRepo := repo.NewNotionServices(
-		notionClient,
-		cfg.Notion.ServicesDatabaseId,
-	)
 	recordsRepo := repo.NewNotionRecords(
 		notionClient,
+		log,
 		cfg.Notion.RecordsDatabaseId,
+		cfg.Notion.ServicesDatabaseId,
 	)
 
 	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
@@ -118,7 +115,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 						usecase.NewScheduleUseCase(
 							productionCalendarRepo,
 							openingHoursRepo,
-							busyPeriodsRepo,
+							recordsRepo,
 							workBreaksRepo,
 							presenter.NewTelegramScheduleQueryPresenter(
 								cfg.Telegram.CalendarWebAppUrl,
@@ -128,7 +125,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 						make_appointment.NewDatePickerUseCase(
 							productionCalendarRepo,
 							openingHoursRepo,
-							busyPeriodsRepo,
+							recordsRepo,
 							workBreaksRepo,
 							telegram_make_appointment.NewTelegramDatePickerQueryPresenter(
 								cfg.Telegram.CalendarWebAppUrl,
@@ -152,13 +149,13 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					presenter.NewTelegramGreet(),
 				),
 				usecase.NewServicesUseCase(
-					servicesRepo,
+					recordsRepo,
 					presenter.NewTelegramServices(),
 				),
 				usecase.NewScheduleUseCase(
 					productionCalendarRepo,
 					openingHoursRepo,
-					busyPeriodsRepo,
+					recordsRepo,
 					workBreaksRepo,
 					presenter.NewTelegramScheduleTextPresenter(
 						cfg.Telegram.CalendarWebAppUrl,
@@ -166,7 +163,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					),
 				),
 				make_appointment.NewServicePickerUseCase(
-					servicesRepo,
+					recordsRepo,
 					recordsRepo,
 					telegram_make_appointment.NewTelegramServicePickerPresenter(
 						serviceIdContainer,
@@ -177,7 +174,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 				make_appointment.NewDatePickerUseCase(
 					productionCalendarRepo,
 					openingHoursRepo,
-					busyPeriodsRepo,
+					recordsRepo,
 					workBreaksRepo,
 					telegram_make_appointment.NewTelegramDatePickerTextPresenter(
 						cfg.Telegram.CalendarWebAppUrl,
@@ -190,22 +187,22 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 					entity.SampleRateInMinutes(30),
 					productionCalendarRepo,
 					openingHoursRepo,
-					busyPeriodsRepo,
+					recordsRepo,
 					workBreaksRepo,
-					servicesRepo,
+					recordsRepo,
 					telegram_make_appointment.NewTelegramTimeSlotsPickerPresenter(
 						datePickerStateContainer,
 					),
 				),
 				make_appointment.NewAppointmentConfirmationUseCase(
-					servicesRepo,
+					recordsRepo,
 					telegram_make_appointment.NewTelegramConfirmationPresenter(
 						datePickerStateContainer,
 					),
 				),
 				make_appointment.NewMakeAppointmentUseCase(
 					recordsRepo,
-					servicesRepo,
+					recordsRepo,
 					telegram_make_appointment.NewTelegramAppointmentInfoPresenter(),
 				),
 				usecase.NewCancelAppointmentUseCase(

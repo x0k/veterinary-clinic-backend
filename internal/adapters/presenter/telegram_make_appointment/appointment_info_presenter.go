@@ -27,7 +27,7 @@ func (p *TelegramAppointmentInfoPresenter) RenderInfo(
 			ParseMode: telebot.ModeMarkdownV2,
 			ReplyMarkup: &telebot.ReplyMarkup{
 				InlineKeyboard: [][]telebot.InlineButton{
-					{*adapters.CancelAppointmentBtn.With(string(record.Id))},
+					{*adapters.CancelAppointmentBtn},
 				},
 			},
 		},
