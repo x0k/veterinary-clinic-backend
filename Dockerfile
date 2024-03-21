@@ -22,6 +22,9 @@ RUN go build -o app ./cmd/app/
 # Create a minimal runtime image
 FROM alpine:3.19.0
 
+# Install runtime dependencies
+RUN apk add --no-cache tzdata
+
 # Set the working directory
 WORKDIR /app
 
