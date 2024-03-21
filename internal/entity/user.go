@@ -37,7 +37,7 @@ func NewTelegramUser(
 		Id:          TelegramUserIdToUserId(id),
 		Name:        fmt.Sprintf("%s %s", firstName, lastName),
 		PhoneNumber: "",
-		Email:       fmt.Sprintf("@%s", username),
+		Email:       fmt.Sprintf("https://t.me/%s", username),
 	}
 }
 
