@@ -217,7 +217,7 @@ func UseTelegramBotRouter(
 	return bot.SetCommands([]telebot.Command{
 		{
 			Text:        "/start",
-			Description: "Показать приветствие",
+			Description: "Приветствие",
 		},
 		{
 			Text:        "/services",
