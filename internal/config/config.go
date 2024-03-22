@@ -30,7 +30,8 @@ type LoggerConfig struct {
 }
 
 type StorageConfig struct {
-	Path string `yaml:"path" env:"STORAGE_PATH" env-required:"true"`
+	Path                 string `yaml:"path" env:"STORAGE_PATH" env-required:"true"`
+	RecordsStateFilePath string `yaml:"records_state_file_path" env:"STORAGE_RECORDS_STATE_FILE_PATH" env-required:"true"`
 }
 
 type ProfilerConfig struct {

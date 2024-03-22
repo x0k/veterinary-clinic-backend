@@ -62,6 +62,9 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		cfg.Notion.RecordsDatabaseId,
 		cfg.Notion.ServicesDatabaseId,
 	)
+	actualRecordsStateRepo := repo.NewFsActualRecordsStateRepo(
+		cfg.Storage.RecordsStateFilePath,
+	)
 
 	query := make(chan entity.DialogMessage[adapters.TelegramQueryResponse])
 
@@ -78,6 +81,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	notification := make(chan entity.NotificationMessage[adapters.TelegramTextResponse])
 	appointmentChangeDetector := usecase.NewAppointmentChangeDetectorUseCase(
 		entity.TelegramUserIdToUserId(cfg.Telegram.AdminUserId),
+		actualRecordsStateRepo,
 		recordsRepo,
 		notification,
 		presenter.NewTelegramChangePresenter(),
@@ -96,6 +100,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 	b.Append(
 		productionCalendarRepo,
 		recordsRepo,
+		actualRecordsStateRepo,
 		serviceIdContainer,
 		datePickerStateContainer,
 		infra.NewHttpService(

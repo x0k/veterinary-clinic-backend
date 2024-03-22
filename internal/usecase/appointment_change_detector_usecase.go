@@ -16,10 +16,14 @@ type appointmentChangePresenter[R any] interface {
 	RenderChange(change entity.RecordChange) (R, error)
 }
 
-type AppointmentChangeDetectorUseCase[R any] struct {
-	state map[entity.RecordId]entity.Record
+type appointmentChangeActualRecordsStateRepo interface {
+	ActualRecordsStateLoader
+	ActualRecordsStateSaver
+}
 
+type AppointmentChangeDetectorUseCase[R any] struct {
 	adminTelegramUserId   entity.UserId
+	actualRecordsState    appointmentChangeActualRecordsStateRepo
 	recordsRepo           ActualRecordsLoader
 	telegramNotifications chan<- entity.NotificationMessage[R]
 	presenter             appointmentChangePresenter[R]
@@ -27,13 +31,14 @@ type AppointmentChangeDetectorUseCase[R any] struct {
 
 func NewAppointmentChangeDetectorUseCase[R any](
 	adminTelegramUserId entity.UserId,
+	actualRecordsState appointmentChangeActualRecordsStateRepo,
 	recordsRepo ActualRecordsLoader,
 	telegramNotifications chan<- entity.NotificationMessage[R],
 	presenter appointmentChangePresenter[R],
 ) *AppointmentChangeDetectorUseCase[R] {
 	return &AppointmentChangeDetectorUseCase[R]{
-		state:                 make(map[entity.RecordId]entity.Record),
 		adminTelegramUserId:   adminTelegramUserId,
+		actualRecordsState:    actualRecordsState,
 		recordsRepo:           recordsRepo,
 		telegramNotifications: telegramNotifications,
 		presenter:             presenter,
@@ -44,11 +49,19 @@ func (u *AppointmentChangeDetectorUseCase[R]) DetectChanges(
 	ctx context.Context,
 	now time.Time,
 ) error {
+	state, err := u.actualRecordsState.ActualRecordsState(ctx)
+	if err != nil {
+		return err
+	}
 	actualRecords, err := u.recordsRepo.LoadActualRecords(ctx, now)
 	if err != nil {
 		return err
 	}
-	changes := entity.DetectChanges(u.state, actualRecords)
+	changes := state.Update(actualRecords)
+	if err := u.actualRecordsState.SaveActualRecordsState(ctx, state); err != nil {
+		return err
+	}
+
 	errs := make([]error, 0, len(changes))
 	for _, change := range changes {
 		notification, err := u.presenter.RenderChange(change)
