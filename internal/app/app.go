@@ -232,7 +232,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			controller.StartTelegramBotNotificationHandler(ctx, log, bot, notification)
 			return nil
 		}),
-		controller.NewCron(log, time.Minute, appointmentChangeDetector.DetectChanges),
+		controller.NewCron(
+			log,
+			cfg.AppointmentChangeDetector.CheckInterval,
+			appointmentChangeDetector.DetectChanges,
+		),
 	)
 
 	if cfg.Profiler.Enabled {
