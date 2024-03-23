@@ -16,11 +16,25 @@ type RecordChange struct {
 	Record Record
 }
 
-func DetectChanges(mutableState map[RecordId]Record, actualRecords []Record) []RecordChange {
-	stateCopy := maps.Clone(mutableState)
+type ActualRecordsState struct {
+	records map[RecordId]Record
+}
+
+func NewActualRecordsState(records map[RecordId]Record) ActualRecordsState {
+	return ActualRecordsState{
+		records: records,
+	}
+}
+
+func (r ActualRecordsState) Records() map[RecordId]Record {
+	return r.records
+}
+
+func (r *ActualRecordsState) Update(actualRecords []Record) []RecordChange {
+	stateCopy := maps.Clone(r.records)
 	changes := make([]RecordChange, 0, len(actualRecords))
 	for _, actualRecord := range actualRecords {
-		mutableState[actualRecord.Id] = actualRecord
+		r.records[actualRecord.Id] = actualRecord
 		oldRecord, ok := stateCopy[actualRecord.Id]
 		// created
 		if !ok {
@@ -44,7 +58,7 @@ func DetectChanges(mutableState map[RecordId]Record, actualRecords []Record) []R
 		delete(stateCopy, actualRecord.Id)
 	}
 	for _, record := range stateCopy {
-		delete(mutableState, record.Id)
+		delete(r.records, record.Id)
 		changes = append(changes, RecordChange{
 			Type:   RecordRemoved,
 			Record: record,

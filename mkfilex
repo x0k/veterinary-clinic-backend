@@ -1,23 +1,27 @@
 #!/bin/bash -e
 
+env: run
+    if [ -f .env.local ]
+    then
+        export $(cat .env.local | xargs)
+    fi
+    if [ -d ~/Sync/veterinary-clinic ]
+    then
+        export TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token)
+        export NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token)
+        export NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id)
+        export NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id)
+        export TELEGRAM_ADMIN_USER_ID=$(cat ~/Sync/veterinary-clinic/telegram-admin-user-id)
+    fi
+
 all:
-    TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
-        NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token) \
-        NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id) \
-        NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id) \
-        TELEGRAM_ADMIN_USER_ID=$(cat ~/Sync/veterinary-clinic/telegram-admin-user-id) \
-        air -- --config config/config.yml
+    air -- --config config/config.yml
 
 build:
     CGO_ENABLED=1 go build -o bin/app cmd/app/main.go
 
 run:
-    TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token) \
-        NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token) \
-        NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id) \
-        NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id) \
-        TELEGRAM_ADMIN_USER_ID=$(cat ~/Sync/veterinary-clinic/telegram-admin-user-id) \
-        ./bin/app --config config/config.yml
+    ./bin/app --config config/config.yml
 
 test:
     go test ./...

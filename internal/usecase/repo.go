@@ -54,3 +54,11 @@ type BusyPeriodsLoader interface {
 type WorkBreaksLoader interface {
 	WorkBreaks(ctx context.Context) (entity.WorkBreaks, error)
 }
+
+type ActualRecordsStateLoader interface {
+	ActualRecordsState(ctx context.Context) (entity.ActualRecordsState, error)
+}
+
+type ActualRecordsStateSaver interface {
+	SaveActualRecordsState(ctx context.Context, state entity.ActualRecordsState) error
+}

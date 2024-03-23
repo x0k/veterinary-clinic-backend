@@ -1,5 +1,6 @@
 storage:
   path: "./storage/storage.db"
+  records_state_file_path: "./storage/records_state"
 logger:
   level: debug
   handler_type: pretty
@@ -16,3 +17,5 @@ telegram:
   calendar_web_app_url: https://x0k.github.io/telegram-web-inputs/calendar
 production_calendar:
   url: https://gist.githubusercontent.com/x0k/e45728deb54612d6043b8aa7ec4d1cef/raw/55b6006d74fa4e50568bb601b36a7248f9613e1b/calendar.json
+appointment_change_detector:
+  check_interval: 10s

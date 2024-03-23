@@ -30,7 +30,8 @@ type LoggerConfig struct {
 }
 
 type StorageConfig struct {
-	Path string `yaml:"path" env:"STORAGE_PATH" env-required:"true"`
+	Path                 string `yaml:"path" env:"STORAGE_PATH" env-required:"true"`
+	RecordsStateFilePath string `yaml:"records_state_file_path" env:"STORAGE_RECORDS_STATE_FILE_PATH" env-required:"true"`
 }
 
 type ProfilerConfig struct {
@@ -62,14 +63,19 @@ type ProductionCalendarConfig struct {
 	Url adapters.ProductionCalendarUrl `yaml:"url" env:"PRODUCTION_CALENDAR_URL" env-required:"true"`
 }
 
+type AppointmentChangeDetectorConfig struct {
+	CheckInterval time.Duration `yaml:"check_interval" env:"APPOINTMENT_CHANGE_DETECTOR_CHECK_INTERVAL" env-default:"1m"`
+}
+
 type Config struct {
-	Logger             LoggerConfig             `yaml:"logger"`
-	Storage            StorageConfig            `yaml:"storage"`
-	Profiler           ProfilerConfig           `yaml:"profiler"`
-	Metrics            MetricsConfig            `yaml:"metrics"`
-	Notion             NotionConfig             `yaml:"notion"`
-	Telegram           TelegramConfig           `yaml:"telegram"`
-	ProductionCalendar ProductionCalendarConfig `yaml:"production_calendar"`
+	Logger                    LoggerConfig                    `yaml:"logger"`
+	Storage                   StorageConfig                   `yaml:"storage"`
+	Profiler                  ProfilerConfig                  `yaml:"profiler"`
+	Metrics                   MetricsConfig                   `yaml:"metrics"`
+	Notion                    NotionConfig                    `yaml:"notion"`
+	Telegram                  TelegramConfig                  `yaml:"telegram"`
+	ProductionCalendar        ProductionCalendarConfig        `yaml:"production_calendar"`
+	AppointmentChangeDetector AppointmentChangeDetectorConfig `yaml:"appointment_change_detector"`
 }
 
 func MustLoad(configPath string) *Config {
