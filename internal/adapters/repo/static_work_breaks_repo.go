@@ -22,6 +22,21 @@ var allWorkBreaks = entity.WorkBreaks{
 			},
 		},
 	},
+	{
+		Id:              "vacation",
+		MatchExpression: `^\d 2024-03-(2[6-9]|30|31)`,
+		Title:           "Отпуск",
+		Period: entity.TimePeriod{
+			Start: entity.Time{
+				Hours:   0,
+				Minutes: 0,
+			},
+			End: entity.Time{
+				Hours:   23,
+				Minutes: 59,
+			},
+		},
+	},
 }
 
 type StaticWorkBreaks struct{}
