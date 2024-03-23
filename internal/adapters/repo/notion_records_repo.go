@@ -33,7 +33,7 @@ func NewNotionRecords(
 	servicesDatabaseId notionapi.DatabaseID,
 ) *NotionRecordsRepo {
 	return &NotionRecordsRepo{
-		log:                log.With(slog.String("component", "adapters.repo.notion")),
+		log:                log.With(slog.String("component", "adapters.repo.NotionRecordsRepo")),
 		client:             client,
 		recordsDatabaseId:  recordsDatabaseId,
 		servicesDatabaseId: servicesDatabaseId,
