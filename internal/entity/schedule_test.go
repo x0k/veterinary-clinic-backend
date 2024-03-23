@@ -33,7 +33,6 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 				},
 				busyPeriods: BusyPeriods{},
 				workBreaks: CalculatedWorkBreaks{
-
 					{
 						Id:              "lunch",
 						MatchExpression: `^[1-5]`,
