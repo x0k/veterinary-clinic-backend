@@ -126,13 +126,15 @@ func (p *Api[T]) SubtractPeriodsFromPeriods(
 	periods []Period[T],
 	periodsToSubtract []Period[T],
 ) []Period[T] {
-	allPeriods := periods
-	tmp := make([]Period[T], 0, len(periods))
+	oldPeriods := slices.Clone(periods)
+	newPeriods := make([]Period[T], 0, len(periods))
 	for _, breakPeriod := range periodsToSubtract {
-		for _, period := range allPeriods {
-			tmp = append(tmp, p.SubtractPeriods(period, breakPeriod)...)
+		for _, period := range oldPeriods {
+			newPeriods = append(newPeriods, p.SubtractPeriods(period, breakPeriod)...)
 		}
-		allPeriods = tmp
+		tmp := oldPeriods
+		oldPeriods = newPeriods
+		newPeriods = tmp[0:0]
 	}
-	return allPeriods
+	return oldPeriods
 }
