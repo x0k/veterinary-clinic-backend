@@ -43,6 +43,8 @@ func UseHttpTelegramRouter(
 	})
 
 	mux.HandleFunc(fmt.Sprintf("POST %s", adapters.CalendarWebHandlerPath), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", string(calendarWebAppOrigin))
+		w.Header().Set("Vary", "Accept-Encoding, Origin")
 		res, httpErr := httpx.JSONBody[WebAppResultResponse](log.Logger, jsonBodyDecoder, w, r)
 		if httpErr != nil {
 			http.Error(w, httpErr.Text, httpErr.Status)
