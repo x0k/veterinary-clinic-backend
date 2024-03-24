@@ -47,9 +47,7 @@ func (s *NotionRecordsRepo) Start(ctx context.Context) error {
 }
 
 func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entity.BusyPeriods, error) {
-	after := t.Add(
-		-(time.Duration(t.Hour())*time.Hour + time.Duration(t.Minute())*time.Minute + time.Duration(t.Second())*time.Second),
-	)
+	after := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	afterDate := notionapi.Date(after)
 	beforeDate := notionapi.Date(after.AddDate(0, 0, 1))
 	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
@@ -57,7 +55,12 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 			notionapi.PropertyFilter{
 				Property: RecordDateTimePeriod,
 				Date: &notionapi.DateFilterCondition{
-					After:  &afterDate,
+					After: &afterDate,
+				},
+			},
+			notionapi.PropertyFilter{
+				Property: RecordDateTimePeriod,
+				Date: &notionapi.DateFilterCondition{
 					Before: &beforeDate,
 				},
 			},
@@ -258,8 +261,7 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 			notionapi.PropertyFilter{
 				Property: RecordDateTimePeriod,
 				Date: &notionapi.DateFilterCondition{
-					After:      &after,
-					IsNotEmpty: true,
+					After: &after,
 				},
 			},
 			notionapi.OrCompoundFilter{
