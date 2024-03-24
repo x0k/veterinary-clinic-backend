@@ -39,6 +39,10 @@ type RecordsRemover interface {
 	Remove(ctx context.Context, recordId entity.RecordId) error
 }
 
+type RecordsArchiver interface {
+	ArchiveRecords(ctx context.Context) error
+}
+
 type ProductionCalendarLoader interface {
 	ProductionCalendar(ctx context.Context) (entity.ProductionCalendar, error)
 }

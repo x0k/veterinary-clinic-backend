@@ -10,10 +10,11 @@ type RecordId string
 type RecordStatus string
 
 const (
-	RecordAwaits    RecordStatus = "awaits"
-	RecordDone      RecordStatus = "done"
-	RecordNotAppear RecordStatus = "failed"
-	RecordArchived  RecordStatus = "archived"
+	RecordAwaits            RecordStatus = "awaits"
+	RecordDone              RecordStatus = "done"
+	RecordNotAppear         RecordStatus = "failed"
+	RecordDoneArchived      RecordStatus = "done_archived"
+	RecordNotAppearArchived RecordStatus = "failed_archived"
 )
 
 type Record struct {
@@ -32,8 +33,10 @@ func RecordStatusName(status RecordStatus) (string, error) {
 		return "выполнено", nil
 	case RecordNotAppear:
 		return "не пришел", nil
-	case RecordArchived:
-		return "архив", nil
+	case RecordDoneArchived:
+		return "архив (выполнено)", nil
+	case RecordNotAppearArchived:
+		return "архив (не пришел)", nil
 	default:
 		return "", ErrInvalidRecordStatus
 	}

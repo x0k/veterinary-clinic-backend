@@ -319,3 +319,55 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 	}
 	return records, errors.Join(errs...)
 }
+
+func (r *NotionRecordsRepo) ArchiveRecords(ctx context.Context) error {
+	res, err := r.client.Database.Query(ctx, r.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: notionapi.AndCompoundFilter{
+			notionapi.OrCompoundFilter{
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordDone,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordNotAppear,
+					},
+				},
+			},
+		},
+		Sorts: []notionapi.SortObject{
+			{
+				Property:  RecordDateTimePeriod,
+				Direction: notionapi.SortOrderASC,
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	errs := make([]error, 0, len(res.Results))
+	for _, page := range res.Results {
+		status, err := RecordStatus(page.Properties)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		newState := RecordDoneArchived
+		if status == entity.RecordNotAppear {
+			newState = RecordNotAppearArchived
+		}
+		if _, err = r.client.Page.Update(ctx, notionapi.PageID(page.ID), &notionapi.PageUpdateRequest{
+			Properties: notionapi.Properties{
+				RecordState: notionapi.SelectProperty{
+					Select: notionapi.Option{Name: newState},
+				},
+			},
+		}); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}

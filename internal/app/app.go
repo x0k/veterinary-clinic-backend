@@ -90,6 +90,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		notification,
 		presenter.NewTelegramChangePresenter(),
 	)
+	appointmentAutoArchiver := usecase.NewArchiveRecordsUseCase(
+		log,
+		cfg.AppointmentAutoArchiver.ArchiveTime,
+		recordsRepo,
+	)
 
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token: string(cfg.Telegram.Token),
@@ -241,6 +246,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 			log,
 			cfg.AppointmentChangeDetector.CheckInterval,
 			appointmentChangeDetector.DetectChanges,
+		),
+		controller.NewCron(
+			log,
+			cfg.AppointmentAutoArchiver.ArchiveInterval,
+			appointmentAutoArchiver.ArchiveRecords,
 		),
 	)
 

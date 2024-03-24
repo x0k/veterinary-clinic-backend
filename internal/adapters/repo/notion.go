@@ -32,10 +32,11 @@ const (
 )
 
 const (
-	RecordAwaits    = "Ожидает"
-	RecordDone      = "Выполнено"
-	RecordNotAppear = "Не пришел"
-	RecordArchived  = "Архив"
+	RecordAwaits            = "Ожидает"
+	RecordDone              = "Выполнено"
+	RecordNotAppear         = "Не пришел"
+	RecordDoneArchived      = "Архив выполнено"
+	RecordNotAppearArchived = "Архив не пришел"
 )
 
 func RichTextValue(richText []notionapi.RichText) string {
@@ -95,8 +96,10 @@ func RecordStatus(properties notionapi.Properties) (entity.RecordStatus, error) 
 		return entity.RecordDone, nil
 	case RecordNotAppear:
 		return entity.RecordNotAppear, nil
-	case RecordArchived:
-		return entity.RecordArchived, nil
+	case RecordDoneArchived:
+		return entity.RecordDoneArchived, nil
+	case RecordNotAppearArchived:
+		return entity.RecordNotAppearArchived, nil
 	default:
 		return entity.RecordStatus(""), entity.ErrInvalidRecordStatus
 	}
