@@ -40,6 +40,52 @@ func (s Schedule) SetDates(next *time.Time, prev *time.Time) Schedule {
 	return s
 }
 
+func SortAndFlatTitledPeriods(periods []TitledTimePeriod) []TitledTimePeriod {
+	if len(periods) < 2 {
+		return periods
+	}
+	flat := slices.Clone(periods)
+	slices.SortFunc(flat, func(a, b TitledTimePeriod) int {
+		return TimePeriodApi.ComparePeriods(a.TimePeriod, b.TimePeriod)
+	})
+	nextIndex := 1
+	for i := 1; i < len(flat); i++ {
+		prevPeriod := flat[nextIndex-1]
+		currentPeriod := flat[i]
+		if TimePeriodApi.IsValidPeriod(
+			TimePeriodApi.IntersectPeriods(prevPeriod.TimePeriod, currentPeriod.TimePeriod),
+		) {
+			if prevPeriod.Type == BusyPeriod || currentPeriod.Type == FreePeriod {
+				diff := TimePeriodApi.SubtractPeriods(currentPeriod.TimePeriod, prevPeriod.TimePeriod)
+				if len(diff) == 0 {
+					continue
+				}
+				flat[nextIndex] = TitledTimePeriod{
+					TimePeriod: diff[0],
+					Type:       currentPeriod.Type,
+					Title:      currentPeriod.Title,
+				}
+			} else {
+				diff := TimePeriodApi.SubtractPeriods(prevPeriod.TimePeriod, currentPeriod.TimePeriod)
+				if len(diff) == 0 {
+					flat[nextIndex-1] = currentPeriod
+					continue
+				}
+				flat[nextIndex-1] = TitledTimePeriod{
+					TimePeriod: diff[0],
+					Type:       prevPeriod.Type,
+					Title:      prevPeriod.Title,
+				}
+				flat[nextIndex] = currentPeriod
+			}
+		} else {
+			flat[nextIndex] = currentPeriod
+		}
+		nextIndex++
+	}
+	return flat[:nextIndex]
+}
+
 func CalculateSchedulePeriods(
 	freePeriods FreePeriods,
 	busyPeriods BusyPeriods,
@@ -80,10 +126,7 @@ func CalculateSchedulePeriods(
 			Title:      p.Title,
 		})
 	}
-	slices.SortFunc(schedule, func(a, b TitledTimePeriod) int {
-		return TimePeriodApi.ComparePeriods(a.TimePeriod, b.TimePeriod)
-	})
-	return schedule
+	return SortAndFlatTitledPeriods(schedule)
 }
 
 func CalculateNextAvailableDay(productionCalendar ProductionCalendar, from time.Time) time.Time {

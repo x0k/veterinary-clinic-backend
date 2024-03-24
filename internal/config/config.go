@@ -48,6 +48,7 @@ type NotionConfig struct {
 	Token              notionapi.Token      `yaml:"token" env:"NOTION_TOKEN" env-required:"true"`
 	ServicesDatabaseId notionapi.DatabaseID `yaml:"services_database_id" env:"NOTION_SERVICES_DATABASE_ID" env-required:"true"`
 	RecordsDatabaseId  notionapi.DatabaseID `yaml:"records_database_id" env:"NOTION_RECORDS_DATABASE_ID" env-required:"true"`
+	BreaksDatabaseId   notionapi.DatabaseID `yaml:"breaks_database_id" env:"NOTION_BREAKS_DATABASE_ID" env-required:"true"`
 }
 
 type TelegramConfig struct {

@@ -26,6 +26,11 @@ const (
 )
 
 const (
+	BreakTitle  = "Наименование"
+	BreakPeriod = "Период"
+)
+
+const (
 	RecordAwaits    = "Ожидает"
 	RecordInWork    = "В работе"
 	RecordDone      = "Выполнено"
@@ -92,8 +97,8 @@ func ActualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
 	return entity.RecordAwaits
 }
 
-func DateTimePeriodFromRecord(properties notionapi.Properties) *entity.DateTimePeriod {
-	date := Date(properties, RecordDateTimePeriod)
+func DateTimePeriod(properties notionapi.Properties, key string) *entity.DateTimePeriod {
+	date := Date(properties, key)
 	if date == nil {
 		return nil
 	}
@@ -109,6 +114,10 @@ func DateTimePeriodFromRecord(properties notionapi.Properties) *entity.DateTimeP
 		Start: entity.GoTimeToDateTime(time.Time(*start)),
 		End:   entity.GoTimeToDateTime(time.Time(*end)),
 	}
+}
+
+func DateTimePeriodFromRecord(properties notionapi.Properties) *entity.DateTimePeriod {
+	return DateTimePeriod(properties, RecordDateTimePeriod)
 }
 
 func ActualRecord(page notionapi.Page, currentUserId *entity.UserId, service entity.Service) *entity.Record {
@@ -146,5 +155,45 @@ func RichText(value string) []notionapi.RichText {
 			Type: notionapi.ObjectTypeText,
 			Text: &notionapi.Text{Content: value},
 		},
+	}
+}
+
+var breakTimePeriod = entity.TimePeriod{
+	Start: entity.Time{
+		Hours:   0,
+		Minutes: 0,
+	},
+	End: entity.Time{
+		Hours:   23,
+		Minutes: 59,
+	},
+}
+
+func WorkBreak(page notionapi.Page) *entity.WorkBreak {
+	period := DateTimePeriod(page.Properties, BreakPeriod)
+	if period == nil {
+		return nil
+	}
+	dt := time.Date(
+		period.Start.Year,
+		time.Month(period.Start.Month),
+		period.Start.Day,
+		0, 0, 0, 0, time.Local)
+	sb := strings.Builder{}
+	sb.WriteString("^\\d (")
+	for dt.Year() < period.End.Year ||
+		dt.Month() < time.Month(period.End.Month) ||
+		dt.Day() < period.End.Day {
+		sb.WriteString(dt.Format(time.DateOnly))
+		sb.WriteByte('|')
+		dt = dt.AddDate(0, 0, 1)
+	}
+	sb.WriteString(dt.Format(time.DateOnly))
+	sb.WriteByte(')')
+	return &entity.WorkBreak{
+		Id:              entity.WorkBreakId(page.ID),
+		Title:           Title(page.Properties, BreakTitle),
+		MatchExpression: sb.String(),
+		Period:          breakTimePeriod,
 	}
 }

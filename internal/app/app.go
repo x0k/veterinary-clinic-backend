@@ -55,7 +55,11 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	productionCalendarRepo := repo.NewHttpProductionCalendar(log, cfg.ProductionCalendar.Url, &http.Client{})
 	openingHoursRepo := repo.NewStaticOpeningHoursRepo()
-	workBreaksRepo := repo.NewStaticWorkBreaks()
+	workBreaksRepo := repo.NewNotionWorkBreaks(
+		notionClient,
+		log,
+		cfg.Notion.BreaksDatabaseId,
+	)
 	recordsRepo := repo.NewNotionRecords(
 		notionClient,
 		log,
@@ -99,6 +103,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	b.Append(
 		productionCalendarRepo,
+		workBreaksRepo,
 		recordsRepo,
 		actualRecordsStateRepo,
 		serviceIdContainer,
