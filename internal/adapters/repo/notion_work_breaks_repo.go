@@ -9,6 +9,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
 var staticWorkBreaks = entity.WorkBreaks{
@@ -63,9 +64,12 @@ func (s *NotionWorkBreaks) WorkBreaks(ctx context.Context) (entity.WorkBreaks, e
 		workBreaks := make(entity.WorkBreaks, len(staticWorkBreaks), len(staticWorkBreaks)+len(r.Results))
 		copy(workBreaks, staticWorkBreaks)
 		for _, result := range r.Results {
-			if workBreak := WorkBreak(result); workBreak != nil {
-				workBreaks = append(workBreaks, *workBreak)
+			workBreak, err := WorkBreak(result)
+			if err != nil {
+				s.log.Error(ctx, "failed to parse work break", sl.Err(err))
+				continue
 			}
+			workBreaks = append(workBreaks, workBreak)
 		}
 		return workBreaks, nil
 	})

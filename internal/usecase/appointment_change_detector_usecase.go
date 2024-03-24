@@ -76,37 +76,25 @@ func (u *AppointmentChangeDetectorUseCase[R]) DetectChanges(
 				Message: notification,
 			}
 		case entity.RecordStatusChanged:
-			if change.Record.UserId == nil {
-				errs = append(errs, ErrInvalidRecordUserId)
-				continue
-			}
 			u.telegramNotifications <- entity.NotificationMessage[R]{
-				UserId:  *change.Record.UserId,
+				UserId:  change.Record.User.Id,
 				Message: notification,
 			}
 		case entity.RecordDateTimeChanged:
-			if change.Record.UserId == nil {
-				errs = append(errs, ErrInvalidRecordUserId)
-				continue
-			}
 			u.telegramNotifications <- entity.NotificationMessage[R]{
-				UserId:  *change.Record.UserId,
+				UserId:  change.Record.User.Id,
 				Message: notification,
 			}
 		case entity.RecordRemoved:
-			if change.Record.Status == entity.RecordInWork {
+			if change.Record.Status != entity.RecordAwaits {
 				continue
 			}
 			u.telegramNotifications <- entity.NotificationMessage[R]{
 				UserId:  u.adminTelegramUserId,
 				Message: notification,
 			}
-			if change.Record.UserId == nil {
-				errs = append(errs, ErrInvalidRecordUserId)
-				continue
-			}
 			u.telegramNotifications <- entity.NotificationMessage[R]{
-				UserId:  *change.Record.UserId,
+				UserId:  change.Record.User.Id,
 				Message: notification,
 			}
 		default:

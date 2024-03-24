@@ -64,18 +64,10 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 					Before: &beforeDate,
 				},
 			},
-			notionapi.OrCompoundFilter{
-				notionapi.PropertyFilter{
-					Property: RecordState,
-					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordInWork,
-					},
-				},
-				notionapi.PropertyFilter{
-					Property: RecordState,
-					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordAwaits,
-					},
+			notionapi.PropertyFilter{
+				Property: RecordState,
+				Select: &notionapi.SelectFilterCondition{
+					Equals: RecordAwaits,
 				},
 			},
 		},
@@ -92,12 +84,15 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 	}
 	periods := make([]entity.TimePeriod, 0, len(r.Results))
 	for _, page := range r.Results {
-		if period := DateTimePeriodFromRecord(page.Properties); period != nil {
-			periods = append(periods, entity.TimePeriod{
-				Start: period.Start.Time,
-				End:   period.End.Time,
-			})
+		period, err := DateTimePeriod(page.Properties, RecordDateTimePeriod)
+		if err != nil {
+			s.log.Error(ctx, "failed to parse record period", sl.Err(err))
+			continue
 		}
+		periods = append(periods, entity.TimePeriod{
+			Start: period.Start.Time,
+			End:   period.End.Time,
+		})
 	}
 	return periods, nil
 }
@@ -190,10 +185,7 @@ func (s *NotionRecordsRepo) Create(
 	if res == nil {
 		return entity.Record{}, ErrFailedToCreateRecord
 	}
-	if rec := ActualRecord(*res, &user.Id, service); rec != nil {
-		return *rec, nil
-	}
-	return entity.Record{}, ErrFailedToCreateRecord
+	return Record(*res, service)
 }
 
 func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId) error {
@@ -205,7 +197,36 @@ func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId
 }
 
 func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.UserId) (entity.Record, error) {
-	res, err := s.recordDbRespByUserId(ctx, userId)
+	res, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: notionapi.AndCompoundFilter{
+			notionapi.OrCompoundFilter{
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordAwaits,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordDone,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordNotAppear,
+					},
+				},
+			},
+			notionapi.PropertyFilter{
+				Property: RecordUserId,
+				RichText: &notionapi.TextFilterCondition{
+					Equals: string(userId),
+				},
+			},
+		},
+	})
 	if err != nil {
 		return entity.Record{}, err
 	}
@@ -221,37 +242,7 @@ func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.Us
 	if err != nil {
 		return entity.Record{}, err
 	}
-	if rec := ActualRecord(page, &userId, service); rec != nil {
-		return *rec, nil
-	}
-	return entity.Record{}, ErrFailedToCreateRecord
-}
-
-func (s *NotionRecordsRepo) recordDbRespByUserId(ctx context.Context, userId entity.UserId) (*notionapi.DatabaseQueryResponse, error) {
-	return s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
-		Filter: notionapi.AndCompoundFilter{
-			notionapi.OrCompoundFilter{
-				notionapi.PropertyFilter{
-					Property: RecordState,
-					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordInWork,
-					},
-				},
-				notionapi.PropertyFilter{
-					Property: RecordState,
-					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordAwaits,
-					},
-				},
-			},
-			notionapi.PropertyFilter{
-				Property: RecordUserId,
-				RichText: &notionapi.TextFilterCondition{
-					Equals: string(userId),
-				},
-			},
-		},
-	})
+	return Record(page, service)
 }
 
 func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time) ([]entity.Record, error) {
@@ -268,13 +259,19 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 				notionapi.PropertyFilter{
 					Property: RecordState,
 					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordInWork,
+						Equals: RecordAwaits,
 					},
 				},
 				notionapi.PropertyFilter{
 					Property: RecordState,
 					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordAwaits,
+						Equals: RecordDone,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordNotAppear,
 					},
 				},
 			},
@@ -313,7 +310,7 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 			errs = append(errs, adapters.ErrInvalidRecord)
 			continue
 		}
-		rec, err := PrivateActualRecord(page, service)
+		rec, err := Record(page, service)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -321,4 +318,56 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 		records = append(records, rec)
 	}
 	return records, errors.Join(errs...)
+}
+
+func (r *NotionRecordsRepo) ArchiveRecords(ctx context.Context) error {
+	res, err := r.client.Database.Query(ctx, r.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: notionapi.AndCompoundFilter{
+			notionapi.OrCompoundFilter{
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordDone,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordNotAppear,
+					},
+				},
+			},
+		},
+		Sorts: []notionapi.SortObject{
+			{
+				Property:  RecordDateTimePeriod,
+				Direction: notionapi.SortOrderASC,
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	errs := make([]error, 0, len(res.Results))
+	for _, page := range res.Results {
+		status, err := RecordStatus(page.Properties)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		newState := RecordDoneArchived
+		if status == entity.RecordNotAppear {
+			newState = RecordNotAppearArchived
+		}
+		if _, err = r.client.Page.Update(ctx, notionapi.PageID(page.ID), &notionapi.PageUpdateRequest{
+			Properties: notionapi.Properties{
+				RecordState: notionapi.SelectProperty{
+					Select: notionapi.Option{Name: newState},
+				},
+			},
+		}); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }

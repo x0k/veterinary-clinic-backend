@@ -68,6 +68,11 @@ type AppointmentChangeDetectorConfig struct {
 	CheckInterval time.Duration `yaml:"check_interval" env:"APPOINTMENT_CHANGE_DETECTOR_CHECK_INTERVAL" env-default:"1m"`
 }
 
+type AppointmentAutoArchiverConfig struct {
+	ArchiveInterval time.Duration `yaml:"archive_interval" env:"APPOINTMENT_AUTO_ARCHIVER_ARCHIVE_INTERVAL" env-default:"24h"`
+	ArchiveTime     time.Time     `yaml:"archive_time" env:"APPOINTMENT_AUTO_ARCHIVER_ARCHIVE_TIME" env-default:"2000-01-01T23:30:00+03:00"`
+}
+
 type Config struct {
 	Logger                    LoggerConfig                    `yaml:"logger"`
 	Storage                   StorageConfig                   `yaml:"storage"`
@@ -77,6 +82,7 @@ type Config struct {
 	Telegram                  TelegramConfig                  `yaml:"telegram"`
 	ProductionCalendar        ProductionCalendarConfig        `yaml:"production_calendar"`
 	AppointmentChangeDetector AppointmentChangeDetectorConfig `yaml:"appointment_change_detector"`
+	AppointmentAutoArchiver   AppointmentAutoArchiverConfig   `yaml:"appointment_auto_archiver"`
 }
 
 func MustLoad(configPath string) *Config {

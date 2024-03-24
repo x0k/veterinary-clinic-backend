@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -31,10 +32,11 @@ const (
 )
 
 const (
-	RecordAwaits    = "Ожидает"
-	RecordInWork    = "В работе"
-	RecordDone      = "Выполнено"
-	RecordNotAppear = "Не пришел"
+	RecordAwaits            = "Ожидает"
+	RecordDone              = "Выполнено"
+	RecordNotAppear         = "Не пришел"
+	RecordDoneArchived      = "Архив выполнено"
+	RecordNotAppearArchived = "Архив не пришел"
 )
 
 func RichTextValue(richText []notionapi.RichText) string {
@@ -64,6 +66,14 @@ func Date(properties notionapi.Properties, dateKey string) *notionapi.DateObject
 	return properties[dateKey].(*notionapi.DateProperty).Date
 }
 
+func Phone(properties notionapi.Properties, phoneKey string) string {
+	return properties[phoneKey].(*notionapi.PhoneNumberProperty).PhoneNumber
+}
+
+func Email(properties notionapi.Properties, emailKey string) string {
+	return properties[emailKey].(*notionapi.EmailProperty).Email
+}
+
 func Relations(properties notionapi.Properties, relationKey string) []notionapi.Relation {
 	return properties[relationKey].(*notionapi.RelationProperty).Relation
 }
@@ -78,73 +88,57 @@ func Service(page notionapi.Page) entity.Service {
 	}
 }
 
-func UserIdFromRecord(properties notionapi.Properties, currentUserId *entity.UserId) *entity.UserId {
-	if currentUserId == nil {
-		return nil
+func RecordStatus(properties notionapi.Properties) (entity.RecordStatus, error) {
+	switch properties[RecordState].(*notionapi.SelectProperty).Select.Name {
+	case RecordAwaits:
+		return entity.RecordAwaits, nil
+	case RecordDone:
+		return entity.RecordDone, nil
+	case RecordNotAppear:
+		return entity.RecordNotAppear, nil
+	case RecordDoneArchived:
+		return entity.RecordDoneArchived, nil
+	case RecordNotAppearArchived:
+		return entity.RecordNotAppearArchived, nil
+	default:
+		return entity.RecordStatus(""), entity.ErrInvalidRecordStatus
 	}
-	uid := Text(properties, RecordUserId)
-	if uid != string(*currentUserId) {
-		return nil
-	}
-	return currentUserId
 }
 
-func ActualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
-	status := properties[RecordState].(*notionapi.SelectProperty).Select.Name
-	if status == RecordInWork {
-		return entity.RecordInWork
-	}
-	return entity.RecordAwaits
-}
-
-func DateTimePeriod(properties notionapi.Properties, key string) *entity.DateTimePeriod {
+func DateTimePeriod(properties notionapi.Properties, key string) (entity.DateTimePeriod, error) {
 	date := Date(properties, key)
-	if date == nil {
-		return nil
+	if date == nil || date.Start == nil || date.End == nil {
+		return entity.DateTimePeriod{}, fmt.Errorf("%s: %w", key, entity.ErrInvalidDate)
 	}
-	start := date.Start
-	if start == nil {
-		return nil
-	}
-	end := date.End
-	if end == nil {
-		return nil
-	}
-	return &entity.DateTimePeriod{
-		Start: entity.GoTimeToDateTime(time.Time(*start)),
-		End:   entity.GoTimeToDateTime(time.Time(*end)),
+	return entity.DateTimePeriod{
+		Start: entity.GoTimeToDateTime(time.Time(*date.Start)),
+		End:   entity.GoTimeToDateTime(time.Time(*date.End)),
+	}, nil
+}
+
+func User(properties notionapi.Properties) entity.User {
+	return entity.User{
+		Id:          entity.UserId(Text(properties, RecordUserId)),
+		Name:        Title(properties, RecordTitle),
+		PhoneNumber: Phone(properties, RecordPhoneNumber),
+		Email:       Email(properties, RecordEmail),
 	}
 }
 
-func DateTimePeriodFromRecord(properties notionapi.Properties) *entity.DateTimePeriod {
-	return DateTimePeriod(properties, RecordDateTimePeriod)
-}
-
-func ActualRecord(page notionapi.Page, currentUserId *entity.UserId, service entity.Service) *entity.Record {
-	dateTimePeriod := DateTimePeriodFromRecord(page.Properties)
-	if dateTimePeriod == nil {
-		return nil
+func Record(page notionapi.Page, service entity.Service) (entity.Record, error) {
+	dateTimePeriod, err := DateTimePeriod(page.Properties, RecordDateTimePeriod)
+	if err != nil {
+		return entity.Record{}, err
 	}
-	return &entity.Record{
-		Id:             entity.RecordId(page.ID),
-		UserId:         UserIdFromRecord(page.Properties, currentUserId),
-		Status:         ActualRecordStatus(page.Properties),
-		DateTimePeriod: *dateTimePeriod,
-		Service:        service,
+	status, err := RecordStatus(page.Properties)
+	if err != nil {
+		return entity.Record{}, err
 	}
-}
-
-func PrivateActualRecord(page notionapi.Page, service entity.Service) (entity.Record, error) {
-	dateTimePeriod := DateTimePeriodFromRecord(page.Properties)
-	if dateTimePeriod == nil {
-		return entity.Record{}, ErrFailedToCreateRecord
-	}
-	uid := entity.UserId(Text(page.Properties, RecordUserId))
 	return entity.Record{
 		Id:             entity.RecordId(page.ID),
-		UserId:         &uid,
-		Status:         ActualRecordStatus(page.Properties),
-		DateTimePeriod: *dateTimePeriod,
+		User:           User(page.Properties),
+		Status:         status,
+		DateTimePeriod: dateTimePeriod,
 		Service:        service,
 	}, nil
 }
@@ -158,10 +152,10 @@ func RichText(value string) []notionapi.RichText {
 	}
 }
 
-func WorkBreak(page notionapi.Page) *entity.WorkBreak {
-	period := DateTimePeriod(page.Properties, BreakPeriod)
-	if period == nil {
-		return nil
+func WorkBreak(page notionapi.Page) (entity.WorkBreak, error) {
+	period, err := DateTimePeriod(page.Properties, BreakPeriod)
+	if err != nil {
+		return entity.WorkBreak{}, err
 	}
 	dt := time.Date(
 		period.Start.Year,
@@ -179,7 +173,7 @@ func WorkBreak(page notionapi.Page) *entity.WorkBreak {
 	}
 	sb.WriteString(dt.Format(time.DateOnly))
 	sb.WriteByte(')')
-	return &entity.WorkBreak{
+	return entity.WorkBreak{
 		Id:              entity.WorkBreakId(page.ID),
 		Title:           Title(page.Properties, BreakTitle),
 		MatchExpression: sb.String(),
@@ -187,5 +181,5 @@ func WorkBreak(page notionapi.Page) *entity.WorkBreak {
 			Start: period.Start.Time,
 			End:   period.End.Time,
 		},
-	}
+	}, nil
 }

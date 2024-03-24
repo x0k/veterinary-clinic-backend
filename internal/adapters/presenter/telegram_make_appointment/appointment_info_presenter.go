@@ -18,18 +18,28 @@ func NewTelegramAppointmentInfoPresenter() *TelegramAppointmentInfoPresenter {
 func (p *TelegramAppointmentInfoPresenter) RenderInfo(
 	record entity.Record,
 ) (adapters.TelegramTextResponse, error) {
+	status, err := entity.RecordStatusName(record.Status)
+	if err != nil {
+		return adapters.TelegramTextResponse{}, err
+	}
 	sb := strings.Builder{}
-	sb.WriteString("Ваша запись:\n\n")
+	sb.WriteString("Статус: ")
+	sb.WriteString(adapters.EscapeTelegramMarkdownString(status))
+	sb.WriteString("\n\n")
 	WriteAppointment(&sb, record.Service, entity.DateTimeToGoTime(record.DateTimePeriod.Start))
+	var markup *telebot.ReplyMarkup
+	if record.Status == entity.RecordAwaits {
+		markup = &telebot.ReplyMarkup{
+			InlineKeyboard: [][]telebot.InlineButton{
+				{*adapters.CancelAppointmentBtn},
+			},
+		}
+	}
 	return adapters.TelegramTextResponse{
 		Text: sb.String(),
 		Options: &telebot.SendOptions{
-			ParseMode: telebot.ModeMarkdownV2,
-			ReplyMarkup: &telebot.ReplyMarkup{
-				InlineKeyboard: [][]telebot.InlineButton{
-					{*adapters.CancelAppointmentBtn},
-				},
-			},
+			ParseMode:   telebot.ModeMarkdownV2,
+			ReplyMarkup: markup,
 		},
 	}, nil
 }
