@@ -158,17 +158,6 @@ func RichText(value string) []notionapi.RichText {
 	}
 }
 
-var breakTimePeriod = entity.TimePeriod{
-	Start: entity.Time{
-		Hours:   0,
-		Minutes: 0,
-	},
-	End: entity.Time{
-		Hours:   23,
-		Minutes: 59,
-	},
-}
-
 func WorkBreak(page notionapi.Page) *entity.WorkBreak {
 	period := DateTimePeriod(page.Properties, BreakPeriod)
 	if period == nil {
@@ -194,6 +183,9 @@ func WorkBreak(page notionapi.Page) *entity.WorkBreak {
 		Id:              entity.WorkBreakId(page.ID),
 		Title:           Title(page.Properties, BreakTitle),
 		MatchExpression: sb.String(),
-		Period:          breakTimePeriod,
+		Period: entity.TimePeriod{
+			Start: period.Start.Time,
+			End:   period.End.Time,
+		},
 	}
 }
