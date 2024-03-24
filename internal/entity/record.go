@@ -3,6 +3,7 @@ package entity
 import "errors"
 
 var ErrInvalidRecordStatus = errors.New("invalid record status")
+var ErrInvalidDate = errors.New("invalid date")
 
 type RecordId string
 
