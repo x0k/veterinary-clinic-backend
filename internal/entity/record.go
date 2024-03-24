@@ -9,15 +9,17 @@ type RecordId string
 type RecordStatus string
 
 const (
-	RecordAwaits RecordStatus = "awaits"
-	RecordInWork RecordStatus = "inWork"
+	RecordAwaits    RecordStatus = "awaits"
+	RecordDone      RecordStatus = "done"
+	RecordNotAppear RecordStatus = "failed"
+	RecordArchived  RecordStatus = "archived"
 )
 
 type Record struct {
 	Id             RecordId
 	Status         RecordStatus
 	DateTimePeriod DateTimePeriod
-	UserId         *UserId
+	User           User
 	Service        Service
 }
 
@@ -25,8 +27,12 @@ func RecordStatusName(status RecordStatus) (string, error) {
 	switch status {
 	case RecordAwaits:
 		return "ожидает", nil
-	case RecordInWork:
-		return "в работе", nil
+	case RecordDone:
+		return "выполнено", nil
+	case RecordNotAppear:
+		return "не пришел", nil
+	case RecordArchived:
+		return "архив", nil
 	default:
 		return "", ErrInvalidRecordStatus
 	}

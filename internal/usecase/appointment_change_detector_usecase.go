@@ -94,7 +94,7 @@ func (u *AppointmentChangeDetectorUseCase[R]) DetectChanges(
 				Message: notification,
 			}
 		case entity.RecordRemoved:
-			if change.Record.Status == entity.RecordInWork {
+			if change.Record.Status != entity.RecordAwaits {
 				continue
 			}
 			u.telegramNotifications <- entity.NotificationMessage[R]{

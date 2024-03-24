@@ -64,18 +64,10 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 					Before: &beforeDate,
 				},
 			},
-			notionapi.OrCompoundFilter{
-				notionapi.PropertyFilter{
-					Property: RecordState,
-					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordInWork,
-					},
-				},
-				notionapi.PropertyFilter{
-					Property: RecordState,
-					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordAwaits,
-					},
+			notionapi.PropertyFilter{
+				Property: RecordState,
+				Select: &notionapi.SelectFilterCondition{
+					Equals: RecordAwaits,
 				},
 			},
 		},
@@ -205,7 +197,7 @@ func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId
 }
 
 func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.UserId) (entity.Record, error) {
-	res, err := s.recordDbRespByUserId(ctx, userId)
+	res, err := s.recordByUserId(ctx, userId)
 	if err != nil {
 		return entity.Record{}, err
 	}
@@ -227,7 +219,7 @@ func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.Us
 	return entity.Record{}, ErrFailedToCreateRecord
 }
 
-func (s *NotionRecordsRepo) recordDbRespByUserId(ctx context.Context, userId entity.UserId) (*notionapi.DatabaseQueryResponse, error) {
+func (s *NotionRecordsRepo) recordByUserId(ctx context.Context, userId entity.UserId) (*notionapi.DatabaseQueryResponse, error) {
 	return s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.AndCompoundFilter{
 			notionapi.OrCompoundFilter{
@@ -268,13 +260,13 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 				notionapi.PropertyFilter{
 					Property: RecordState,
 					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordInWork,
+						Equals: RecordAwaits,
 					},
 				},
 				notionapi.PropertyFilter{
 					Property: RecordState,
 					Select: &notionapi.SelectFilterCondition{
-						Equals: RecordAwaits,
+						Equals: RecordInWork,
 					},
 				},
 			},

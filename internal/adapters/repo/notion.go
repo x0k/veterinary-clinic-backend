@@ -32,9 +32,9 @@ const (
 
 const (
 	RecordAwaits    = "Ожидает"
-	RecordInWork    = "В работе"
 	RecordDone      = "Выполнено"
 	RecordNotAppear = "Не пришел"
+	RecordArchived  = "Архив"
 )
 
 func RichTextValue(richText []notionapi.RichText) string {
@@ -89,12 +89,20 @@ func UserIdFromRecord(properties notionapi.Properties, currentUserId *entity.Use
 	return currentUserId
 }
 
-func ActualRecordStatus(properties notionapi.Properties) entity.RecordStatus {
+func RecordStatus(properties notionapi.Properties) (entity.RecordStatus, error) {
 	status := properties[RecordState].(*notionapi.SelectProperty).Select.Name
-	if status == RecordInWork {
-		return entity.RecordInWork
+	switch status {
+	case RecordAwaits:
+		return entity.RecordAwaits, nil
+	case RecordDone:
+		return entity.RecordDone, nil
+	case RecordNotAppear:
+		return entity.RecordNotAppear, nil
+	case RecordArchived:
+		return entity.RecordArchived, nil
+	default:
+		return entity.RecordStatus(""), entity.ErrInvalidRecordStatus
 	}
-	return entity.RecordAwaits
 }
 
 func DateTimePeriod(properties notionapi.Properties, key string) *entity.DateTimePeriod {
@@ -125,10 +133,14 @@ func ActualRecord(page notionapi.Page, currentUserId *entity.UserId, service ent
 	if dateTimePeriod == nil {
 		return nil
 	}
+	status, err := RecordStatus(page.Properties)
+	if err != nil {
+		return nil
+	}
 	return &entity.Record{
 		Id:             entity.RecordId(page.ID),
 		UserId:         UserIdFromRecord(page.Properties, currentUserId),
-		Status:         ActualRecordStatus(page.Properties),
+		Status:         status,
 		DateTimePeriod: *dateTimePeriod,
 		Service:        service,
 	}
@@ -139,11 +151,15 @@ func PrivateActualRecord(page notionapi.Page, service entity.Service) (entity.Re
 	if dateTimePeriod == nil {
 		return entity.Record{}, ErrFailedToCreateRecord
 	}
+	status, err := RecordStatus(page.Properties)
+	if err != nil {
+		return entity.Record{}, err
+	}
 	uid := entity.UserId(Text(page.Properties, RecordUserId))
 	return entity.Record{
 		Id:             entity.RecordId(page.ID),
 		UserId:         &uid,
-		Status:         ActualRecordStatus(page.Properties),
+		Status:         status,
 		DateTimePeriod: *dateTimePeriod,
 		Service:        service,
 	}, nil
