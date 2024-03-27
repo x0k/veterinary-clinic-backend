@@ -3,13 +3,10 @@ package controller
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase/make_appointment"
 	"gopkg.in/telebot.v3"
@@ -22,7 +19,6 @@ var ErrUnknownDatePickerState = errors.New("unknown date picker state")
 func UseTelegramBotRouter(
 	ctx context.Context,
 	bot *telebot.Bot,
-	log *logger.Logger,
 	greet *usecase.GreetUseCase[adapters.TelegramTextResponse],
 	services *usecase.ServicesUseCase[adapters.TelegramTextResponse],
 	schedule *usecase.ScheduleUseCase[adapters.TelegramTextResponse],
@@ -35,17 +31,10 @@ func UseTelegramBotRouter(
 	makeAppointment *make_appointment.MakeAppointmentUseCase[adapters.TelegramTextResponse],
 	cancelAppointment *usecase.CancelAppointmentUseCase[adapters.TelegramCallbackResponse],
 ) error {
-	l := log.With(slog.String("component", "adapters.controller.UseTelegramBotRouter"))
-
-	fail := func(msg string, err error) error {
-		l.Error(ctx, msg, sl.Err(err))
-		return err
-	}
-
 	bot.Handle("/start", func(c telebot.Context) error {
 		res, err := greet.GreetUser(ctx)
 		if err != nil {
-			return fail("failed to greet user", err)
+			return err
 		}
 		return c.Send(res.Text, res.Options)
 	})
@@ -53,7 +42,7 @@ func UseTelegramBotRouter(
 	serviceHandler := func(c telebot.Context) error {
 		res, err := services.Services(ctx)
 		if err != nil {
-			return fail("failed to get services", err)
+			return err
 		}
 		return c.Send(res.Text, res.Options)
 	}
@@ -64,7 +53,7 @@ func UseTelegramBotRouter(
 		now := time.Now()
 		res, err := schedule.Schedule(ctx, now, now)
 		if err != nil {
-			return fail("failed to get schedule", err)
+			return err
 		}
 		return c.Send(res.Text, res.Options)
 	}
@@ -74,11 +63,11 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.NextScheduleBtn, func(c telebot.Context) error {
 		date, err := time.Parse(time.DateOnly, c.Data())
 		if err != nil {
-			return fail("failed to parse date", err)
+			return err
 		}
 		res, err := schedule.Schedule(ctx, time.Now(), date)
 		if err != nil {
-			return fail("failed to get schedule for date", err)
+			return err
 		}
 		return c.Edit(res.Text, res.Options)
 	})
@@ -89,7 +78,7 @@ func UseTelegramBotRouter(
 			entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID)),
 		)
 		if err != nil {
-			return fail("failed to get services picker", err)
+			return err
 		}
 		return c.Send(servicePicker.Text, servicePicker.Options)
 	}
@@ -111,7 +100,7 @@ func UseTelegramBotRouter(
 			now,
 		)
 		if err != nil {
-			return fail("failed to get date picker", err)
+			return err
 		}
 		return c.Edit(datePicker.Text, datePicker.Options)
 	})
@@ -130,7 +119,7 @@ func UseTelegramBotRouter(
 			state.Date,
 		)
 		if err != nil {
-			return fail("failed to get next date picker", err)
+			return err
 		}
 		return c.Edit(datePicker.Text, datePicker.Options)
 	}
@@ -142,7 +131,7 @@ func UseTelegramBotRouter(
 			entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID)),
 		)
 		if err != nil {
-			return fail("failed to get services picker", err)
+			return err
 		}
 		return c.Edit(servicePicker.Text, servicePicker.Options)
 	})
@@ -161,7 +150,7 @@ func UseTelegramBotRouter(
 			state.Date,
 		)
 		if err != nil {
-			return fail("failed to get time picker", err)
+			return err
 		}
 		return c.Edit(timePicker.Text, timePicker.Options)
 	}
@@ -180,7 +169,7 @@ func UseTelegramBotRouter(
 			state.Date,
 		)
 		if err != nil {
-			return fail("failed to get confirmation", err)
+			return err
 		}
 		return c.Edit(confirmation.Text, confirmation.Options)
 	})
@@ -206,7 +195,7 @@ func UseTelegramBotRouter(
 			state.Date,
 		)
 		if err != nil {
-			return fail("failed to make appointment", err)
+			return err
 		}
 		return c.Edit(res.Text, res.Options)
 	})
@@ -217,10 +206,10 @@ func UseTelegramBotRouter(
 		userId := entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID))
 		res, err := cancelAppointment.Cancel(ctx, userId)
 		if err != nil {
-			return fail("failed to cancel appointment", err)
+			return err
 		}
 		if err := c.Respond(res.Response); err != nil {
-			return fail("failed to respond", err)
+			return err
 		}
 		return c.Delete()
 	})

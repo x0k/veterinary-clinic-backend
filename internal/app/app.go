@@ -155,12 +155,12 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 		),
 		infra.Starter(func(ctx context.Context) error {
 			bot.Use(
-				middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelDebug)),
+				middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelInfo)),
 				middleware.AutoRespond(),
 				middleware.Recover(),
 			)
 			if err := controller.UseTelegramBotRouter(
-				ctx, bot, log,
+				ctx, bot,
 				usecase.NewGreetUseCase(
 					presenter.NewTelegramGreet(),
 				),
