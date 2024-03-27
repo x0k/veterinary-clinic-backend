@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-env: run
+env: run prof
     if [ -f .env.local ]
     then
         export $(cat .env.local | xargs)
@@ -13,6 +13,7 @@ env: run
         export NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id)
         export NOTION_BREAKS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-breaks-db-id)
         export TELEGRAM_ADMIN_USER_ID=$(cat ~/Sync/veterinary-clinic/telegram-admin-user-id)
+        export PROFILER_REMOTE_ADDRESS=$(cat ~/Sync/veterinary-clinic/prof-address)
     fi
 
 all:
@@ -23,6 +24,9 @@ build:
 
 run:
     ./bin/app --config config/config.yml
+
+prof:
+    go tool pprof -http :8081 "${PROFILER_REMOTE_ADDRESS}/debug/pprof/$1"
 
 test:
     go test ./...
