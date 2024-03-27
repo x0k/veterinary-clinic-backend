@@ -51,7 +51,10 @@ func (e *Expiable[T]) Set(val T) {
 	e.val = val
 	e.actual = true
 	if !e.timer.Stop() {
-		<-e.timer.C
+		select {
+		case <-e.timer.C:
+		default:
+		}
 	}
 	e.timer.Reset(e.ttl)
 }
