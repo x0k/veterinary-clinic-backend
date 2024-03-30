@@ -12,7 +12,7 @@ env: run prof
         export NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id)
         export NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id)
         export NOTION_BREAKS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-breaks-db-id)
-        export TELEGRAM_ADMIN_USER_ID=$(cat ~/Sync/veterinary-clinic/telegram-admin-user-id)
+        export NOTIFICATIONS_ADMIN_ID=$(cat ~/Sync/veterinary-clinic/notifications-admin-id)
         export PROFILER_REMOTE_ADDRESS=$(cat ~/Sync/veterinary-clinic/prof-address)
     fi
 

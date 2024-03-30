@@ -57,7 +57,6 @@ type TelegramConfig struct {
 	WebHandlerAddress string                     `yaml:"web_handler_address" env:"TELEGRAM_WEB_HANDLER_ADDRESS" env-required:"true"`
 	WebHandlerUrl     string                     `yaml:"web_handler_url" env:"TELEGRAM_WEB_HANDLER_URL" env-required:"true"`
 	CalendarWebAppUrl adapters.CalendarWebAppUrl `yaml:"calendar_web_app_url" env:"TELEGRAM_CALENDAR_WEB_APP_URL" env-required:"true"`
-	AdminUserId       entity.TelegramUserId      `yaml:"admin_user_id" env:"TELEGRAM_ADMIN_USER_ID" env-required:"true"`
 }
 
 type ProductionCalendarConfig struct {
@@ -73,6 +72,10 @@ type AppointmentAutoArchiverConfig struct {
 	ArchiveTime     time.Time     `yaml:"archive_time" env:"APPOINTMENT_AUTO_ARCHIVER_ARCHIVE_TIME" env-default:"2000-01-01T23:30:00+03:00"`
 }
 
+type NotificationsConfig struct {
+	AdminId entity.UserId `yaml:"admin_id" env:"NOTIFICATIONS_ADMIN_ID" env-required:"true"`
+}
+
 type Config struct {
 	Logger                    LoggerConfig                    `yaml:"logger"`
 	Storage                   StorageConfig                   `yaml:"storage"`
@@ -83,6 +86,7 @@ type Config struct {
 	ProductionCalendar        ProductionCalendarConfig        `yaml:"production_calendar"`
 	AppointmentChangeDetector AppointmentChangeDetectorConfig `yaml:"appointment_change_detector"`
 	AppointmentAutoArchiver   AppointmentAutoArchiverConfig   `yaml:"appointment_auto_archiver"`
+	Notifications             NotificationsConfig             `yaml:"notifications"`
 }
 
 func MustLoad(configPath string) *Config {

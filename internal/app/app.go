@@ -84,7 +84,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	notification := make(chan entity.NotificationMessage[adapters.TelegramTextResponse])
 	appointmentChangeDetector := usecase.NewAppointmentChangeDetectorUseCase(
-		entity.TelegramUserIdToUserId(cfg.Telegram.AdminUserId),
+		cfg.Notifications.AdminId,
 		actualRecordsStateRepo,
 		recordsRepo,
 		notification,
