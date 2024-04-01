@@ -20,7 +20,15 @@ const (
 	RecordNotAppear RecordStatus = "failed"
 )
 
-type RecordId uuid.UUID
+type RecordId string
+
+func NewRecordId(str string) RecordId {
+	return RecordId(str)
+}
+
+func (r RecordId) String() string {
+	return string(r)
+}
 
 type Record struct {
 	Id             RecordId
@@ -34,11 +42,15 @@ func NewRecord(dateTimePeriod entity.DateTimePeriod) (Record, error) {
 		return Record{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
 	}
 	return Record{
-		Id:             RecordId(uuid.New()),
+		Id:             RecordId(uuid.New().String()),
 		Status:         RecordAwaits,
 		IsArchived:     false,
 		DateTimePeriod: dateTimePeriod,
 	}, nil
+}
+
+func (r *Record) SetId(id RecordId) {
+	r.Id = id
 }
 
 func (r *Record) Archive() error {

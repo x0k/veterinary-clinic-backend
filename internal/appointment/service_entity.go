@@ -1,14 +1,13 @@
 package appointment
 
 import (
-	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type ServiceId uuid.UUID
+type ServiceId string
 
 func (s ServiceId) String() string {
-	return uuid.UUID(s).String()
+	return string(s)
 }
 
 type Service struct {

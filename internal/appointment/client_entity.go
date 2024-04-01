@@ -13,10 +13,10 @@ func NewTelegramClientIdentity(id entity.TelegramUserId) ClientIdentity {
 	return ClientIdentity(fmt.Sprintf("tg-%d", id))
 }
 
-type ClientId uuid.UUID
+type ClientId string
 
 func (c ClientId) String() string {
-	return uuid.UUID(c).String()
+	return string(c)
 }
 
 type Client struct {
@@ -32,7 +32,7 @@ func NewClient(
 	email string,
 ) *Client {
 	return &Client{
-		Id:          ClientId(uuid.New()),
+		Id:          ClientId(uuid.New().String()),
 		Name:        name,
 		PhoneNumber: phoneNumber,
 		Email:       email,

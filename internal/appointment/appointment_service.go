@@ -62,11 +62,11 @@ func (s *AppointmentService) CreateAppointment(
 			s.log.Error(ctx, "failed to release appointments lock", sl.Err(err))
 		}
 	}()
-	appointments, err := s.appointments.GetAppointmentsForPeriod(ctx, dateTimePeriod)
+	isBusy, err := s.appointments.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
 	if err != nil {
 		return err
 	}
-	if len(appointments) > 0 {
+	if isBusy {
 		return fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
 	appointment, err := NewAppointment(client, service, dateTimePeriod)
