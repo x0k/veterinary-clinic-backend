@@ -1,17 +1,24 @@
 package period
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
-type Period[T any] struct {
+type Period[T fmt.Stringer] struct {
 	Start T
 	End   T
 }
 
-type Api[T any] struct {
+func (p Period[T]) String() string {
+	return fmt.Sprintf("%s - %s", p.Start, p.End)
+}
+
+type Api[T fmt.Stringer] struct {
 	cmp func(T, T) int
 }
 
-func NewApi[T any](cmp func(T, T) int) *Api[T] {
+func NewApi[T fmt.Stringer](cmp func(T, T) int) *Api[T] {
 	return &Api[T]{
 		cmp: cmp,
 	}

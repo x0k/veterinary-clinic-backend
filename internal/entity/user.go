@@ -18,7 +18,6 @@ type User struct {
 	Email       string
 }
 
-type TelegramUserId int64
 type TelegramUsername string
 type TelegramFirstName string
 type TelegramLastName string

@@ -30,6 +30,10 @@ type DateTime struct {
 	Date
 }
 
+func (dt DateTime) String() string {
+	return fmt.Sprintf("%s %s", dt.Date, dt.Time)
+}
+
 func CompareTime(a, b Time) int {
 	if d := a.Hours - b.Hours; d != 0 {
 		return d
