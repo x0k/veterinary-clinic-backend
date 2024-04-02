@@ -98,19 +98,7 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 	properties := notionapi.Properties{
 		RecordTitle: notionapi.TitleProperty{
 			Type:  notionapi.PropertyTypeTitle,
-			Title: notion.ToRichText(app.Client().Name),
-		},
-		RecordService: notionapi.RelationProperty{
-			Type: notionapi.PropertyTypeRelation,
-			Relation: []notionapi.Relation{
-				{
-					ID: notionapi.PageID(app.Service().Id.String()),
-				},
-			},
-		},
-		RecordEmail: notionapi.EmailProperty{
-			Type:  notionapi.PropertyTypeEmail,
-			Email: app.Client().Email,
+			Title: notion.ToRichText(app.Customer().Name),
 		},
 		RecordDateTimePeriod: notionapi.DateProperty{
 			Type: notionapi.PropertyTypeDate,
@@ -125,16 +113,22 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 				Name: status,
 			},
 		},
-		RecordUserId: notionapi.RichTextProperty{
-			Type:     notionapi.PropertyTypeRichText,
-			RichText: notion.ToRichText(app.Client().Id.String()),
+		RecordCustomer: notionapi.RelationProperty{
+			Type: notionapi.PropertyTypeRelation,
+			Relation: []notionapi.Relation{
+				{
+					ID: notionapi.PageID(app.Customer().Id.String()),
+				},
+			},
 		},
-	}
-	if app.Client().PhoneNumber != "" {
-		properties[RecordPhoneNumber] = notionapi.PhoneNumberProperty{
-			Type:        notionapi.PropertyTypePhoneNumber,
-			PhoneNumber: app.Client().PhoneNumber,
-		}
+		RecordService: notionapi.RelationProperty{
+			Type: notionapi.PropertyTypeRelation,
+			Relation: []notionapi.Relation{
+				{
+					ID: notionapi.PageID(app.Service().Id.String()),
+				},
+			},
+		},
 	}
 	res, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
 		Parent: notionapi.Parent{

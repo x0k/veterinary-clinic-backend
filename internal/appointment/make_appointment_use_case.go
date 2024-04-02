@@ -16,37 +16,37 @@ var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 type MakeAppointmentUseCase struct {
 	log          *logger.Logger
 	appointments AppointmentRepository
-	clients      ClientRepository
+	customers    CustomerRepository
 	services     ServiceRepository
 }
 
 func NewMakeAppointmentUseCase(
 	log *logger.Logger,
 	appointments AppointmentRepository,
-	clients ClientRepository,
+	customers CustomerRepository,
 	services ServiceRepository,
 ) *MakeAppointmentUseCase {
 	return &MakeAppointmentUseCase{
 		log:          log.With(slog.String("component", "appointment.AppointmentService")),
 		appointments: appointments,
-		clients:      clients,
+		customers:    customers,
 		services:     services,
 	}
 }
 
 func (s *MakeAppointmentUseCase) CreateAppointment(
 	ctx context.Context,
-	clientId ClientId,
+	customerId CustomerId,
 	serviceId ServiceId,
 	dateTimePeriod entity.DateTimePeriod,
 ) error {
 	s.log.Debug(
 		ctx, "create appointment",
-		slog.String("client_id", clientId.String()),
+		slog.String("customer_id", customerId.String()),
 		slog.String("service_id", serviceId.String()),
 		slog.String("date_time_period", dateTimePeriod.String()),
 	)
-	client, err := s.clients.Client(ctx, clientId)
+	customer, err := s.customers.Customer(ctx, customerId)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (s *MakeAppointmentUseCase) CreateAppointment(
 	if isBusy {
 		return fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	appointment, err := NewAppointment(client, service, dateTimePeriod)
+	appointment, err := NewAppointment(customer, service, dateTimePeriod)
 	if err != nil {
 		return err
 	}

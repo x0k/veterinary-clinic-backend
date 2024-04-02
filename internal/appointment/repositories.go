@@ -19,8 +19,11 @@ type AppointmentRepository interface {
 	SaveAppointment(context.Context, *AppointmentAggregate) error
 }
 
-type ClientRepository interface {
-	Client(context.Context, ClientId) (ClientEntity, error)
+var ErrCustomerNotFound = errors.New("customer not found")
+var ErrCustomerLoadFailed = errors.New("customer load failed")
+
+type CustomerRepository interface {
+	Customer(context.Context, CustomerId) (CustomerEntity, error)
 }
 
 var ErrServiceLoadFailed = errors.New("service load failed")

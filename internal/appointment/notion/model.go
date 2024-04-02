@@ -10,28 +10,6 @@ import (
 )
 
 const (
-	ServiceTitle             = "Наименование"
-	ServiceDurationInMinutes = "Продолжительность в минутах"
-	ServiceDescription       = "Описание"
-	ServiceCost              = "Стоимость"
-)
-
-const (
-	RecordTitle          = "ФИО"
-	RecordService        = "Услуга"
-	RecordPhoneNumber    = "Телефон"
-	RecordEmail          = "Почта"
-	RecordDateTimePeriod = "Время записи"
-	RecordState          = "Статус"
-	RecordUserId         = "identity"
-)
-
-const (
-	BreakTitle  = "Наименование"
-	BreakPeriod = "Период"
-)
-
-const (
 	RecordAwaits            = "Ожидает"
 	RecordDone              = "Выполнено"
 	RecordNotAppear         = "Не пришел"
@@ -62,7 +40,14 @@ func RecordStatus(record appointment.RecordEntity) (string, error) {
 	}
 }
 
-func Service(page notionapi.Page) appointment.ServiceEntity {
+const (
+	ServiceTitle             = "Наименование"
+	ServiceDurationInMinutes = "Продолжительность в минутах"
+	ServiceDescription       = "Описание"
+	ServiceCost              = "Стоимость"
+)
+
+func NotionToService(page notionapi.Page) appointment.ServiceEntity {
 	return appointment.NewService(
 		appointment.NewServiceId(string(page.ID)),
 		notion.Title(page.Properties, ServiceTitle),
@@ -73,3 +58,32 @@ func Service(page notionapi.Page) appointment.ServiceEntity {
 		notion.Text(page.Properties, ServiceCost),
 	)
 }
+
+const (
+	CustomerTitle       = "ФИО"
+	CustomerEmail       = "Почта"
+	CustomerPhoneNumber = "Телефон"
+	CustomerUserId      = "identity"
+)
+
+func NotionToCustomer(page notionapi.Page) appointment.CustomerEntity {
+	return appointment.NewCustomer(
+		appointment.NewCustomerId(string(page.ID)),
+		notion.Title(page.Properties, CustomerTitle),
+		notion.Phone(page.Properties, CustomerPhoneNumber),
+		notion.Email(page.Properties, CustomerEmail),
+	)
+}
+
+const (
+	RecordTitle          = "Сводка"
+	RecordDateTimePeriod = "Время записи"
+	RecordState          = "Статус"
+	RecordCustomer       = "Клиент"
+	RecordService        = "Услуга"
+)
+
+const (
+	BreakTitle  = "Наименование"
+	BreakPeriod = "Период"
+)

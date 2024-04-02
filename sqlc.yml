@@ -7,3 +7,9 @@ sql:
       go:
         package: "db"
         out: "internal/lib/db"
+    database:
+      uri: "storage/storage.db"
+    rules:
+      - sqlc/db-prepare
+    analyzer:
+      database: false

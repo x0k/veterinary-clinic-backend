@@ -34,11 +34,15 @@ type RecordEntity struct {
 	Status         RecordStatus
 	IsArchived     bool
 	DateTimePeriod entity.DateTimePeriod
+	CustomerId     CustomerId
+	ServiceId      ServiceId
 }
 
 func NewRecord(
 	id RecordId,
 	dateTimePeriod entity.DateTimePeriod,
+	customerId CustomerId,
+	serviceId ServiceId,
 ) (RecordEntity, error) {
 	if !entity.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
@@ -48,11 +52,9 @@ func NewRecord(
 		Status:         RecordAwaits,
 		IsArchived:     false,
 		DateTimePeriod: dateTimePeriod,
+		CustomerId:     customerId,
+		ServiceId:      serviceId,
 	}, nil
-}
-
-func (r *RecordEntity) SetId(id RecordId) {
-	r.Id = id
 }
 
 func (r *RecordEntity) Archive() error {

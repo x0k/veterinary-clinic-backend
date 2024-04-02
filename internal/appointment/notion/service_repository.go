@@ -36,7 +36,7 @@ func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.Service
 		}
 		services := make([]appointment.ServiceEntity, 0, len(r.Results))
 		for _, result := range r.Results {
-			services = append(services, Service(result))
+			services = append(services, NotionToService(result))
 		}
 		return services, nil
 	})
@@ -50,5 +50,5 @@ func (s *ServiceRepository) Service(ctx context.Context, serviceId entity.Servic
 	if res == nil {
 		return appointment.ServiceEntity{}, appointment.ErrServiceNotFound
 	}
-	return Service(*res), nil
+	return NotionToService(*res), nil
 }

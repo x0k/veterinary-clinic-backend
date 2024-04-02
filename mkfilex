@@ -21,16 +21,6 @@ env: run prof migrate
 all:
     air -- --config config/config.yml
 
-g:
-    sqlc generate
-
-# Migration create
-mc:
-    migrate create -ext sql -dir $STORAGE_MIGRATIONS_PATH -seq $1
-
-migrate:
-    CGO_ENABLED=1 go run -tags migrate cmd/migrate/main.go
-
 build:
     CGO_ENABLED=1 go build -tags migrate -o bin/app cmd/app/main.go
 
@@ -45,3 +35,19 @@ test:
 
 lint:
     golangci-lint run ./...
+
+## DATABASE
+
+db:
+    sqlc generate
+
+# Database queries lint
+qlint:
+    sqlc vet
+
+# Migration create
+mc:
+    migrate create -ext sql -dir $STORAGE_MIGRATIONS_PATH -seq $1
+
+migrate:
+    CGO_ENABLED=1 go run -tags migrate cmd/migrate/main.go
