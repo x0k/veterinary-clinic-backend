@@ -18,6 +18,5 @@ func init() {
 }
 
 func main() {
-	cfg := config.MustLoad(config_path)
-	app.Run(cfg)
+	app.Run(config.MustLoad(config_path))
 }
