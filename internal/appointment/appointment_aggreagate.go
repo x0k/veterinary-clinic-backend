@@ -1,51 +1,53 @@
 package appointment
 
 import (
+	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type Appointment struct {
-	record  Record
-	client  Client
-	service Service
+type AppointmentAggregate struct {
+	record  RecordEntity
+	client  ClientEntity
+	service ServiceEntity
 }
 
 func NewAppointment(
-	client Client,
-	service Service,
+	client ClientEntity,
+	service ServiceEntity,
 	dateTimePeriod entity.DateTimePeriod,
-) (*Appointment, error) {
-	record, err := NewRecord(dateTimePeriod)
+) (*AppointmentAggregate, error) {
+	recordId := NewRecordId(uuid.New().String())
+	record, err := NewRecord(recordId, dateTimePeriod)
 	if err != nil {
 		return nil, err
 	}
-	return &Appointment{
+	return &AppointmentAggregate{
 		record:  record,
 		service: service,
 		client:  client,
 	}, nil
 }
 
-func (r *Appointment) Id() RecordId {
+func (r *AppointmentAggregate) Id() RecordId {
 	return r.record.Id
 }
 
-func (r *Appointment) SetId(id RecordId) {
+func (r *AppointmentAggregate) SetId(id RecordId) {
 	r.record.SetId(id)
 }
 
-func (r *Appointment) Status() RecordStatus {
+func (r *AppointmentAggregate) Status() RecordStatus {
 	return r.record.Status
 }
 
-func (r *Appointment) Record() Record {
+func (r *AppointmentAggregate) Record() RecordEntity {
 	return r.record
 }
 
-func (r *Appointment) Client() Client {
+func (r *AppointmentAggregate) Client() ClientEntity {
 	return r.client
 }
 
-func (r *Appointment) Service() Service {
+func (r *AppointmentAggregate) Service() ServiceEntity {
 	return r.service
 }

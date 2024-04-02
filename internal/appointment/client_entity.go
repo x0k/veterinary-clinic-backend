@@ -19,7 +19,7 @@ func (c ClientId) String() string {
 	return string(c)
 }
 
-type Client struct {
+type ClientEntity struct {
 	Id          ClientId
 	Name        string
 	PhoneNumber string
@@ -30,8 +30,8 @@ func NewClient(
 	name string,
 	phoneNumber string,
 	email string,
-) *Client {
-	return &Client{
+) *ClientEntity {
+	return &ClientEntity{
 		Id:          ClientId(uuid.New().String()),
 		Name:        name,
 		PhoneNumber: phoneNumber,

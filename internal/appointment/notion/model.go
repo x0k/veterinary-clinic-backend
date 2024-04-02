@@ -3,7 +3,10 @@ package appointment_notion
 import (
 	"fmt"
 
+	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
 
 const (
@@ -36,7 +39,7 @@ const (
 	RecordNotAppearArchived = "Архив не пришел"
 )
 
-func RecordStatus(record appointment.Record) (string, error) {
+func RecordStatus(record appointment.RecordEntity) (string, error) {
 	if record.IsArchived {
 		switch record.Status {
 		case appointment.RecordDone:
@@ -57,4 +60,16 @@ func RecordStatus(record appointment.Record) (string, error) {
 	default:
 		return "", fmt.Errorf("%w: %s", appointment.ErrUnknownRecordStatus, record.Status)
 	}
+}
+
+func Service(page notionapi.Page) appointment.ServiceEntity {
+	return appointment.NewService(
+		appointment.NewServiceId(string(page.ID)),
+		notion.Title(page.Properties, ServiceTitle),
+		entity.DurationInMinutes(
+			notion.Number(page.Properties, ServiceDurationInMinutes),
+		),
+		notion.Text(page.Properties, ServiceDescription),
+		notion.Text(page.Properties, ServiceCost),
+	)
 }

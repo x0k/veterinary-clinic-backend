@@ -3,46 +3,36 @@ package appointment_notion
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"slices"
 	"sync"
-	"time"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
 
-type Appointment struct {
-	log                    *logger.Logger
+type AppointmentRepository struct {
 	periodsMu              sync.Mutex
 	periods                []entity.DateTimePeriod
 	client                 *notionapi.Client
-	servicesCache          *containers.Expiable[[]appointment.Service]
 	appointmentsDatabaseId notionapi.DatabaseID
 	servicesDatabaseId     notionapi.DatabaseID
 }
 
 func NewAppointment(
-	log *logger.Logger,
 	client *notionapi.Client,
 	appointmentsDatabaseId notionapi.DatabaseID,
 	servicesDatabaseId notionapi.DatabaseID,
-) *Appointment {
-	return &Appointment{
-		log:                    log.With(slog.String("component", "appointment_notion.Appointment")),
+) *AppointmentRepository {
+	return &AppointmentRepository{
 		client:                 client,
 		appointmentsDatabaseId: appointmentsDatabaseId,
 		servicesDatabaseId:     servicesDatabaseId,
-		servicesCache:          containers.NewExpiable[[]appointment.Service](time.Hour),
 	}
 }
 
-func (r *Appointment) LockPeriod(ctx context.Context, period entity.DateTimePeriod) error {
+func (r *AppointmentRepository) LockPeriod(ctx context.Context, period entity.DateTimePeriod) error {
 	r.periodsMu.Lock()
 	defer r.periodsMu.Unlock()
 	for _, p := range r.periods {
@@ -56,7 +46,7 @@ func (r *Appointment) LockPeriod(ctx context.Context, period entity.DateTimePeri
 	return nil
 }
 
-func (r *Appointment) UnLockPeriod(ctx context.Context, period entity.DateTimePeriod) error {
+func (r *AppointmentRepository) UnLockPeriod(ctx context.Context, period entity.DateTimePeriod) error {
 	r.periodsMu.Lock()
 	defer r.periodsMu.Unlock()
 	index := slices.Index(r.periods, period)
@@ -67,7 +57,7 @@ func (r *Appointment) UnLockPeriod(ctx context.Context, period entity.DateTimePe
 	return nil
 }
 
-func (r *Appointment) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
+func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
 	after := notionapi.Date(entity.DateTimeToGoTime(period.Start))
 	before := notionapi.Date(entity.DateTimeToGoTime(period.End))
 	res, err := r.client.Database.Query(ctx, r.appointmentsDatabaseId, &notionapi.DatabaseQueryRequest{
@@ -93,13 +83,12 @@ func (r *Appointment) IsAppointmentPeriodBusy(ctx context.Context, period entity
 		},
 	})
 	if err != nil {
-		r.log.Error(ctx, "failed to query database", sl.Err(err))
-		return false, appointment.ErrAppointmentsLoadFailed
+		return false, fmt.Errorf("%w: %s", appointment.ErrAppointmentsLoadFailed, err)
 	}
 	return len(res.Results) > 0, nil
 }
 
-func (r *Appointment) SaveAppointment(ctx context.Context, app *appointment.Appointment) error {
+func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
 	start := notionapi.Date(entity.DateTimeToGoTime(app.Record().DateTimePeriod.Start))
 	end := notionapi.Date(entity.DateTimeToGoTime(app.Record().DateTimePeriod.End))
 	status, err := RecordStatus(app.Record())
@@ -154,8 +143,7 @@ func (r *Appointment) SaveAppointment(ctx context.Context, app *appointment.Appo
 		Properties: properties,
 	})
 	if err != nil {
-		r.log.Error(ctx, "failed to create page", sl.Err(err))
-		return appointment.ErrAppointmentSaveFailed
+		return fmt.Errorf("%w: %s", appointment.ErrAppointmentSaveFailed, err.Error())
 	}
 	app.SetId(appointment.NewRecordId(string(res.ID)))
 	return nil

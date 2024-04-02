@@ -16,13 +16,16 @@ type AppointmentRepository interface {
 	LockPeriod(context.Context, entity.DateTimePeriod) error
 	UnLockPeriod(context.Context, entity.DateTimePeriod) error
 	IsAppointmentPeriodBusy(context.Context, entity.DateTimePeriod) (bool, error)
-	SaveAppointment(context.Context, *Appointment) error
+	SaveAppointment(context.Context, *AppointmentAggregate) error
 }
 
 type ClientRepository interface {
-	GetClient(context.Context, ClientId) (Client, error)
+	Client(context.Context, ClientId) (ClientEntity, error)
 }
 
+var ErrServiceLoadFailed = errors.New("service load failed")
+var ErrServiceNotFound = errors.New("service not found")
+
 type ServiceRepository interface {
-	GetService(context.Context, ServiceId) (Service, error)
+	Service(context.Context, ServiceId) (ServiceEntity, error)
 }

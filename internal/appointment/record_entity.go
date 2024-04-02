@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
@@ -30,30 +29,33 @@ func (r RecordId) String() string {
 	return string(r)
 }
 
-type Record struct {
+type RecordEntity struct {
 	Id             RecordId
 	Status         RecordStatus
 	IsArchived     bool
 	DateTimePeriod entity.DateTimePeriod
 }
 
-func NewRecord(dateTimePeriod entity.DateTimePeriod) (Record, error) {
+func NewRecord(
+	id RecordId,
+	dateTimePeriod entity.DateTimePeriod,
+) (RecordEntity, error) {
 	if !entity.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
-		return Record{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
+		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
 	}
-	return Record{
-		Id:             RecordId(uuid.New().String()),
+	return RecordEntity{
+		Id:             id,
 		Status:         RecordAwaits,
 		IsArchived:     false,
 		DateTimePeriod: dateTimePeriod,
 	}, nil
 }
 
-func (r *Record) SetId(id RecordId) {
+func (r *RecordEntity) SetId(id RecordId) {
 	r.Id = id
 }
 
-func (r *Record) Archive() error {
+func (r *RecordEntity) Archive() error {
 	if r.IsArchived {
 		return nil
 	}
@@ -64,7 +66,7 @@ func (r *Record) Archive() error {
 	return nil
 }
 
-func (r *Record) SetStatus(status RecordStatus) error {
+func (r *RecordEntity) SetStatus(status RecordStatus) error {
 	if r.IsArchived {
 		return ErrRecordIsArchived
 	}
@@ -72,7 +74,7 @@ func (r *Record) SetStatus(status RecordStatus) error {
 	return nil
 }
 
-func (r *Record) SetDateTimePeriod(dateTimePeriod entity.DateTimePeriod) error {
+func (r *RecordEntity) SetDateTimePeriod(dateTimePeriod entity.DateTimePeriod) error {
 	if !entity.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
 		return fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
 	}

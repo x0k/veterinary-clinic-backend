@@ -13,20 +13,20 @@ import (
 
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 
-type AppointmentService struct {
+type MakeAppointmentUseCase struct {
 	log          *logger.Logger
 	appointments AppointmentRepository
 	clients      ClientRepository
 	services     ServiceRepository
 }
 
-func NewAppointmentService(
+func NewMakeAppointmentUseCase(
 	log *logger.Logger,
 	appointments AppointmentRepository,
 	clients ClientRepository,
 	services ServiceRepository,
-) *AppointmentService {
-	return &AppointmentService{
+) *MakeAppointmentUseCase {
+	return &MakeAppointmentUseCase{
 		log:          log.With(slog.String("component", "appointment.AppointmentService")),
 		appointments: appointments,
 		clients:      clients,
@@ -34,7 +34,7 @@ func NewAppointmentService(
 	}
 }
 
-func (s *AppointmentService) CreateAppointment(
+func (s *MakeAppointmentUseCase) CreateAppointment(
 	ctx context.Context,
 	clientId ClientId,
 	serviceId ServiceId,
@@ -46,11 +46,11 @@ func (s *AppointmentService) CreateAppointment(
 		slog.String("service_id", serviceId.String()),
 		slog.String("date_time_period", dateTimePeriod.String()),
 	)
-	client, err := s.clients.GetClient(ctx, clientId)
+	client, err := s.clients.Client(ctx, clientId)
 	if err != nil {
 		return err
 	}
-	service, err := s.services.GetService(ctx, serviceId)
+	service, err := s.services.Service(ctx, serviceId)
 	if err != nil {
 		return err
 	}
