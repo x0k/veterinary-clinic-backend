@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
@@ -39,7 +40,6 @@ type RecordEntity struct {
 }
 
 func NewRecord(
-	id RecordId,
 	dateTimePeriod entity.DateTimePeriod,
 	customerId CustomerId,
 	serviceId ServiceId,
@@ -48,13 +48,17 @@ func NewRecord(
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
 	}
 	return RecordEntity{
-		Id:             id,
+		Id:             NewRecordId(uuid.NewString()),
 		Status:         RecordAwaits,
 		IsArchived:     false,
 		DateTimePeriod: dateTimePeriod,
 		CustomerId:     customerId,
 		ServiceId:      serviceId,
 	}, nil
+}
+
+func (r *RecordEntity) SetId(id RecordId) {
+	r.Id = id
 }
 
 func (r *RecordEntity) Archive() error {

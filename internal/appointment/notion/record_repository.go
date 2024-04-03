@@ -3,8 +3,6 @@ package appointment_notion
 import (
 	"context"
 	"fmt"
-	"slices"
-	"sync"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
@@ -12,52 +10,21 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
 
-type AppointmentRepository struct {
-	periodsMu              sync.Mutex
-	periods                []entity.DateTimePeriod
+type RecordRepository struct {
 	client                 *notionapi.Client
 	appointmentsDatabaseId notionapi.DatabaseID
-	servicesDatabaseId     notionapi.DatabaseID
 }
 
 func NewAppointment(
 	client *notionapi.Client,
 	appointmentsDatabaseId notionapi.DatabaseID,
-	servicesDatabaseId notionapi.DatabaseID,
-) *AppointmentRepository {
-	return &AppointmentRepository{
+) *RecordRepository {
+	return &RecordRepository{
 		client:                 client,
 		appointmentsDatabaseId: appointmentsDatabaseId,
-		servicesDatabaseId:     servicesDatabaseId,
 	}
 }
-
-func (r *AppointmentRepository) LockPeriod(ctx context.Context, period entity.DateTimePeriod) error {
-	r.periodsMu.Lock()
-	defer r.periodsMu.Unlock()
-	for _, p := range r.periods {
-		if entity.DateTimePeriodApi.IsValidPeriod(
-			entity.DateTimePeriodApi.IntersectPeriods(p, period),
-		) {
-			return fmt.Errorf("%w: %s", appointment.ErrPeriodIsLocked, period)
-		}
-	}
-	r.periods = append(r.periods, period)
-	return nil
-}
-
-func (r *AppointmentRepository) UnLockPeriod(ctx context.Context, period entity.DateTimePeriod) error {
-	r.periodsMu.Lock()
-	defer r.periodsMu.Unlock()
-	index := slices.Index(r.periods, period)
-	if index == -1 {
-		return nil
-	}
-	r.periods = slices.Delete(r.periods, index, index+1)
-	return nil
-}
-
-func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
+func (r *RecordRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
 	after := notionapi.Date(entity.DateTimeToGoTime(period.Start))
 	before := notionapi.Date(entity.DateTimeToGoTime(period.End))
 	res, err := r.client.Database.Query(ctx, r.appointmentsDatabaseId, &notionapi.DatabaseQueryRequest{
@@ -83,22 +50,22 @@ func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, per
 		},
 	})
 	if err != nil {
-		return false, fmt.Errorf("%w: %s", appointment.ErrAppointmentsLoadFailed, err)
+		return false, fmt.Errorf("%w: %s", appointment.ErrBusyPeriodsLoadFailed, err)
 	}
 	return len(res.Results) > 0, nil
 }
 
-func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
-	start := notionapi.Date(entity.DateTimeToGoTime(app.Record().DateTimePeriod.Start))
-	end := notionapi.Date(entity.DateTimeToGoTime(app.Record().DateTimePeriod.End))
-	status, err := RecordStatus(app.Record())
+func (r *RecordRepository) SaveRecord(ctx context.Context, rec *appointment.RecordEntity) error {
+	start := notionapi.Date(entity.DateTimeToGoTime(rec.DateTimePeriod.Start))
+	end := notionapi.Date(entity.DateTimeToGoTime(rec.DateTimePeriod.End))
+	status, err := RecordStatusToNotion(*rec)
 	if err != nil {
 		return err
 	}
 	properties := notionapi.Properties{
 		RecordTitle: notionapi.TitleProperty{
 			Type:  notionapi.PropertyTypeTitle,
-			Title: notion.ToRichText(app.Customer().Name),
+			Title: notion.ToRichText(rec.Customer().Name),
 		},
 		RecordDateTimePeriod: notionapi.DateProperty{
 			Type: notionapi.PropertyTypeDate,
@@ -117,7 +84,7 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
 				{
-					ID: notionapi.PageID(app.Customer().Id.String()),
+					ID: notionapi.PageID(rec.Customer().Id.String()),
 				},
 			},
 		},
@@ -125,7 +92,7 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
 				{
-					ID: notionapi.PageID(app.Service().Id.String()),
+					ID: notionapi.PageID(rec.Service().Id.String()),
 				},
 			},
 		},
@@ -139,6 +106,6 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 	if err != nil {
 		return fmt.Errorf("%w: %s", appointment.ErrAppointmentSaveFailed, err.Error())
 	}
-	app.SetId(appointment.NewRecordId(string(res.ID)))
+	rec.SetId(appointment.NewRecordId(string(res.ID)))
 	return nil
 }

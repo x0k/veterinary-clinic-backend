@@ -7,16 +7,12 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-var ErrPeriodIsLocked = errors.New("period is locked")
-var ErrAppointmentsLoadFailed = errors.New("appointments load failed")
 var ErrUnknownRecordStatus = errors.New("unknown record status")
-var ErrAppointmentSaveFailed = errors.New("appointment save failed")
+var ErrBusyPeriodsLoadFailed = errors.New("busy periods load failed")
 
-type AppointmentRepository interface {
-	LockPeriod(context.Context, entity.DateTimePeriod) error
-	UnLockPeriod(context.Context, entity.DateTimePeriod) error
+type RecordRepository interface {
 	IsAppointmentPeriodBusy(context.Context, entity.DateTimePeriod) (bool, error)
-	SaveAppointment(context.Context, *AppointmentAggregate) error
+	SaveRecord(context.Context, *RecordEntity) error
 }
 
 var ErrCustomerNotFound = errors.New("customer not found")

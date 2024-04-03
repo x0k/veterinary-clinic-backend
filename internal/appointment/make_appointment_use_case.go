@@ -2,7 +2,6 @@ package appointment
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -10,8 +9,6 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
-
-var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 
 type MakeAppointmentUseCase struct {
 	log          *logger.Logger

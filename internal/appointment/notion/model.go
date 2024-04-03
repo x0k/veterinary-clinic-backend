@@ -17,7 +17,7 @@ const (
 	RecordNotAppearArchived = "Архив не пришел"
 )
 
-func RecordStatus(record appointment.RecordEntity) (string, error) {
+func RecordStatusToNotion(record appointment.RecordEntity) (string, error) {
 	if record.IsArchived {
 		switch record.Status {
 		case appointment.RecordDone:
