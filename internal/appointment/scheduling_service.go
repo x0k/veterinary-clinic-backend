@@ -65,9 +65,9 @@ func (s *SchedulingService) MakeAppointment(
 	customer CustomerEntity,
 	service ServiceEntity,
 	dateTimePeriod entity.DateTimePeriod,
-) error {
+) (*AppointmentAggregate, error) {
 	if err := s.lockPeriod(dateTimePeriod); err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		if err := s.unLockPeriod(dateTimePeriod); err != nil {
@@ -76,15 +76,18 @@ func (s *SchedulingService) MakeAppointment(
 	}()
 	isBusy, err := s.appointments.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if isBusy {
-		return fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
+		return nil, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
 	record, err := NewRecord(dateTimePeriod, customer.Id, service.Id, now)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	appointment := NewAppointmentAggregate(record, service, customer)
-	return s.appointments.SaveAppointment(ctx, appointment)
+	if err := s.appointments.CreateAppointment(ctx, appointment); err != nil {
+		return nil, err
+	}
+	return appointment, nil
 }

@@ -31,14 +31,14 @@ func (s *MakeAppointmentUseCase) CreateAppointment(
 	customerId CustomerId,
 	serviceId ServiceId,
 	dateTimePeriod entity.DateTimePeriod,
-) error {
+) (*AppointmentAggregate, error) {
 	customer, err := s.customers.Customer(ctx, customerId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	service, err := s.services.Service(ctx, serviceId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return s.scheduling.MakeAppointment(ctx, now, customer, service, dateTimePeriod)
 }

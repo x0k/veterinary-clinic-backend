@@ -8,7 +8,7 @@ import (
 
 type AppointmentRepository interface {
 	IsAppointmentPeriodBusy(context.Context, entity.DateTimePeriod) (bool, error)
-	SaveAppointment(context.Context, *AppointmentAggregate) error
+	CreateAppointment(context.Context, *AppointmentAggregate) error
 }
 
 type CustomerRepository interface {
