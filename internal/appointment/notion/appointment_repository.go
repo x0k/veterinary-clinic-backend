@@ -10,24 +10,26 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
 
-type RecordRepository struct {
-	client                 *notionapi.Client
-	appointmentsDatabaseId notionapi.DatabaseID
+type AppointmentRepository struct {
+	client            *notionapi.Client
+	recordsDatabaseId notionapi.DatabaseID
 }
 
 func NewAppointment(
 	client *notionapi.Client,
-	appointmentsDatabaseId notionapi.DatabaseID,
-) *RecordRepository {
-	return &RecordRepository{
-		client:                 client,
-		appointmentsDatabaseId: appointmentsDatabaseId,
+	recordsDatabaseId notionapi.DatabaseID,
+) *AppointmentRepository {
+	return &AppointmentRepository{
+		client:            client,
+		recordsDatabaseId: recordsDatabaseId,
 	}
 }
-func (r *RecordRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
+
+func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
+	const op = "appointment_notion.AppointmentRepository.IsAppointmentPeriodBusy"
 	after := notionapi.Date(entity.DateTimeToGoTime(period.Start))
 	before := notionapi.Date(entity.DateTimeToGoTime(period.End))
-	res, err := r.client.Database.Query(ctx, r.appointmentsDatabaseId, &notionapi.DatabaseQueryRequest{
+	res, err := r.client.Database.Query(ctx, r.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.AndCompoundFilter{
 			notionapi.PropertyFilter{
 				Property: RecordDateTimePeriod,
@@ -50,22 +52,24 @@ func (r *RecordRepository) IsAppointmentPeriodBusy(ctx context.Context, period e
 		},
 	})
 	if err != nil {
-		return false, fmt.Errorf("%w: %s", appointment.ErrBusyPeriodsLoadFailed, err)
+		return false, fmt.Errorf("%s: %w", op, err)
 	}
 	return len(res.Results) > 0, nil
 }
 
-func (r *RecordRepository) SaveRecord(ctx context.Context, rec *appointment.RecordEntity) error {
-	start := notionapi.Date(entity.DateTimeToGoTime(rec.DateTimePeriod.Start))
-	end := notionapi.Date(entity.DateTimeToGoTime(rec.DateTimePeriod.End))
-	status, err := RecordStatusToNotion(*rec)
+func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
+	const op = "appointment_notion.AppointmentRepository.SaveAppointment"
+	period := app.DateTimePeriod()
+	start := notionapi.Date(entity.DateTimeToGoTime(period.Start))
+	end := notionapi.Date(entity.DateTimeToGoTime(period.End))
+	status, err := RecordStatusToNotion(app.State(), app.IsArchived())
 	if err != nil {
 		return err
 	}
 	properties := notionapi.Properties{
 		RecordTitle: notionapi.TitleProperty{
 			Type:  notionapi.PropertyTypeTitle,
-			Title: notion.ToRichText(rec.Customer().Name),
+			Title: notion.ToRichText(app.Title()),
 		},
 		RecordDateTimePeriod: notionapi.DateProperty{
 			Type: notionapi.PropertyTypeDate,
@@ -84,7 +88,7 @@ func (r *RecordRepository) SaveRecord(ctx context.Context, rec *appointment.Reco
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
 				{
-					ID: notionapi.PageID(rec.Customer().Id.String()),
+					ID: notionapi.PageID(app.CustomerId().String()),
 				},
 			},
 		},
@@ -92,20 +96,20 @@ func (r *RecordRepository) SaveRecord(ctx context.Context, rec *appointment.Reco
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
 				{
-					ID: notionapi.PageID(rec.Service().Id.String()),
+					ID: notionapi.PageID(app.ServiceId().String()),
 				},
 			},
 		},
 	}
 	res, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
 		Parent: notionapi.Parent{
-			DatabaseID: r.appointmentsDatabaseId,
+			DatabaseID: r.recordsDatabaseId,
 		},
 		Properties: properties,
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %s", appointment.ErrAppointmentSaveFailed, err.Error())
+		return fmt.Errorf("%s: %w", op, err)
 	}
-	rec.SetId(appointment.NewRecordId(string(res.ID)))
+	app.SetId(appointment.NewRecordId(string(res.ID)))
 	return nil
 }

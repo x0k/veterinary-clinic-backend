@@ -29,10 +29,11 @@ func NewService(
 }
 
 func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.ServiceEntity, error) {
+	const op = "appointment_notion.ServiceRepository.Services"
 	return s.servicesCache.Load(func() ([]appointment.ServiceEntity, error) {
 		r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 		services := make([]appointment.ServiceEntity, 0, len(r.Results))
 		for _, result := range r.Results {
@@ -43,12 +44,13 @@ func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.Service
 }
 
 func (s *ServiceRepository) Service(ctx context.Context, serviceId entity.ServiceId) (appointment.ServiceEntity, error) {
+	const op = "appointment_notion.ServiceRepository.Service"
 	res, err := s.client.Page.Get(ctx, notionapi.PageID(serviceId))
 	if err != nil {
-		return appointment.ServiceEntity{}, fmt.Errorf("%w: %s", appointment.ErrServiceLoadFailed, err.Error())
+		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, err)
 	}
 	if res == nil {
-		return appointment.ServiceEntity{}, appointment.ErrServiceNotFound
+		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, entity.ErrNotFound)
 	}
 	return NotionToService(*res), nil
 }

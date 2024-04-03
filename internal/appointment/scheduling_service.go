@@ -17,19 +17,19 @@ var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 
 type SchedulingService struct {
-	log       *logger.Logger
-	periodsMu sync.Mutex
-	periods   []entity.DateTimePeriod
-	records   RecordRepository
+	log          *logger.Logger
+	periodsMu    sync.Mutex
+	periods      []entity.DateTimePeriod
+	appointments AppointmentRepository
 }
 
 func NewSchedulingService(
 	log *logger.Logger,
-	records RecordRepository,
+	appointments AppointmentRepository,
 ) *SchedulingService {
 	return &SchedulingService{
-		log:     log.With(slog.String("component", "appointment.SchedulingService")),
-		records: records,
+		log:          log.With(slog.String("component", "appointment.SchedulingService")),
+		appointments: appointments,
 	}
 }
 
@@ -60,8 +60,8 @@ func (s *SchedulingService) unLockPeriod(period entity.DateTimePeriod) error {
 
 func (s *SchedulingService) MakeAppointment(
 	ctx context.Context,
-	customerId CustomerId,
-	serviceId ServiceId,
+	customer CustomerEntity,
+	service ServiceEntity,
 	dateTimePeriod entity.DateTimePeriod,
 ) error {
 	if err := s.lockPeriod(dateTimePeriod); err != nil {
@@ -72,16 +72,17 @@ func (s *SchedulingService) MakeAppointment(
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()
-	isBusy, err := s.records.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
+	isBusy, err := s.appointments.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
 	if err != nil {
 		return err
 	}
 	if isBusy {
 		return fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	record, err := NewRecord(dateTimePeriod, customerId, serviceId)
+	record, err := NewRecord(dateTimePeriod, customer.Id, service.Id)
 	if err != nil {
 		return err
 	}
-	return s.records.SaveRecord(ctx, &record)
+	appointment := NewAppointmentAggregate(record, service, customer)
+	return s.appointments.SaveAppointment(ctx, appointment)
 }

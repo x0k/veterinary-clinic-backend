@@ -1,6 +1,7 @@
 package appointment_notion
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jomei/notionapi"
@@ -8,6 +9,8 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
+
+var ErrUnknownRecordStatus = errors.New("unknown record status")
 
 const (
 	RecordAwaits            = "Ожидает"
@@ -17,18 +20,18 @@ const (
 	RecordNotAppearArchived = "Архив не пришел"
 )
 
-func RecordStatusToNotion(record appointment.RecordEntity) (string, error) {
-	if record.IsArchived {
-		switch record.Status {
+func RecordStatusToNotion(status appointment.RecordStatus, isArchived bool) (string, error) {
+	if isArchived {
+		switch status {
 		case appointment.RecordDone:
 			return RecordDoneArchived, nil
 		case appointment.RecordNotAppear:
 			return RecordNotAppearArchived, nil
 		default:
-			return "", fmt.Errorf("%w: %s", appointment.ErrUnknownRecordStatus, record.Status)
+			return "", fmt.Errorf("%w: %s", ErrUnknownRecordStatus, status)
 		}
 	}
-	switch record.Status {
+	switch status {
 	case appointment.RecordAwaits:
 		return RecordAwaits, nil
 	case appointment.RecordDone:
@@ -36,7 +39,7 @@ func RecordStatusToNotion(record appointment.RecordEntity) (string, error) {
 	case appointment.RecordNotAppear:
 		return RecordNotAppear, nil
 	default:
-		return "", fmt.Errorf("%w: %s", appointment.ErrUnknownRecordStatus, record.Status)
+		return "", fmt.Errorf("%w: %s", ErrUnknownRecordStatus, status)
 	}
 }
 
