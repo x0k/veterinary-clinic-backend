@@ -2,9 +2,9 @@ package appointment
 
 import (
 	"context"
+	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 )
 
 type MakeAppointmentUseCase struct {
@@ -14,7 +14,6 @@ type MakeAppointmentUseCase struct {
 }
 
 func NewMakeAppointmentUseCase(
-	log *logger.Logger,
 	appointments *SchedulingService,
 	customers CustomerRepository,
 	services ServiceRepository,
@@ -28,6 +27,7 @@ func NewMakeAppointmentUseCase(
 
 func (s *MakeAppointmentUseCase) CreateAppointment(
 	ctx context.Context,
+	now time.Time,
 	customerId CustomerId,
 	serviceId ServiceId,
 	dateTimePeriod entity.DateTimePeriod,
@@ -40,5 +40,5 @@ func (s *MakeAppointmentUseCase) CreateAppointment(
 	if err != nil {
 		return err
 	}
-	return s.scheduling.MakeAppointment(ctx, customer, service, dateTimePeriod)
+	return s.scheduling.MakeAppointment(ctx, now, customer, service, dateTimePeriod)
 }

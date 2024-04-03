@@ -84,6 +84,7 @@ const (
 	RecordState          = "Статус"
 	RecordCustomer       = "Клиент"
 	RecordService        = "Услуга"
+	RecordCreatedAt      = "Дата записи"
 )
 
 const (

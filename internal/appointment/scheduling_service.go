@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
@@ -60,6 +61,7 @@ func (s *SchedulingService) unLockPeriod(period entity.DateTimePeriod) error {
 
 func (s *SchedulingService) MakeAppointment(
 	ctx context.Context,
+	now time.Time,
 	customer CustomerEntity,
 	service ServiceEntity,
 	dateTimePeriod entity.DateTimePeriod,
@@ -79,7 +81,7 @@ func (s *SchedulingService) MakeAppointment(
 	if isBusy {
 		return fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	record, err := NewRecord(dateTimePeriod, customer.Id, service.Id)
+	record, err := NewRecord(dateTimePeriod, customer.Id, service.Id, now)
 	if err != nil {
 		return err
 	}

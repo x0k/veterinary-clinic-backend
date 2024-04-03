@@ -3,6 +3,7 @@ package appointment
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
@@ -37,12 +38,14 @@ type RecordEntity struct {
 	DateTimePeriod entity.DateTimePeriod
 	CustomerId     CustomerId
 	ServiceId      ServiceId
+	CreatedAt      time.Time
 }
 
 func NewRecord(
 	dateTimePeriod entity.DateTimePeriod,
 	customerId CustomerId,
 	serviceId ServiceId,
+	now time.Time,
 ) (RecordEntity, error) {
 	if !entity.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
@@ -54,6 +57,7 @@ func NewRecord(
 		DateTimePeriod: dateTimePeriod,
 		CustomerId:     customerId,
 		ServiceId:      serviceId,
+		CreatedAt:      now,
 	}, nil
 }
 

@@ -2,20 +2,28 @@ package appointment
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type CustomerIdentity string
+var ErrUnknownCustomerIdType = fmt.Errorf("unknown customer id type")
 
-func NewTelegramCustomerIdentity(id entity.TelegramUserId) CustomerIdentity {
-	return CustomerIdentity(fmt.Sprintf("tg-%d", id))
-}
+type CustomerIdType string
+
+const (
+	TelegramIdType CustomerIdType = "tg"
+	VkIdType       CustomerIdType = "vk"
+)
 
 type CustomerId string
 
 func NewCustomerId(id string) CustomerId {
 	return CustomerId(id)
+}
+
+func NewTelegramCustomerId(id entity.TelegramUserId) CustomerId {
+	return CustomerId(fmt.Sprintf("%s-%d", TelegramIdType, id))
 }
 
 func (c CustomerId) String() string {
@@ -41,4 +49,14 @@ func NewCustomer(
 		PhoneNumber: phoneNumber,
 		Email:       email,
 	}
+}
+
+func (c *CustomerEntity) IdType() (CustomerIdType, error) {
+	if strings.HasPrefix(c.Id.String(), string(TelegramIdType)) {
+		return TelegramIdType, nil
+	}
+	if strings.HasPrefix(c.Id.String(), string(VkIdType)) {
+		return VkIdType, nil
+	}
+	return "", ErrUnknownCustomerIdType
 }

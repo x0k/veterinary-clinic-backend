@@ -1,6 +1,11 @@
 package appointment
 
-import "github.com/x0k/veterinary-clinic-backend/internal/entity"
+import (
+	"fmt"
+	"time"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+)
 
 type AppointmentAggregate struct {
 	// Root Entity
@@ -21,8 +26,21 @@ func (a *AppointmentAggregate) SetId(recordId RecordId) {
 	a.record.SetId(recordId)
 }
 
-func (a *AppointmentAggregate) Title() string {
-	return ""
+func (a *AppointmentAggregate) Title() (string, error) {
+	idType, err := a.customer.IdType()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s, %s, %s",
+		a.service.Title,
+		a.record.CreatedAt.Format("02.01.06"),
+		idType,
+	), nil
+}
+
+func (a *AppointmentAggregate) CreatedAt() time.Time {
+	return a.record.CreatedAt
 }
 
 func (a *AppointmentAggregate) DateTimePeriod() entity.DateTimePeriod {
