@@ -6,15 +6,22 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type AppointmentRepository interface {
+type AppointmentPeriodChecker interface {
 	IsAppointmentPeriodBusy(context.Context, entity.DateTimePeriod) (bool, error)
+}
+
+type AppointmentCreator interface {
 	CreateAppointment(context.Context, *AppointmentAggregate) error
 }
 
-type CustomerRepository interface {
+type CustomerLoader interface {
 	Customer(context.Context, CustomerId) (CustomerEntity, error)
 }
 
-type ServiceRepository interface {
+type ServiceLoader interface {
 	Service(context.Context, ServiceId) (ServiceEntity, error)
+}
+
+type ServicesLoader interface {
+	Services(context.Context) ([]ServiceEntity, error)
 }

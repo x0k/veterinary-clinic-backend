@@ -9,14 +9,14 @@ import (
 
 type MakeAppointmentUseCase struct {
 	scheduling *SchedulingService
-	customers  CustomerRepository
-	services   ServiceRepository
+	customers  CustomerLoader
+	services   ServiceLoader
 }
 
 func NewMakeAppointmentUseCase(
 	appointments *SchedulingService,
-	customers CustomerRepository,
-	services ServiceRepository,
+	customers CustomerLoader,
+	services ServiceLoader,
 ) *MakeAppointmentUseCase {
 	return &MakeAppointmentUseCase{
 		scheduling: appointments,

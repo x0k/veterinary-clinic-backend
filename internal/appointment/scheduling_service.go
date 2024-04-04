@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
@@ -18,19 +19,21 @@ var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 
 type SchedulingService struct {
-	log          *logger.Logger
-	periodsMu    sync.Mutex
-	periods      []entity.DateTimePeriod
-	appointments AppointmentRepository
+	log                       *logger.Logger
+	periodsMu                 sync.Mutex
+	periods                   []entity.DateTimePeriod
+	appointmentPeriodsChecker AppointmentPeriodChecker
+	appointmentCreator        AppointmentCreator
 }
 
 func NewSchedulingService(
 	log *logger.Logger,
-	appointments AppointmentRepository,
+	appointmentPeriodChecker AppointmentPeriodChecker,
+	appointmentCreator AppointmentCreator,
 ) *SchedulingService {
 	return &SchedulingService{
-		log:          log.With(slog.String("component", "appointment.SchedulingService")),
-		appointments: appointments,
+		log:                       log.With(slog.String("component", "appointment.SchedulingService")),
+		appointmentPeriodsChecker: appointmentPeriodChecker,
 	}
 }
 
@@ -74,19 +77,27 @@ func (s *SchedulingService) MakeAppointment(
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()
-	isBusy, err := s.appointments.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
+	isBusy, err := s.appointmentPeriodsChecker.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
 	if err != nil {
 		return nil, err
 	}
 	if isBusy {
 		return nil, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	record, err := NewRecord(dateTimePeriod, customer.Id, service.Id, now)
+	record, err := NewRecord(
+		NewRecordId(uuid.NewString()),
+		RecordAwaits,
+		false,
+		dateTimePeriod,
+		customer.Id,
+		service.Id,
+		now,
+	)
 	if err != nil {
 		return nil, err
 	}
 	appointment := NewAppointmentAggregate(record, service, customer)
-	if err := s.appointments.CreateAppointment(ctx, appointment); err != nil {
+	if err := s.appointmentCreator.CreateAppointment(ctx, appointment); err != nil {
 		return nil, err
 	}
 	return appointment, nil

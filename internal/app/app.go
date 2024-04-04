@@ -18,7 +18,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/boot"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
@@ -39,7 +39,7 @@ func run(ctx context.Context, cfg *config.Config, log *logger.Logger) error {
 
 	log.Info(ctx, "starting application", slog.String("log_level", cfg.Logger.Level))
 
-	b := boot.New(log)
+	b := module.NewRoot(log)
 
 	calendarWebAppUrl, err := url.Parse(string(cfg.Telegram.CalendarWebAppUrl))
 	if err != nil {
