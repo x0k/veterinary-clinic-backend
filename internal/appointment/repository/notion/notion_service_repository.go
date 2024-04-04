@@ -28,6 +28,11 @@ func NewService(
 	}
 }
 
+func (s *ServiceRepository) Start(ctx context.Context) error {
+	s.servicesCache.Start(ctx)
+	return nil
+}
+
 func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.ServiceEntity, error) {
 	const op = "appointment_notion.ServiceRepository.Services"
 	return s.servicesCache.Load(func() ([]appointment.ServiceEntity, error) {

@@ -1,4 +1,4 @@
-package app_logger
+package app
 
 import (
 	"log"
@@ -27,7 +27,7 @@ type LoggerConfig struct {
 	HandlerType string `yaml:"handler_type" env:"LOGGER_HANDLER_TYPE" env-default:"text"`
 }
 
-func MustNew(cfg *LoggerConfig) *logger.Logger {
+func MustNewLogger(cfg *LoggerConfig) *logger.Logger {
 	var level slog.Leveler
 	switch cfg.Level {
 	case DebugLevel:

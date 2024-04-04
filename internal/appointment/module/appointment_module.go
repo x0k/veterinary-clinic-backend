@@ -14,14 +14,6 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type NotionConfig struct {
-	ServicesDatabaseId notionapi.DatabaseID `yaml:"services_database_id" env:"APPOINTMENT_NOTION_SERVICES_DATABASE_ID" env-required:"true"`
-}
-
-type AppointmentConfig struct {
-	Notion NotionConfig `yaml:"notion"`
-}
-
 func New(
 	cfg *AppointmentConfig,
 	log *logger.Logger,
@@ -36,6 +28,7 @@ func New(
 	)
 
 	module.Append(
+		servicesRepository,
 		infra.Starter(func(ctx context.Context) error {
 			if err := appointment_telegram_controller.UseServices(
 				ctx, bot,

@@ -9,7 +9,7 @@ env: run prof migrate
     then
         export TELEGRAM_TOKEN=$(cat ~/Sync/veterinary-clinic/telegram-token)
         export NOTION_TOKEN=$(cat ~/Sync/veterinary-clinic/notion-token)
-        export NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id)
+        export APPOINTMENT_NOTION_SERVICES_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-services-db-id)
         export NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id)
         export NOTION_BREAKS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-breaks-db-id)
         export NOTIFICATIONS_ADMIN_ID=$(cat ~/Sync/veterinary-clinic/notifications-admin-id)

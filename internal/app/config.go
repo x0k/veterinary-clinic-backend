@@ -10,7 +10,6 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 )
 
 type StorageConfig struct {
@@ -30,10 +29,7 @@ type MetricsConfig struct {
 }
 
 type NotionConfig struct {
-	Token              notionapi.Token      `yaml:"token" env:"NOTION_TOKEN" env-required:"true"`
-	ServicesDatabaseId notionapi.DatabaseID `yaml:"services_database_id" env:"NOTION_SERVICES_DATABASE_ID" env-required:"true"`
-	RecordsDatabaseId  notionapi.DatabaseID `yaml:"records_database_id" env:"NOTION_RECORDS_DATABASE_ID" env-required:"true"`
-	BreaksDatabaseId   notionapi.DatabaseID `yaml:"breaks_database_id" env:"NOTION_BREAKS_DATABASE_ID" env-required:"true"`
+	Token notionapi.Token `yaml:"token" env:"NOTION_TOKEN" env-required:"true"`
 }
 
 type TelegramConfig struct {
@@ -65,12 +61,12 @@ type Config struct {
 	Profiler ProfilerConfig `yaml:"profiler"`
 	Notion   NotionConfig   `yaml:"notion"`
 	Telegram TelegramConfig `yaml:"telegram"`
+	Logger   LoggerConfig   `yaml:"logger"`
 
-	Logger      app_logger.LoggerConfig              `yaml:"logger"`
 	Appointment appointment_module.AppointmentConfig `yaml:"appointment"`
 }
 
-func MustLoad(configPath string) *Config {
+func MustLoadConfig(configPath string) *Config {
 	cfg := &Config{}
 	var cfgErr error
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
