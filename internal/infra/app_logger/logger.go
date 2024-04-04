@@ -5,41 +5,58 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/config"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/handlers/slogpretty"
 )
 
-func MustNew(cfg *config.LoggerConfig) *logger.Logger {
+const (
+	DebugLevel = "debug"
+	InfoLevel  = "info"
+	WarnLevel  = "warn"
+	ErrorLevel = "error"
+)
+
+const (
+	TextHandler   = "text"
+	JSONHandler   = "json"
+	PrettyHandler = "pretty"
+)
+
+type LoggerConfig struct {
+	Level       string `yaml:"level" env:"LOGGER_LEVEL" env-default:"info"`
+	HandlerType string `yaml:"handler_type" env:"LOGGER_HANDLER_TYPE" env-default:"text"`
+}
+
+func MustNew(cfg *LoggerConfig) *logger.Logger {
 	var level slog.Leveler
 	switch cfg.Level {
-	case config.DebugLevel:
+	case DebugLevel:
 		level = slog.LevelDebug
-	case config.InfoLevel:
+	case InfoLevel:
 		level = slog.LevelInfo
-	case config.WarnLevel:
+	case WarnLevel:
 		level = slog.LevelWarn
-	case config.ErrorLevel:
+	case ErrorLevel:
 		level = slog.LevelError
 	default:
-		log.Fatalf("Unknown level: %s, expect %q, %q, %q or %q", cfg.Level, config.DebugLevel, config.InfoLevel, config.WarnLevel, config.ErrorLevel)
+		log.Fatalf("Unknown level: %s, expect %q, %q, %q or %q", cfg.Level, DebugLevel, InfoLevel, WarnLevel, ErrorLevel)
 	}
 	options := &slog.HandlerOptions{
 		Level: level,
 	}
 	var handler slog.Handler
 	switch cfg.HandlerType {
-	case config.TextHandler:
+	case TextHandler:
 		handler = slog.NewTextHandler(os.Stdout, options)
-	case config.JSONHandler:
+	case JSONHandler:
 		handler = slog.NewJSONHandler(os.Stdout, options)
-	case config.PrettyHandler:
+	case PrettyHandler:
 		otps := &slogpretty.PrettyHandlerOptions{
 			SlogOpts: options,
 		}
 		handler = otps.NewPrettyHandler(os.Stdout)
 	default:
-		log.Fatalf("Unknown handler type: %s, expect %q or %q", cfg.HandlerType, config.TextHandler, config.JSONHandler)
+		log.Fatalf("Unknown handler type: %s, expect %q or %q", cfg.HandlerType, TextHandler, JSONHandler)
 	}
 	return logger.New(slog.New(handler))
 }

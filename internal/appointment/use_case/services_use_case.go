@@ -1,4 +1,4 @@
-package appointment
+package appointment_use_case
 
 import "context"
 

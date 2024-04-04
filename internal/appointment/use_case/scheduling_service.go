@@ -1,4 +1,4 @@
-package appointment
+package appointment_use_case
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
@@ -65,10 +66,10 @@ func (s *SchedulingService) unLockPeriod(period entity.DateTimePeriod) error {
 func (s *SchedulingService) MakeAppointment(
 	ctx context.Context,
 	now time.Time,
-	customer CustomerEntity,
-	service ServiceEntity,
+	customer appointment.CustomerEntity,
+	service appointment.ServiceEntity,
 	dateTimePeriod entity.DateTimePeriod,
-) (*AppointmentAggregate, error) {
+) (*appointment.AppointmentAggregate, error) {
 	if err := s.lockPeriod(dateTimePeriod); err != nil {
 		return nil, err
 	}
@@ -84,9 +85,9 @@ func (s *SchedulingService) MakeAppointment(
 	if isBusy {
 		return nil, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	record, err := NewRecord(
-		NewRecordId(uuid.NewString()),
-		RecordAwaits,
+	record, err := appointment.NewRecord(
+		appointment.NewRecordId(uuid.NewString()),
+		appointment.RecordAwaits,
 		false,
 		dateTimePeriod,
 		customer.Id,
@@ -96,9 +97,9 @@ func (s *SchedulingService) MakeAppointment(
 	if err != nil {
 		return nil, err
 	}
-	appointment := NewAppointmentAggregate(record, service, customer)
-	if err := s.appointmentCreator.CreateAppointment(ctx, appointment); err != nil {
+	app := appointment.NewAppointmentAggregate(record, service, customer)
+	if err := s.appointmentCreator.CreateAppointment(ctx, app); err != nil {
 		return nil, err
 	}
-	return appointment, nil
+	return app, nil
 }

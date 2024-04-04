@@ -1,9 +1,10 @@
-package appointment
+package appointment_use_case
 
 import (
 	"context"
 	"time"
 
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
@@ -28,10 +29,10 @@ func NewMakeAppointmentUseCase(
 func (s *MakeAppointmentUseCase) CreateAppointment(
 	ctx context.Context,
 	now time.Time,
-	customerId CustomerId,
-	serviceId ServiceId,
+	customerId appointment.CustomerId,
+	serviceId appointment.ServiceId,
 	dateTimePeriod entity.DateTimePeriod,
-) (*AppointmentAggregate, error) {
+) (*appointment.AppointmentAggregate, error) {
 	customer, err := s.customers.Customer(ctx, customerId)
 	if err != nil {
 		return nil, err

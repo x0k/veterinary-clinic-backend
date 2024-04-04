@@ -1,4 +1,4 @@
-package appointment_notion
+package appointment_notion_repository
 
 import (
 	"context"

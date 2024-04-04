@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
 type Root struct {
@@ -30,11 +29,10 @@ func (r *Root) awaiter(ctx context.Context) error {
 		r.log.Info(ctx, "received signal", slog.String("signal", s.String()))
 		return nil
 	case err := <-r.fatal:
-		r.log.Error(ctx, "fatal error", sl.Err(err))
-		return nil
+		return err
 	}
 }
 
-func (r *Root) Start(ctx context.Context) {
-	_ = r.start(ctx, r.awaiter)
+func (r *Root) Start(ctx context.Context) error {
+	return r.start(ctx, r.awaiter)
 }

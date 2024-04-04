@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"log"
@@ -8,26 +8,10 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/infra/app_logger"
 )
-
-const (
-	TextHandler   = "text"
-	JSONHandler   = "json"
-	PrettyHandler = "pretty"
-)
-
-const (
-	DebugLevel = "debug"
-	InfoLevel  = "info"
-	WarnLevel  = "warn"
-	ErrorLevel = "error"
-)
-
-type LoggerConfig struct {
-	Level       string `yaml:"level" env:"LOGGER_LEVEL" env-default:"info"`
-	HandlerType string `yaml:"handler_type" env:"LOGGER_HANDLER_TYPE" env-default:"text"`
-}
 
 type StorageConfig struct {
 	Path                 string `yaml:"path" env:"STORAGE_PATH" env-required:"true"`
@@ -78,16 +62,12 @@ type NotificationsConfig struct {
 }
 
 type Config struct {
-	Logger                    LoggerConfig                    `yaml:"logger"`
-	Storage                   StorageConfig                   `yaml:"storage"`
-	Profiler                  ProfilerConfig                  `yaml:"profiler"`
-	Metrics                   MetricsConfig                   `yaml:"metrics"`
-	Notion                    NotionConfig                    `yaml:"notion"`
-	Telegram                  TelegramConfig                  `yaml:"telegram"`
-	ProductionCalendar        ProductionCalendarConfig        `yaml:"production_calendar"`
-	AppointmentChangeDetector AppointmentChangeDetectorConfig `yaml:"appointment_change_detector"`
-	AppointmentAutoArchiver   AppointmentAutoArchiverConfig   `yaml:"appointment_auto_archiver"`
-	Notifications             NotificationsConfig             `yaml:"notifications"`
+	Profiler ProfilerConfig `yaml:"profiler"`
+	Notion   NotionConfig   `yaml:"notion"`
+	Telegram TelegramConfig `yaml:"telegram"`
+
+	Logger      app_logger.LoggerConfig              `yaml:"logger"`
+	Appointment appointment_module.AppointmentConfig `yaml:"appointment"`
 }
 
 func MustLoad(configPath string) *Config {
