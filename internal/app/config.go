@@ -10,17 +10,13 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/profiler"
 )
 
 type StorageConfig struct {
 	Path                 string `yaml:"path" env:"STORAGE_PATH" env-required:"true"`
 	MigrationsPath       string `env:"STORAGE_MIGRATIONS_PATH"`
 	RecordsStateFilePath string `yaml:"records_state_file_path" env:"STORAGE_RECORDS_STATE_FILE_PATH" env-required:"true"`
-}
-
-type ProfilerConfig struct {
-	Enabled bool   `yaml:"enabled" env:"PROFILER_ENABLED"`
-	Address string `yaml:"address" env:"PROFILER_ADDRESS"`
 }
 
 type MetricsConfig struct {
@@ -58,12 +54,12 @@ type NotificationsConfig struct {
 }
 
 type Config struct {
-	Profiler ProfilerConfig `yaml:"profiler"`
 	Notion   NotionConfig   `yaml:"notion"`
 	Telegram TelegramConfig `yaml:"telegram"`
 	Logger   LoggerConfig   `yaml:"logger"`
 
-	Appointment appointment_module.AppointmentConfig `yaml:"appointment"`
+	Profiler    profiler.Config           `yaml:"profiler"`
+	Appointment appointment_module.Config `yaml:"appointment"`
 }
 
 func MustLoadConfig(configPath string) *Config {

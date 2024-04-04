@@ -78,6 +78,7 @@ func (s *SchedulingService) MakeAppointment(
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()
+	// TODO: Check weekends, holidays, etc
 	isBusy, err := s.appointmentPeriodsChecker.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
 	if err != nil {
 		return nil, err

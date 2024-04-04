@@ -1,20 +1,19 @@
 package app
 
 import (
-	"context"
-	"net/http"
-
 	"github.com/jomei/notionapi"
-	"github.com/x0k/veterinary-clinic-backend/internal/adapters/controller"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/module"
+	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/infra/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
+	"github.com/x0k/veterinary-clinic-backend/internal/profiler"
 	"gopkg.in/telebot.v3"
 )
 
 func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
-	m := module.NewRoot(log)
+	m := module.NewRoot(log.Logger)
+
+	// Infrastructure
 
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token: string(cfg.Telegram.Token),
@@ -25,9 +24,11 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	notion := notionapi.NewClient(cfg.Notion.Token)
 
+	// Modules
+
+	profilerModule := profiler.New(&cfg.Profiler, log)
 	appointmentModule, err := appointment_module.New(
 		&cfg.Appointment,
 		log,
@@ -39,25 +40,10 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	}
 
 	m.Append(
+		profilerModule,
 		appointmentModule,
-		infra.Starter(func(ctx context.Context) error {
-			context.AfterFunc(ctx, func() {
-				bot.Stop()
-			})
-			bot.Start()
-			return nil
-		}),
+		adapters_telegram.NewService(bot, log),
 	)
-
-	if cfg.Profiler.Enabled {
-		m.Append(infra.NewHttpService(
-			log,
-			&http.Server{
-				Addr:    cfg.Profiler.Address,
-				Handler: controller.UseHttpProfilerRouter(http.NewServeMux()),
-			},
-		))
-	}
 
 	return m, nil
 }

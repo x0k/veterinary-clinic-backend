@@ -5,9 +5,6 @@ import (
 	"log/slog"
 	"sync"
 	"sync/atomic"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
 type Service interface {
@@ -15,19 +12,16 @@ type Service interface {
 }
 
 type Module struct {
-	log      *logger.Logger
+	log      *slog.Logger
 	wg       sync.WaitGroup
 	services []Service
 	fatal    chan error
 	stopped  atomic.Bool
 }
 
-func New(log *logger.Logger, name string) *Module {
+func New(log *slog.Logger, name string) *Module {
 	return &Module{
-		log: log.With(
-			slog.String("component", "boot.Module"),
-			slog.String("module_name", name),
-		),
+		log:   log.With(slog.String("module_name", name)),
 		fatal: make(chan error, 1),
 	}
 }
@@ -38,7 +32,7 @@ func (m *Module) Append(services ...Service) {
 
 func (m *Module) Fatal(ctx context.Context, err error) {
 	if m.stopped.Swap(true) {
-		m.log.Error(ctx, "fatal error", sl.Err(err))
+		m.log.LogAttrs(ctx, slog.LevelError, "fatal error", slog.String("error", err.Error()))
 		return
 	}
 	m.fatal <- err
@@ -55,11 +49,15 @@ func (m *Module) awaiter(ctx context.Context) error {
 }
 
 func (m *Module) start(ctx context.Context, awaiter func(context.Context) error) error {
+	if len(m.services) == 0 {
+		return nil
+	}
+
 	if m.stopped.Load() {
 		return <-m.fatal
 	}
 
-	m.log.Info(ctx, "starting")
+	m.log.LogAttrs(ctx, slog.LevelInfo, "starting")
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -76,7 +74,7 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 
 	err := awaiter(ctx)
 
-	m.log.Info(ctx, "shutting down")
+	m.log.LogAttrs(ctx, slog.LevelInfo, "stopping")
 
 	m.stopped.Store(true)
 	cancel()

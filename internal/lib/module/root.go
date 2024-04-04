@@ -6,27 +6,25 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 )
 
 type Root struct {
 	*Module
 }
 
-func NewRoot(log *logger.Logger) *Root {
+func NewRoot(log *slog.Logger) *Root {
 	return &Root{
 		Module: New(log, "root"),
 	}
 }
 
 func (r *Root) awaiter(ctx context.Context) error {
-	r.log.Info(ctx, "press CTRL-C to exit")
+	r.log.LogAttrs(ctx, slog.LevelInfo, "press CTRL-C to exit")
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	select {
 	case s := <-stop:
-		r.log.Info(ctx, "received signal", slog.String("signal", s.String()))
+		r.log.LogAttrs(ctx, slog.LevelInfo, "received signal", slog.String("signal", s.String()))
 		return nil
 	case err := <-r.fatal:
 		return err

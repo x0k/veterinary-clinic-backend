@@ -9,18 +9,18 @@ import (
 	appointment_notion_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/notion"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	"github.com/x0k/veterinary-clinic-backend/internal/infra"
-	"github.com/x0k/veterinary-clinic-backend/internal/infra/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 	"gopkg.in/telebot.v3"
 )
 
 func New(
-	cfg *AppointmentConfig,
+	cfg *Config,
 	log *logger.Logger,
 	bot *telebot.Bot,
 	notion *notionapi.Client,
 ) (*module.Module, error) {
-	module := module.New(log, "appointment")
+	module := module.New(log.Logger, "appointment")
 
 	servicesRepository := appointment_notion_repository.NewService(
 		notion,
