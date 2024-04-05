@@ -3,8 +3,8 @@ package appointment_telegram_presenter
 import (
 	"strings"
 
+	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/infra/telegram"
 	"gopkg.in/telebot.v3"
 )
 

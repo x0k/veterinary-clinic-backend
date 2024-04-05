@@ -10,7 +10,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
-	"github.com/x0k/veterinary-clinic-backend/internal/profiler"
+	profiler_module "github.com/x0k/veterinary-clinic-backend/internal/profiler"
 )
 
 type StorageConfig struct {
@@ -58,7 +58,7 @@ type Config struct {
 	Telegram TelegramConfig `yaml:"telegram"`
 	Logger   LoggerConfig   `yaml:"logger"`
 
-	Profiler    profiler.Config           `yaml:"profiler"`
+	Profiler    profiler_module.Config    `yaml:"profiler"`
 	Appointment appointment_module.Config `yaml:"appointment"`
 }
 

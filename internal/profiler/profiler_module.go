@@ -1,10 +1,10 @@
-package profiler
+package profiler_module
 
 import (
 	"net/http"
 	"net/http/pprof"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/infra"
+	adapters_http "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 )
@@ -26,13 +26,11 @@ func UseHttpRouter(mux *http.ServeMux) *http.ServeMux {
 func New(cfg *Config, log *logger.Logger) *module.Module {
 	m := module.New(log.Logger, "profiler")
 	if cfg.Enabled {
-		m.Append(infra.NewHttpService(
-			log,
-			&http.Server{
-				Addr:    cfg.Address,
-				Handler: UseHttpRouter(http.NewServeMux()),
-			},
-		))
+		srv := &http.Server{
+			Addr:    cfg.Address,
+			Handler: UseHttpRouter(http.NewServeMux()),
+		}
+		m.Append(adapters_http.NewService("profiler_http_server", srv, m))
 	}
 	return m
 }

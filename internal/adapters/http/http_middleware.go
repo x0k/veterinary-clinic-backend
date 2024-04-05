@@ -1,4 +1,4 @@
-package infra
+package adapters_http
 
 import (
 	"log/slog"

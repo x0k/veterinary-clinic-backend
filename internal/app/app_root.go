@@ -1,13 +1,16 @@
 package app
 
 import (
+	"log/slog"
+
 	"github.com/jomei/notionapi"
+	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/infra/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
-	"github.com/x0k/veterinary-clinic-backend/internal/profiler"
+	profiler_module "github.com/x0k/veterinary-clinic-backend/internal/profiler"
 	"gopkg.in/telebot.v3"
+	"gopkg.in/telebot.v3/middleware"
 )
 
 func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
@@ -24,11 +27,20 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	if err != nil {
 		return nil, err
 	}
+	bot.Use(
+		middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelDebug)),
+		middleware.AutoRespond(),
+		middleware.Recover(),
+	)
+	m.Append(adapters_telegram.NewService("telegram_bot", bot))
+
 	notion := notionapi.NewClient(cfg.Notion.Token)
 
 	// Modules
 
-	profilerModule := profiler.New(&cfg.Profiler, log)
+	profilerModule := profiler_module.New(&cfg.Profiler, log)
+	m.Append(profilerModule)
+
 	appointmentModule, err := appointment_module.New(
 		&cfg.Appointment,
 		log,
@@ -38,12 +50,7 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	m.Append(
-		profilerModule,
-		appointmentModule,
-		adapters_telegram.NewService(bot, log),
-	)
+	m.Append(appointmentModule)
 
 	return m, nil
 }

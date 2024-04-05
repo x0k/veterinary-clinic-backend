@@ -11,6 +11,8 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 )
 
+const serviceRepositoryName = "appointment_notion.ServiceRepository"
+
 type ServiceRepository struct {
 	client             *notionapi.Client
 	servicesDatabaseId notionapi.DatabaseID
@@ -28,13 +30,17 @@ func NewService(
 	}
 }
 
+func (s *ServiceRepository) Name() string {
+	return serviceRepositoryName
+}
+
 func (s *ServiceRepository) Start(ctx context.Context) error {
 	s.servicesCache.Start(ctx)
 	return nil
 }
 
 func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.ServiceEntity, error) {
-	const op = "appointment_notion.ServiceRepository.Services"
+	const op = serviceRepositoryName + ".Services"
 	return s.servicesCache.Load(func() ([]appointment.ServiceEntity, error) {
 		r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 		if err != nil {
@@ -49,7 +55,7 @@ func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.Service
 }
 
 func (s *ServiceRepository) Service(ctx context.Context, serviceId entity.ServiceId) (appointment.ServiceEntity, error) {
-	const op = "appointment_notion.ServiceRepository.Service"
+	const op = serviceRepositoryName + ".Service"
 	res, err := s.client.Page.Get(ctx, notionapi.PageID(serviceId))
 	if err != nil {
 		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, err)

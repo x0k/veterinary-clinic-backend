@@ -7,11 +7,8 @@ import (
 	"sync/atomic"
 )
 
-type Service interface {
-	Start(ctx context.Context) error
-}
-
 type Module struct {
+	name     string
 	log      *slog.Logger
 	wg       sync.WaitGroup
 	services []Service
@@ -22,8 +19,13 @@ type Module struct {
 func New(log *slog.Logger, name string) *Module {
 	return &Module{
 		log:   log.With(slog.String("module_name", name)),
+		name:  name,
 		fatal: make(chan error, 1),
 	}
+}
+
+func (m *Module) Name() string {
+	return m.name
 }
 
 func (m *Module) Append(services ...Service) {
@@ -57,8 +59,6 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 		return <-m.fatal
 	}
 
-	m.log.LogAttrs(ctx, slog.LevelInfo, "starting")
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -66,9 +66,11 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 		m.wg.Add(1)
 		go func() {
 			defer m.wg.Done()
+			m.log.LogAttrs(ctx, slog.LevelInfo, "starting", slog.String("service", service.Name()))
 			if err := service.Start(ctx); err != nil {
 				m.Fatal(ctx, err)
 			}
+			m.log.LogAttrs(ctx, slog.LevelInfo, "stopped", slog.String("service", service.Name()))
 		}()
 	}
 

@@ -1,4 +1,4 @@
-package infra
+package adapters_telegram
 
 import (
 	"time"
@@ -7,22 +7,22 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 )
 
-type TelegramInitData struct {
+type InitData struct {
 	telegramToken adapters.TelegramToken
 	expiredIn     time.Duration
 }
 
-func NewTelegramInitData(telegramToken adapters.TelegramToken, expiredIn time.Duration) *TelegramInitData {
-	return &TelegramInitData{
+func NewInitData(telegramToken adapters.TelegramToken, expiredIn time.Duration) *InitData {
+	return &InitData{
 		telegramToken: telegramToken,
 		expiredIn:     expiredIn,
 	}
 }
 
-func (p *TelegramInitData) Validate(data string) error {
+func (p *InitData) Validate(data string) error {
 	return initdata.Validate(data, string(p.telegramToken), p.expiredIn)
 }
 
-func (p *TelegramInitData) Parse(data string) (initdata.InitData, error) {
+func (p *InitData) Parse(data string) (initdata.InitData, error) {
 	return initdata.Parse(data)
 }
