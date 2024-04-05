@@ -15,3 +15,22 @@ func TimePeriodDurationInMinutes(period TimePeriod) DurationInMinutes {
 		(period.End.Hours-period.Start.Hours)*60 + (period.End.Minutes - period.Start.Minutes),
 	)
 }
+
+func DateToDayTimePeriod(d Date) DateTimePeriod {
+	return DateTimePeriod{
+		Start: DateTime{
+			Date: d,
+			Time: Time{
+				Hours:   0,
+				Minutes: 0,
+			},
+		},
+		End: DateTime{
+			Date: d,
+			Time: Time{
+				Hours:   23,
+				Minutes: 59,
+			},
+		},
+	}
+}

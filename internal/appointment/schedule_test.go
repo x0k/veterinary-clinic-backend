@@ -87,7 +87,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CalculateSchedulePeriods(tt.args.freePeriods, tt.args.busyPeriods, tt.args.workBreaks); !reflect.DeepEqual(got, tt.want) {
+			if got := NewSchedulePeriods(tt.args.freePeriods, tt.args.busyPeriods, tt.args.workBreaks); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CalculateSchedulePeriods() = %v, want %v", got, tt.want)
 			}
 		})
