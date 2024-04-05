@@ -1,8 +1,10 @@
-package entity
+package appointment
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
 func TestCalculateSchedulePeriods(t *testing.T) {
@@ -21,11 +23,11 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 			args: args{
 				freePeriods: FreePeriods{
 					{
-						Start: Time{
+						Start: entity.Time{
 							Hours:   9,
 							Minutes: 30,
 						},
-						End: Time{
+						End: entity.Time{
 							Hours:   17,
 							Minutes: 0,
 						},
@@ -37,12 +39,12 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 						Id:              "lunch",
 						MatchExpression: `^[1-5]`,
 						Title:           "Перерыв на обед",
-						Period: TimePeriod{
-							Start: Time{
+						Period: entity.TimePeriod{
+							Start: entity.Time{
 								Hours:   12,
 								Minutes: 30,
 							},
-							End: Time{
+							End: entity.Time{
 								Hours:   13,
 								Minutes: 30,
 							},
@@ -52,12 +54,12 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 						Id:              "vacation",
 						MatchExpression: `^\d 2024-03-(2[6-9]|30|31)`,
 						Title:           "Отпуск",
-						Period: TimePeriod{
-							Start: Time{
+						Period: entity.TimePeriod{
+							Start: entity.Time{
 								Hours:   0,
 								Minutes: 0,
 							},
-							End: Time{
+							End: entity.Time{
 								Hours:   23,
 								Minutes: 59,
 							},
@@ -67,12 +69,12 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 			},
 			want: SchedulePeriods{
 				{
-					TimePeriod: TimePeriod{
-						Start: Time{
+					TimePeriod: entity.TimePeriod{
+						Start: entity.Time{
 							Hours:   0,
 							Minutes: 0,
 						},
-						End: Time{
+						End: entity.Time{
 							Hours:   23,
 							Minutes: 59,
 						},

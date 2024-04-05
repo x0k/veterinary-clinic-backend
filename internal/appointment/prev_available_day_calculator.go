@@ -1,6 +1,10 @@
-package entity
+package appointment
 
-import "time"
+import (
+	"time"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+)
 
 type PrevAvailableDayCalculator struct {
 	productionCalendar ProductionCalendar
@@ -22,7 +26,7 @@ func (c *PrevAvailableDayCalculator) Calculate(
 ) *time.Time {
 	prevDay := fromDate
 	for prevDay.Sub(c.nowDate) >= 0 {
-		prevDayJson := GoTimeToJsonDate(prevDay)
+		prevDayJson := entity.GoTimeToJsonDate(prevDay)
 		if dayType, ok := c.productionCalendar[prevDayJson]; !ok || !IsNonWorkingDayType(dayType) {
 			return &prevDay
 		}

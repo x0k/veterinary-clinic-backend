@@ -1,10 +1,12 @@
-package entity
+package appointment
 
 import (
 	"errors"
 	"fmt"
 	"regexp"
 	"time"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
 var ErrFailedToCompileMatchExpression = errors.New("failed to compile match expression")
@@ -15,7 +17,7 @@ type WorkBreak struct {
 	Id              WorkBreakId
 	Title           string
 	MatchExpression string
-	Period          TimePeriod
+	Period          entity.TimePeriod
 }
 
 type WorkBreaks []WorkBreak
