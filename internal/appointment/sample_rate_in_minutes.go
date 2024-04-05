@@ -1,3 +1,3 @@
-package entity
+package appointment
 
 type SampleRateInMinutes int

@@ -1,25 +1,27 @@
-package entity
+package appointment
 
-type SampledFreeTimeSlots []TimePeriod
+import "github.com/x0k/veterinary-clinic-backend/internal/entity"
 
-type FreeTimeSlotsSampler struct {
-	durationInMinutes   DurationInMinutes
-	durationShift       func(Time) Time
+type SampledFreeTimeSlots []entity.TimePeriod
+
+type freeTimeSlotsSampler struct {
+	durationInMinutes   entity.DurationInMinutes
+	durationShift       func(entity.Time) entity.Time
 	sampleRateInMinutes SampleRateInMinutes
-	sampleRateShift     func(Time) Time
+	sampleRateShift     func(entity.Time) entity.Time
 }
 
-func NewFreeTimeSlotsSampler(
-	durationInMinutes DurationInMinutes,
+func newFreeTimeSlotsSampler(
+	durationInMinutes entity.DurationInMinutes,
 	sampleRateInMinutes SampleRateInMinutes,
-) *FreeTimeSlotsSampler {
-	durationShift := MakeTimeShifter(Time{
+) *freeTimeSlotsSampler {
+	durationShift := entity.MakeTimeShifter(entity.Time{
 		Minutes: int(durationInMinutes),
 	})
-	sampleRateShift := MakeTimeShifter(Time{
+	sampleRateShift := entity.MakeTimeShifter(entity.Time{
 		Minutes: int(sampleRateInMinutes),
 	})
-	return &FreeTimeSlotsSampler{
+	return &freeTimeSlotsSampler{
 		durationInMinutes:   durationInMinutes,
 		durationShift:       durationShift,
 		sampleRateInMinutes: sampleRateInMinutes,
@@ -27,26 +29,26 @@ func NewFreeTimeSlotsSampler(
 	}
 }
 
-func (c *FreeTimeSlotsSampler) Sample(period TimePeriod) SampledFreeTimeSlots {
+func (c *freeTimeSlotsSampler) Sample(period entity.TimePeriod) SampledFreeTimeSlots {
 	rest := period.Start.Minutes % int(c.sampleRateInMinutes)
 	if rest != 0 {
-		return c.Sample(TimePeriod{
-			Start: MakeTimeShifter(Time{
+		return c.Sample(entity.TimePeriod{
+			Start: entity.MakeTimeShifter(entity.Time{
 				Minutes: int(c.sampleRateInMinutes) - rest,
 			})(period.Start),
 			End: period.End,
 		})
 	}
-	periodDuration := TimePeriodDurationInMinutes(period)
+	periodDuration := entity.TimePeriodDurationInMinutes(period)
 	if periodDuration < c.durationInMinutes {
-		return []TimePeriod{period}
+		return []entity.TimePeriod{period}
 	}
-	periods := make([]TimePeriod, 1)
-	periods[0] = TimePeriod{
+	periods := make([]entity.TimePeriod, 1)
+	periods[0] = entity.TimePeriod{
 		Start: period.Start,
 		End:   c.durationShift(period.Start),
 	}
-	for _, p := range TimePeriodApi.SubtractPeriods(period, TimePeriod{
+	for _, p := range entity.TimePeriodApi.SubtractPeriods(period, entity.TimePeriod{
 		Start: period.Start,
 		End:   c.sampleRateShift(period.Start),
 	}) {
@@ -55,12 +57,12 @@ func (c *FreeTimeSlotsSampler) Sample(period TimePeriod) SampledFreeTimeSlots {
 	return periods
 }
 
-func SampleFreeTimeSlots(
-	durationInMinutes DurationInMinutes,
+func NewSampleFreeTimeSlots(
+	durationInMinutes entity.DurationInMinutes,
 	sampleRateInMinutes SampleRateInMinutes,
 	periods FreeTimeSlots,
 ) SampledFreeTimeSlots {
-	calculator := NewFreeTimeSlotsSampler(
+	calculator := newFreeTimeSlotsSampler(
 		durationInMinutes,
 		sampleRateInMinutes,
 	)

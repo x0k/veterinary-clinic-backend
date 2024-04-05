@@ -1,15 +1,19 @@
 package appointment_use_case
 
-import "context"
+import (
+	"context"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+)
 
 type ServicesUseCase[R any] struct {
-	servicesLoader    ServicesLoader
-	servicesPresenter ServicesPresenter[R]
+	servicesLoader    appointment.ServicesLoader
+	servicesPresenter appointment.ServicesPresenter[R]
 }
 
 func NewServicesUseCase[R any](
-	servicesLoader ServicesLoader,
-	servicesPresenter ServicesPresenter[R],
+	servicesLoader appointment.ServicesLoader,
+	servicesPresenter appointment.ServicesPresenter[R],
 ) *ServicesUseCase[R] {
 	return &ServicesUseCase[R]{
 		servicesLoader:    servicesLoader,

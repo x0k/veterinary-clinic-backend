@@ -1,4 +1,4 @@
-package appointment_use_case
+package appointment
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
@@ -33,7 +32,7 @@ func NewSchedulingService(
 	appointmentCreator AppointmentCreator,
 ) *SchedulingService {
 	return &SchedulingService{
-		log:                       log.With(slog.String("component", "appointment.SchedulingService")),
+		log:                       log.With(slog.String("component", "SchedulingService")),
 		appointmentPeriodsChecker: appointmentPeriodChecker,
 	}
 }
@@ -66,10 +65,10 @@ func (s *SchedulingService) unLockPeriod(period entity.DateTimePeriod) error {
 func (s *SchedulingService) MakeAppointment(
 	ctx context.Context,
 	now time.Time,
-	customer appointment.CustomerEntity,
-	service appointment.ServiceEntity,
+	customer CustomerEntity,
+	service ServiceEntity,
 	dateTimePeriod entity.DateTimePeriod,
-) (*appointment.AppointmentAggregate, error) {
+) (*AppointmentAggregate, error) {
 	if err := s.lockPeriod(dateTimePeriod); err != nil {
 		return nil, err
 	}
@@ -86,9 +85,9 @@ func (s *SchedulingService) MakeAppointment(
 	if isBusy {
 		return nil, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	record, err := appointment.NewRecord(
-		appointment.NewRecordId(uuid.NewString()),
-		appointment.RecordAwaits,
+	record, err := NewRecord(
+		NewRecordId(uuid.NewString()),
+		RecordAwaits,
 		false,
 		dateTimePeriod,
 		customer.Id,
@@ -98,7 +97,7 @@ func (s *SchedulingService) MakeAppointment(
 	if err != nil {
 		return nil, err
 	}
-	app := appointment.NewAppointmentAggregate(record, service, customer)
+	app := NewAppointmentAggregate(record, service, customer)
 	if err := s.appointmentCreator.CreateAppointment(ctx, app); err != nil {
 		return nil, err
 	}
