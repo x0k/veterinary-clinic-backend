@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
+var ErrInvalidRecordId = errors.New("invalid record id")
 var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 
@@ -86,7 +86,7 @@ func (s *SchedulingService) MakeAppointment(
 		return nil, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
 	record, err := NewRecord(
-		NewRecordId(uuid.NewString()),
+		TemporalRecordId,
 		RecordAwaits,
 		false,
 		dateTimePeriod,
@@ -101,5 +101,16 @@ func (s *SchedulingService) MakeAppointment(
 	if err := s.appointmentCreator.CreateAppointment(ctx, app); err != nil {
 		return nil, err
 	}
+	if app.Id() == TemporalRecordId {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidRecordId, app.Id())
+	}
 	return app, nil
+}
+
+func (s *SchedulingService) Schedule(
+	ctx context.Context,
+	now time.Time,
+	preferredDate time.Time,
+) {
+
 }

@@ -7,3 +7,7 @@ type ServicesPresenter[R any] interface {
 type SchedulePresenter[R any] interface {
 	RenderSchedule(schedule Schedule) (R, error)
 }
+
+type ErrorPresenter[R any] interface {
+	RenderError(err error) (R, error)
+}

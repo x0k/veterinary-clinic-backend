@@ -119,6 +119,5 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
-	app.SetId(appointment.NewRecordId(string(res.ID)))
-	return nil
+	return app.SetId(appointment.NewRecordId(string(res.ID)))
 }

@@ -22,8 +22,12 @@ func NewAppointmentAggregate(record RecordEntity, service ServiceEntity, custome
 	}
 }
 
-func (a *AppointmentAggregate) SetId(recordId RecordId) {
-	a.record.SetId(recordId)
+func (a *AppointmentAggregate) Id() RecordId {
+	return a.record.Id
+}
+
+func (a *AppointmentAggregate) SetId(recordId RecordId) error {
+	return a.record.SetId(recordId)
 }
 
 func (a *AppointmentAggregate) Title() (string, error) {
