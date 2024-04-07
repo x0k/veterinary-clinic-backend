@@ -34,10 +34,10 @@ func (p ProductionCalendar) WorkingDay(today time.Time, shift time.Duration) tim
 	}
 }
 
-func (p ProductionCalendar) NowOrNextWorkingDay(now time.Time) time.Time {
-	return p.WorkingDay(now, 24*time.Hour)
+func (p ProductionCalendar) DayOrNextWorkingDay(day time.Time) time.Time {
+	return p.WorkingDay(day, 24*time.Hour)
 }
 
-func (p ProductionCalendar) NowOrPrevWorkingDay(now time.Time) time.Time {
-	return p.WorkingDay(now, -24*time.Hour)
+func (p ProductionCalendar) DayOrPrevWorkingDay(day time.Time) time.Time {
+	return p.WorkingDay(day, -24*time.Hour)
 }

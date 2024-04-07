@@ -7,7 +7,7 @@ type SchedulePeriods TitledTimePeriods
 func NewSchedulePeriods(
 	freePeriods FreePeriods,
 	busyPeriods BusyPeriods,
-	workBreaks CalculatedWorkBreaks,
+	workBreaks WorkBreaks,
 ) SchedulePeriods {
 	allBusyPeriods := make([]entity.TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)

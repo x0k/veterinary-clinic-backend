@@ -24,6 +24,10 @@ type SchedulingService struct {
 	periods                   []entity.DateTimePeriod
 	appointmentPeriodsChecker AppointmentPeriodChecker
 	appointmentCreator        AppointmentCreator
+	productionCalendarLoader  ProductionCalendarLoader
+	workingHoursLoader        WorkingHoursLoader
+	busyPeriodsLoader         BusyPeriodsLoader
+	workBreaksLoader          WorkBreaksLoader
 }
 
 func NewSchedulingService(
@@ -111,6 +115,34 @@ func (s *SchedulingService) Schedule(
 	ctx context.Context,
 	now time.Time,
 	preferredDate time.Time,
-) {
-
+) (Schedule, error) {
+	productionCalendar, err := s.productionCalendarLoader.ProductionCalendar(ctx)
+	if err != nil {
+		return Schedule{}, err
+	}
+	date := productionCalendar.DayOrNextWorkingDay(preferredDate)
+	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
+	if err != nil {
+		return Schedule{}, err
+	}
+	dayTimePeriod, err := workingHours.ForDay(date).
+		OmitPast(entity.GoTimeToDateTime(now)).
+		ConsiderProductionCalendar(productionCalendar)
+	if err != nil {
+		return Schedule{}, err
+	}
+	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, date)
+	if err != nil {
+		return Schedule{}, err
+	}
+	workBreaks, err := s.workBreaksLoader.WorkBreaks(ctx)
+	if err != nil {
+		return Schedule{}, err
+	}
+	dayWorkBreaks, err := workBreaks.ForDay(date)
+	if err != nil {
+		return Schedule{}, err
+	}
+	schedulePeriods := NewSchedulePeriods(dayTimePeriod.Periods, busyPeriods, dayWorkBreaks)
+	return NewSchedule(date, schedulePeriods, productionCalendar), nil
 }

@@ -7,7 +7,7 @@ type FreeTimeSlots []entity.TimePeriod
 func NewFreeTimeSlots(
 	freePeriods FreePeriods,
 	busyPeriods BusyPeriods,
-	workBreaks CalculatedWorkBreaks,
+	workBreaks WorkBreaks,
 ) FreeTimeSlots {
 	allBusyPeriods := make([]entity.TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)

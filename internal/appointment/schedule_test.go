@@ -11,7 +11,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 	type args struct {
 		freePeriods FreePeriods
 		busyPeriods BusyPeriods
-		workBreaks  CalculatedWorkBreaks
+		workBreaks  WorkBreaks
 	}
 	tests := []struct {
 		name string
@@ -34,7 +34,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 					},
 				},
 				busyPeriods: BusyPeriods{},
-				workBreaks: CalculatedWorkBreaks{
+				workBreaks: WorkBreaks{
 					{
 						Id:              "lunch",
 						MatchExpression: `^[1-5]`,

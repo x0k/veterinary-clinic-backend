@@ -16,8 +16,8 @@ func NewSchedule(
 	schedulePeriods SchedulePeriods,
 	productionCalendar ProductionCalendar,
 ) Schedule {
-	next := productionCalendar.NowOrNextWorkingDay(date.AddDate(0, 0, 1))
-	prev := productionCalendar.NowOrPrevWorkingDay(date.AddDate(0, 0, -1))
+	next := productionCalendar.DayOrNextWorkingDay(date.AddDate(0, 0, 1))
+	prev := productionCalendar.DayOrPrevWorkingDay(date.AddDate(0, 0, -1))
 	return Schedule{
 		Date:     date,
 		Periods:  schedulePeriods,
