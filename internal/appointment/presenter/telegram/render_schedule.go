@@ -14,7 +14,7 @@ func RenderSchedule(schedule appointment.Schedule) string {
 		schedule.Date.Format("02.01.2006")),
 	)
 	sb.WriteString(":\n\n")
-	for _, period := range schedule.Periods {
+	for _, period := range schedule.Entries {
 		sb.WriteByte('*')
 		sb.WriteString(period.Start.String())
 		sb.WriteString(" \\- ")
@@ -23,7 +23,7 @@ func RenderSchedule(schedule appointment.Schedule) string {
 		sb.WriteString(adapters_telegram.EscapeMarkdownString(period.Title))
 		sb.WriteString("\n\n")
 	}
-	if len(schedule.Periods) == 0 {
+	if len(schedule.Entries) == 0 {
 		sb.WriteString("Нет записей\n\n")
 	}
 	return sb.String()

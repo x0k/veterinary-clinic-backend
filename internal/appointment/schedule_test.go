@@ -16,7 +16,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want SchedulePeriods
+		want ScheduleEntries
 	}{
 		{
 			name: "Vacation",
@@ -67,7 +67,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 					},
 				},
 			},
-			want: SchedulePeriods{
+			want: ScheduleEntries{
 				{
 					TimePeriod: entity.TimePeriod{
 						Start: entity.Time{
@@ -87,7 +87,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewSchedulePeriods(tt.args.freePeriods, tt.args.busyPeriods, tt.args.workBreaks); !reflect.DeepEqual(got, tt.want) {
+			if got := newScheduleEntries(tt.args.freePeriods, tt.args.busyPeriods, tt.args.workBreaks); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CalculateSchedulePeriods() = %v, want %v", got, tt.want)
 			}
 		})
