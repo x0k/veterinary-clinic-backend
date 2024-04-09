@@ -13,6 +13,10 @@ var ErrFailedToCompileMatchExpression = errors.New("failed to compile match expr
 
 type WorkBreakId string
 
+func NewWorkBreakId(id string) WorkBreakId {
+	return WorkBreakId(id)
+}
+
 type WorkBreak struct {
 	Id              WorkBreakId
 	Title           string

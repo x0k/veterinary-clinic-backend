@@ -9,6 +9,10 @@ import (
 
 type ProductionCalendar map[entity.JsonDate]DayType
 
+func NewProductionCalendar() ProductionCalendar {
+	return make(ProductionCalendar)
+}
+
 func (p ProductionCalendar) WithoutSaturdayWeekend() ProductionCalendar {
 	cloned := maps.Clone(p)
 	for d, dt := range p {

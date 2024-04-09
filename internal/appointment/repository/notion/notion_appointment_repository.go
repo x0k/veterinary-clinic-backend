@@ -3,30 +3,39 @@ package appointment_notion_repository
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
 
+const appointmentRepositoryName = "appointment_notion_repository.AppointmentRepository"
+
 type AppointmentRepository struct {
+	log               *logger.Logger
 	client            *notionapi.Client
 	recordsDatabaseId notionapi.DatabaseID
 }
 
 func NewAppointment(
+	log *logger.Logger,
 	client *notionapi.Client,
 	recordsDatabaseId notionapi.DatabaseID,
 ) *AppointmentRepository {
 	return &AppointmentRepository{
+		log:               log.With(slog.String("component", appointmentRepositoryName)),
 		client:            client,
 		recordsDatabaseId: recordsDatabaseId,
 	}
 }
 
 func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
-	const op = "appointment_notion.AppointmentRepository.IsAppointmentPeriodBusy"
+	const op = appointmentRepositoryName + ".IsAppointmentPeriodBusy"
 	after := notionapi.Date(entity.DateTimeToGoTime(period.Start))
 	before := notionapi.Date(entity.DateTimeToGoTime(period.End))
 	// TODO: Test notion api to query appointments with overlapping periods
@@ -58,8 +67,8 @@ func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, per
 	return len(res.Results) > 0, nil
 }
 
-func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
-	const op = "appointment_notion.AppointmentRepository.SaveAppointment"
+func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
+	const op = appointmentRepositoryName + ".CreateAppointment"
 	period := app.DateTimePeriod()
 	start := notionapi.Date(entity.DateTimeToGoTime(period.Start))
 	end := notionapi.Date(entity.DateTimeToGoTime(period.End))
@@ -120,4 +129,55 @@ func (r *AppointmentRepository) SaveAppointment(ctx context.Context, app *appoin
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return app.SetId(appointment.NewRecordId(string(res.ID)))
+}
+
+func (s *AppointmentRepository) BusyPeriods(ctx context.Context, t time.Time) (appointment.BusyPeriods, error) {
+	const op = appointmentRepositoryName + ".BusyPeriods"
+	after := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	afterDate := notionapi.Date(after)
+	beforeDate := notionapi.Date(after.AddDate(0, 0, 1))
+	r, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: notionapi.AndCompoundFilter{
+			notionapi.PropertyFilter{
+				Property: RecordDateTimePeriod,
+				Date: &notionapi.DateFilterCondition{
+					After: &afterDate,
+				},
+			},
+			notionapi.PropertyFilter{
+				Property: RecordDateTimePeriod,
+				Date: &notionapi.DateFilterCondition{
+					Before: &beforeDate,
+				},
+			},
+			notionapi.PropertyFilter{
+				Property: RecordState,
+				Select: &notionapi.SelectFilterCondition{
+					Equals: RecordAwaits,
+				},
+			},
+		},
+		Sorts: []notionapi.SortObject{
+			{
+				Property:  RecordDateTimePeriod,
+				Direction: notionapi.SortOrderASC,
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	periods := make([]entity.TimePeriod, 0, len(r.Results))
+	for _, page := range r.Results {
+		period, err := notion.DatePeriod(page.Properties, RecordDateTimePeriod)
+		if err != nil {
+			s.log.Error(ctx, "failed to parse record period", sl.Err(err))
+			continue
+		}
+		periods = append(periods, entity.TimePeriod{
+			Start: entity.GoTimeToTime(period.Start),
+			End:   entity.GoTimeToTime(period.End),
+		})
+	}
+	return periods, nil
 }

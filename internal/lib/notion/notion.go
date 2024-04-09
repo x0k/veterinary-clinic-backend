@@ -1,10 +1,16 @@
 package notion
 
 import (
+	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jomei/notionapi"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/period"
 )
+
+var ErrInvalidPeriodDate = errors.New("invalid period date")
 
 func RichTextValue(richText []notionapi.RichText) string {
 	strs := make([]string, 0, len(richText))
@@ -31,6 +37,17 @@ func Text(properties notionapi.Properties, stringKey string) string {
 
 func Date(properties notionapi.Properties, dateKey string) *notionapi.DateObject {
 	return properties[dateKey].(*notionapi.DateProperty).Date
+}
+
+func DatePeriod(properties notionapi.Properties, periodKey string) (period.Period[time.Time], error) {
+	date := Date(properties, periodKey)
+	if date == nil || date.Start == nil || date.End == nil {
+		return period.Period[time.Time]{}, fmt.Errorf("%s: %w", periodKey, ErrInvalidPeriodDate)
+	}
+	return period.Period[time.Time]{
+		Start: time.Time(*date.Start),
+		End:   time.Time(*date.End),
+	}, nil
 }
 
 func Phone(properties notionapi.Properties, phoneKey string) string {

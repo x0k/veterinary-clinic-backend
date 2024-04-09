@@ -3,6 +3,8 @@ package appointment_notion_repository
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
@@ -91,3 +93,35 @@ const (
 	BreakTitle  = "Наименование"
 	BreakPeriod = "Период"
 )
+
+func NotionToWorkBreak(page notionapi.Page) (appointment.WorkBreak, error) {
+	const op = "appointment_notion_repository.NotionToWorkBreak"
+	period, err := notion.DatePeriod(page.Properties, BreakPeriod)
+	if err != nil {
+		return appointment.WorkBreak{}, fmt.Errorf("%s: %w", op, err)
+	}
+	// start := entity.GoTimeToDateTime(period.Start)
+	dt := time.Date(
+		period.Start.Year(),
+		period.Start.Month(),
+		period.Start.Day(),
+		0, 0, 0, 0, time.Local)
+	sb := strings.Builder{}
+	sb.WriteString("^\\d (")
+	for dt.Before(period.End) {
+		sb.WriteString(dt.Format(time.DateOnly))
+		sb.WriteByte('|')
+		dt = dt.AddDate(0, 0, 1)
+	}
+	sb.WriteString(dt.Format(time.DateOnly))
+	sb.WriteByte(')')
+	return appointment.NewWorkBreak(
+		appointment.NewWorkBreakId(string(page.ID)),
+		notion.Title(page.Properties, BreakTitle),
+		sb.String(),
+		entity.TimePeriod{
+			Start: entity.GoTimeToTime(period.Start),
+			End:   entity.GoTimeToTime(period.End),
+		},
+	), nil
+}

@@ -11,7 +11,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 )
 
-const serviceRepositoryName = "appointment_notion.ServiceRepository"
+const serviceRepositoryName = "appointment_notion_repository.ServiceRepository"
 
 type ServiceRepository struct {
 	client             *notionapi.Client

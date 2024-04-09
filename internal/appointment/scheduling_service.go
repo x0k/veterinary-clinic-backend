@@ -34,10 +34,19 @@ func NewSchedulingService(
 	log *logger.Logger,
 	appointmentPeriodChecker AppointmentPeriodChecker,
 	appointmentCreator AppointmentCreator,
+	productionCalendarLoader ProductionCalendarLoader,
+	workingHoursLoader WorkingHoursLoader,
+	busyPeriodsLoader BusyPeriodsLoader,
+	workBreaksLoader WorkBreaksLoader,
 ) *SchedulingService {
 	return &SchedulingService{
 		log:                       log.With(slog.String("component", "SchedulingService")),
 		appointmentPeriodsChecker: appointmentPeriodChecker,
+		appointmentCreator:        appointmentCreator,
+		productionCalendarLoader:  productionCalendarLoader,
+		workingHoursLoader:        workingHoursLoader,
+		busyPeriodsLoader:         busyPeriodsLoader,
+		workBreaksLoader:          workBreaksLoader,
 	}
 }
 
