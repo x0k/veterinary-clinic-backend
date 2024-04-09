@@ -28,7 +28,7 @@ func newSchedulePresenter(
 
 func (p *schedulePresenter) scheduleButtons(now time.Time, schedule appointment.Schedule) []telebot.InlineButton {
 	buttons := make([]telebot.InlineButton, 0, 3)
-	if schedule.PrevDate.After(now) {
+	if now.Add(-24 * time.Hour).Before(schedule.PrevDate) {
 		buttons = append(buttons, *adapters_telegram.PreviousScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
 	}
 	webAppParams := url.Values{}

@@ -1,6 +1,7 @@
 package appointment_module
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	"github.com/jomei/notionapi"
@@ -49,7 +50,13 @@ func New(
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
 		log,
 		cfg.ProductionCalendar.Url,
-		&http.Client{},
+		&http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: cfg.ProductionCalendar.TLSInsecureSkipVerify,
+				},
+			},
+		},
 	)
 	m.Append(productionCalendarRepository)
 
@@ -58,7 +65,7 @@ func New(
 	workBreaksRepository := appointment_notion_repository.NewWorkBreaks(
 		log,
 		notion,
-		cfg.BreaksDatabaseId,
+		cfg.Notion.BreaksDatabaseId,
 	)
 	m.Append(workBreaksRepository)
 

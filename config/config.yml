@@ -1,21 +1,31 @@
-storage:
-  path: "./storage/storage.db"
-  records_state_file_path: "./storage/records_state"
 logger:
   level: debug
   handler_type: pretty
+notion:
+#   token: 
+telegram:
+  # token:
+  poller_timeout: 10s
+
 profiler:
   enabled: true
   address: 0.0.0.0:6060
-metrics:
-  enabled: true
-  address: 0.0.0.0:9099
-telegram:
-  web_handler_address: 0.0.0.0:6012
-  # This is should be a https url (without end slash) to the web handler address
-  # web_handler_url: 
-  calendar_web_app_url: https://x0k.github.io/telegram-web-inputs/calendar
-production_calendar:
-  url: https://gist.githubusercontent.com/x0k/e45728deb54612d6043b8aa7ec4d1cef/raw/55b6006d74fa4e50568bb601b36a7248f9613e1b/calendar.json
-appointment_change_detector:
-  check_interval: 10s
+
+appointment:
+  notion:
+    # services_database_id:
+    # records_database_id:
+    # calendar_database_id:
+  production_calendar:
+    url: https://gist.githubusercontent.com/x0k/e45728deb54612d6043b8aa7ec4d1cef/raw/55b6006d74fa4e50568bb601b36a7248f9613e1b/calendar.json
+    tls_insecure_skip_verify: false
+  web_calendar:
+    app_url: https://x0k.github.io/telegram-web-inputs/calendar
+    handler_address: 0.0.0.0:6012
+    # This is should be a https url (without end slash) to the web handler address
+    # web_handler_url: 
+  # appointment_change_detector:
+  #   check_interval: 10s
+  # storage:
+  #   path: "./storage/storage.db"
+  #   records_state_file_path: "./storage/records_state"
