@@ -3,8 +3,10 @@ package appointment_module
 import (
 	"crypto/tls"
 	"net/http"
+	"time"
 
 	"github.com/jomei/notionapi"
+	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	adapters_http "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
@@ -16,6 +18,7 @@ import (
 	appointment_notion_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/notion"
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
+	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 	"gopkg.in/telebot.v3"
@@ -36,11 +39,15 @@ func New(
 	)
 	m.Append(servicesRepository)
 
+	errorPresenter := appointment_telegram_presenter.NewErrorTextPresenter()
+
 	servicesController := adapters_telegram.NewController("services_controller", appointment_telegram_controller.NewServices(
 		bot,
 		appointment_use_case.NewServicesUseCase(
+			log,
 			servicesRepository,
 			appointment_telegram_presenter.NewServices(),
+			errorPresenter,
 		),
 	))
 	m.Append(servicesController)
@@ -88,12 +95,13 @@ func New(
 	scheduleController := adapters_telegram.NewController("schedule_controller", appointment_telegram_controller.NewSchedule(
 		bot,
 		appointment_use_case.NewScheduleUseCase(
+			log,
 			schedulingService,
 			appointment_telegram_presenter.NewScheduleTextPresenter(
 				cfg.WebCalendar.AppUrl,
 				webCalendarHandlerUrl,
 			),
-			appointment_telegram_presenter.NewErrorTextPresenter(),
+			errorPresenter,
 		),
 	))
 	m.Append(scheduleController)
@@ -114,6 +122,7 @@ func New(
 				webCalendarAppOrigin,
 				telegramInitDataParser,
 				appointment_use_case.NewScheduleUseCase(
+					log,
 					schedulingService,
 					appointment_telegram_presenter.NewScheduleQueryPresenter(
 						cfg.WebCalendar.AppUrl,
@@ -125,6 +134,33 @@ func New(
 		),
 	}, m)
 	m.Append(webCalendarService)
+
+	customerRepository := appointment_notion_repository.NewCustomer(
+		notion,
+		cfg.Notion.CustomersDatabaseId,
+	)
+
+	expirableServiceIdContainer := adapters.NewExpirableStateContainer[appointment.ServiceId](
+		"expirable_service_id_container",
+		uint64(time.Now().UnixNano()),
+		10*time.Minute,
+	)
+	m.Append(expirableServiceIdContainer)
+
+	makeAppointmentController := adapters_telegram.NewController("make_appointment_controller", appointment_telegram_controller.NewMakeAppointment(
+		bot,
+		appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
+			log,
+			customerRepository,
+			servicesRepository,
+			appointment_telegram_presenter.NewServicesPickerPresenter(
+				expirableServiceIdContainer,
+			),
+			appointment_telegram_presenter.NewRegistrationPresenter(),
+			errorPresenter,
+		),
+	))
+	m.Append(makeAppointmentController)
 
 	return m, nil
 }

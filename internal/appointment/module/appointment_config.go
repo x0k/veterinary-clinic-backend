@@ -7,9 +7,10 @@ import (
 )
 
 type NotionConfig struct {
-	ServicesDatabaseId notionapi.DatabaseID `yaml:"services_database_id" env:"APPOINTMENT_NOTION_SERVICES_DATABASE_ID" env-required:"true"`
-	RecordsDatabaseId  notionapi.DatabaseID `yaml:"records_database_id" env:"APPOINTMENT_NOTION_RECORDS_DATABASE_ID" env-required:"true"`
-	BreaksDatabaseId   notionapi.DatabaseID `yaml:"breaks_database_id" env:"APPOINTMENT_NOTION_BREAKS_DATABASE_ID" env-required:"true"`
+	ServicesDatabaseId  notionapi.DatabaseID `yaml:"services_database_id" env:"APPOINTMENT_NOTION_SERVICES_DATABASE_ID" env-required:"true"`
+	RecordsDatabaseId   notionapi.DatabaseID `yaml:"records_database_id" env:"APPOINTMENT_NOTION_RECORDS_DATABASE_ID" env-required:"true"`
+	BreaksDatabaseId    notionapi.DatabaseID `yaml:"breaks_database_id" env:"APPOINTMENT_NOTION_BREAKS_DATABASE_ID" env-required:"true"`
+	CustomersDatabaseId notionapi.DatabaseID `yaml:"customers_database_id" env:"APPOINTMENT_NOTION_CUSTOMERS_DATABASE_ID" env-required:"true"`
 }
 
 type ProductionCalendarConfig struct {

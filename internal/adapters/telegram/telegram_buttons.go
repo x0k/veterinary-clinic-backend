@@ -19,7 +19,7 @@ var (
 		Text:   "График работы",
 		Unique: "schedule",
 	}
-	AppointmentBtn = &telebot.InlineButton{
+	StartMakeAppointmentDialogBtn = &telebot.InlineButton{
 		Text:   "Запись на прием",
 		Unique: "appointment",
 	}
@@ -27,7 +27,7 @@ var (
 		InlineKeyboard: [][]telebot.InlineButton{
 			{*ScheduleBtn},
 			{*ServicesBtn},
-			{*AppointmentBtn},
+			{*StartMakeAppointmentDialogBtn},
 		},
 	}
 	NextMakeAppointmentDateBtn = &telebot.InlineButton{
@@ -37,6 +37,10 @@ var (
 	PrevMakeAppointmentDateBtn = &telebot.InlineButton{
 		Text:   "⬅",
 		Unique: "nx-mk-app-dt",
+	}
+	RegisterTelegramCustomerBtn = &telebot.ReplyButton{
+		Contact: true,
+		Text:    "Предоставить номер телефона",
 	}
 	CancelMakeAppointmentDateBtn = &telebot.InlineButton{
 		Text:   "Назад",
