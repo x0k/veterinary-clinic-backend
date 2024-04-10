@@ -60,3 +60,7 @@ func (c *CustomerEntity) IdType() (CustomerIdType, error) {
 	}
 	return "", ErrUnknownCustomerIdType
 }
+
+func TelegramUserIdToCustomerId(id entity.TelegramUserId) CustomerId {
+	return NewCustomerId(fmt.Sprintf("tg-%d", id))
+}
