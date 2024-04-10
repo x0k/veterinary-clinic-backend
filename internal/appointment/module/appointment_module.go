@@ -5,8 +5,11 @@ import (
 	"net/http"
 
 	"github.com/jomei/notionapi"
+	adapters_http "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_http_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/http"
 	appointment_telegram_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/telegram"
 	appointment_telegram_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/telegram"
 	appointment_http_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/http"
@@ -23,6 +26,7 @@ func New(
 	log *logger.Logger,
 	bot *telebot.Bot,
 	notion *notionapi.Client,
+	telegramInitDataParser *adapters_telegram.InitDataParser,
 ) (*module.Module, error) {
 	m := module.New(log.Logger, "appointment")
 
@@ -87,10 +91,35 @@ func New(
 				cfg.WebCalendar.AppUrl,
 				cfg.WebCalendar.HandlerUrl,
 			),
-			appointment_telegram_presenter.NewErrorPresenter(),
+			appointment_telegram_presenter.NewErrorTextPresenter(),
 		),
 	))
 	m.Append(scheduleController)
+
+	webCalendarAppOrigin, err := adapters_web_calendar.NewAppOrigin(
+		cfg.WebCalendar.AppUrl,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	webCalendarService := adapters_http.NewService("web_calendar_server", &http.Server{
+		Addr: cfg.WebCalendar.HandlerAddress.String(),
+		Handler: appointment_http_controller.UseWebCalendarRouter(
+			http.NewServeMux(), log, bot,
+			webCalendarAppOrigin,
+			telegramInitDataParser,
+			appointment_use_case.NewScheduleUseCase(
+				schedulingService,
+				appointment_telegram_presenter.NewScheduleQueryPresenter(
+					cfg.WebCalendar.AppUrl,
+					cfg.WebCalendar.HandlerUrl,
+				),
+				appointment_telegram_presenter.NewErrorQueryPresenter(),
+			),
+		),
+	}, m)
+	m.Append(webCalendarService)
 
 	return m, nil
 }

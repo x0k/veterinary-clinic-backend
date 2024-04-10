@@ -14,14 +14,6 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase/make_appointment"
 )
 
-type WebAppResultResponse struct {
-	Data struct {
-		SelectedDates []string `json:"selectedDates"`
-	} `json:"data"`
-	WebAppInitData string `json:"webAppInitData"`
-	State          string `json:"state"`
-}
-
 func UseHttpTelegramRouter(
 	mux *http.ServeMux,
 	log *logger.Logger,

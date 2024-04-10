@@ -7,22 +7,22 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 )
 
-type InitData struct {
+type InitDataParser struct {
 	telegramToken adapters.TelegramToken
 	expiredIn     time.Duration
 }
 
-func NewInitData(telegramToken adapters.TelegramToken, expiredIn time.Duration) *InitData {
-	return &InitData{
+func NewInitDataParser(telegramToken adapters.TelegramToken, expiredIn time.Duration) *InitDataParser {
+	return &InitDataParser{
 		telegramToken: telegramToken,
 		expiredIn:     expiredIn,
 	}
 }
 
-func (p *InitData) Validate(data string) error {
+func (p *InitDataParser) Validate(data string) error {
 	return initdata.Validate(data, string(p.telegramToken), p.expiredIn)
 }
 
-func (p *InitData) Parse(data string) (initdata.InitData, error) {
+func (p *InitDataParser) Parse(data string) (initdata.InitData, error) {
 	return initdata.Parse(data)
 }
