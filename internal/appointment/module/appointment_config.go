@@ -20,7 +20,7 @@ type ProductionCalendarConfig struct {
 type WebCalendarConfig struct {
 	AppUrl         adapters_web_calendar.AppUrl         `yaml:"app_url" env:"APPOINTMENT_WEB_CALENDAR_APP_URL" env-required:"true"`
 	HandlerAddress adapters_web_calendar.HandlerAddress `yaml:"handler_address" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_ADDRESS" env-required:"true"`
-	HandlerUrl     adapters_web_calendar.HandlerUrl     `yaml:"handler_url" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_URL" env-required:"true"`
+	HandlerUrlRoot adapters_web_calendar.HandlerUrlRoot `yaml:"handler_url_root" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_URL_ROOT" env-required:"true"`
 }
 
 type Config struct {

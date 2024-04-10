@@ -129,6 +129,7 @@ func (s *SchedulingService) Schedule(
 	if err != nil {
 		return Schedule{}, err
 	}
+	productionCalendar = productionCalendar.WithoutSaturdayWeekend()
 	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
 	if err != nil {
 		return Schedule{}, err

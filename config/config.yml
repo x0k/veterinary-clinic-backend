@@ -6,6 +6,7 @@ notion:
 telegram:
   # token:
   poller_timeout: 10s
+  init_data_expiry: 24h
 
 profiler:
   enabled: true
@@ -22,8 +23,8 @@ appointment:
   web_calendar:
     app_url: https://x0k.github.io/telegram-web-inputs/calendar
     handler_address: 0.0.0.0:6012
-    # This is should be a https url (without end slash) to the web handler address
-    # web_handler_url: 
+    # This is should be a https url to the web handler address
+    # web_handler_url_root: 
   # appointment_change_detector:
   #   check_interval: 10s
   # storage:

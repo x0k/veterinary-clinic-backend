@@ -83,13 +83,15 @@ func New(
 		workBreaksRepository,
 	)
 
+	webCalendarHandlerUrl := adapters_web_calendar.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
+
 	scheduleController := adapters_telegram.NewController("schedule_controller", appointment_telegram_controller.NewSchedule(
 		bot,
 		appointment_use_case.NewScheduleUseCase(
 			schedulingService,
 			appointment_telegram_presenter.NewScheduleTextPresenter(
 				cfg.WebCalendar.AppUrl,
-				cfg.WebCalendar.HandlerUrl,
+				webCalendarHandlerUrl,
 			),
 			appointment_telegram_presenter.NewErrorTextPresenter(),
 		),
@@ -105,17 +107,20 @@ func New(
 
 	webCalendarService := adapters_http.NewService("web_calendar_server", &http.Server{
 		Addr: cfg.WebCalendar.HandlerAddress.String(),
-		Handler: appointment_http_controller.UseWebCalendarRouter(
-			http.NewServeMux(), log, bot,
-			webCalendarAppOrigin,
-			telegramInitDataParser,
-			appointment_use_case.NewScheduleUseCase(
-				schedulingService,
-				appointment_telegram_presenter.NewScheduleQueryPresenter(
-					cfg.WebCalendar.AppUrl,
-					cfg.WebCalendar.HandlerUrl,
+		Handler: adapters_http.Logging(
+			log,
+			appointment_http_controller.UseWebCalendarRouter(
+				http.NewServeMux(), log, bot,
+				webCalendarAppOrigin,
+				telegramInitDataParser,
+				appointment_use_case.NewScheduleUseCase(
+					schedulingService,
+					appointment_telegram_presenter.NewScheduleQueryPresenter(
+						cfg.WebCalendar.AppUrl,
+						webCalendarHandlerUrl,
+					),
+					appointment_telegram_presenter.NewErrorQueryPresenter(),
 				),
-				appointment_telegram_presenter.NewErrorQueryPresenter(),
 			),
 		),
 	}, m)

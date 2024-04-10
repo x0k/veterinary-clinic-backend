@@ -19,7 +19,7 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	// Infrastructure
 
 	bot, err := telebot.NewBot(telebot.Settings{
-		Token: string(cfg.Telegram.Token),
+		Token: cfg.Telegram.Token.String(),
 		Poller: &telebot.LongPoller{
 			Timeout: cfg.Telegram.PollerTimeout,
 		},
@@ -41,11 +41,17 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	profilerModule := profiler_module.New(&cfg.Profiler, log)
 	m.Append(profilerModule)
 
+	telegramInitDataParser := adapters_telegram.NewInitDataParser(
+		cfg.Telegram.Token,
+		cfg.Telegram.InitDataExpiry,
+	)
+
 	appointmentModule, err := appointment_module.New(
 		&cfg.Appointment,
 		log,
 		bot,
 		notion,
+		telegramInitDataParser,
 	)
 	if err != nil {
 		return nil, err

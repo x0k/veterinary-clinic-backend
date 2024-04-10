@@ -3,7 +3,14 @@ package adapters_web_calendar
 import (
 	"fmt"
 	"net/url"
+	"strings"
 )
+
+const HandlerPath = "/web-calendar"
+
+const AppInputValidationSchema = `{"type":"object","properties":{"selectedDates":{"type":"array","minItems":1}},"required":["selectedDates"]}`
+
+const AppOptionsTemplate = `{"date":{"min":"%s"},"settings":{"selected":{"dates":["%s"]}}}`
 
 type AppUrl string
 
@@ -25,19 +32,27 @@ func (o AppOrigin) String() string {
 	return string(o)
 }
 
+type HandlerUrlRoot string
+
+func (h HandlerUrlRoot) String() string {
+	return string(h)
+}
+
 type HandlerUrl string
+
+func NewHandlerUrl(root HandlerUrlRoot) HandlerUrl {
+	path := HandlerPath
+	if strings.HasSuffix(root.String(), "/") {
+		path = path[1:]
+	}
+	return HandlerUrl(fmt.Sprintf("%s%s", root, path))
+}
 
 type HandlerAddress string
 
 func (h HandlerAddress) String() string {
 	return string(h)
 }
-
-const HandlerPath = "/web-calendar"
-
-const AppInputValidationSchema = `{"type":"object","properties":{"selectedDates":{"type":"array","minItems":1}},"required":["selectedDates"]}`
-
-const AppOptionsTemplate = `{"date":{"min":"%s"},"settings":{"selected":{"dates":["%s"]}}}`
 
 type AppResultResponse struct {
 	Data struct {
