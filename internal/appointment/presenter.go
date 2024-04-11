@@ -1,6 +1,10 @@
 package appointment
 
-import "time"
+import (
+	"time"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+)
 
 type ServicesPresenter[R any] interface {
 	RenderServices(services []ServiceEntity) (R, error)
@@ -15,7 +19,11 @@ type ErrorPresenter[R any] interface {
 }
 
 type RegistrationPresenter[R any] interface {
-	RenderRegistration() (R, error)
+	RenderRegistration(telegramUserId entity.TelegramUserId) (R, error)
+}
+
+type SuccessRegistrationPresenter[R any] interface {
+	RenderSuccessRegistration() (R, error)
 }
 
 type ServicesPickerPresenter[R any] interface {

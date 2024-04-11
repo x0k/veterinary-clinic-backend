@@ -1,6 +1,10 @@
-package entity
+package appointment
 
-import "maps"
+import (
+	"maps"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+)
 
 type RecordChangeType int
 
@@ -13,24 +17,24 @@ const (
 
 type RecordChange struct {
 	Type   RecordChangeType
-	Record Record
+	Record RecordEntity
 }
 
 type ActualRecordsState struct {
-	records map[RecordId]Record
+	records map[RecordId]RecordEntity
 }
 
-func NewActualRecordsState(records map[RecordId]Record) ActualRecordsState {
+func NewActualRecordsState(records map[RecordId]RecordEntity) ActualRecordsState {
 	return ActualRecordsState{
 		records: records,
 	}
 }
 
-func (r ActualRecordsState) Records() map[RecordId]Record {
+func (r ActualRecordsState) Records() map[RecordId]RecordEntity {
 	return r.records
 }
 
-func (r *ActualRecordsState) Update(actualRecords []Record) []RecordChange {
+func (r *ActualRecordsState) Update(actualRecords []RecordEntity) []RecordChange {
 	stateCopy := maps.Clone(r.records)
 	changes := make([]RecordChange, 0, len(actualRecords))
 	for _, actualRecord := range actualRecords {
@@ -49,7 +53,7 @@ func (r *ActualRecordsState) Update(actualRecords []Record) []RecordChange {
 				Type:   RecordStatusChanged,
 				Record: actualRecord,
 			})
-		} else if DateTimePeriodApi.ComparePeriods(oldRecord.DateTimePeriod, actualRecord.DateTimePeriod) != 0 {
+		} else if entity.DateTimePeriodApi.ComparePeriods(oldRecord.DateTimePeriod, actualRecord.DateTimePeriod) != 0 {
 			changes = append(changes, RecordChange{
 				Type:   RecordDateTimeChanged,
 				Record: actualRecord,

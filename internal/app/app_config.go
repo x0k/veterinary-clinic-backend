@@ -10,7 +10,6 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	profiler_module "github.com/x0k/veterinary-clinic-backend/internal/profiler"
 )
 
@@ -46,10 +45,6 @@ type AppointmentChangeDetectorConfig struct {
 type AppointmentAutoArchiverConfig struct {
 	ArchiveInterval time.Duration `yaml:"archive_interval" env:"APPOINTMENT_AUTO_ARCHIVER_ARCHIVE_INTERVAL" env-default:"24h"`
 	ArchiveTime     time.Time     `yaml:"archive_time" env:"APPOINTMENT_AUTO_ARCHIVER_ARCHIVE_TIME" env-default:"2000-01-01T23:30:00+03:00"`
-}
-
-type NotificationsConfig struct {
-	AdminId entity.UserId `yaml:"admin_id" env:"NOTIFICATIONS_ADMIN_ID" env-required:"true"`
 }
 
 type Config struct {

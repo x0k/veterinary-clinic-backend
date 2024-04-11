@@ -2,11 +2,13 @@ package appointment_notion_repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
 )
 
 const customerRepositoryName = "appointment_notion_repository.CustomerRepository"
@@ -43,4 +45,42 @@ func (r *CustomerRepository) Customer(ctx context.Context, id appointment.Custom
 		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, entity.ErrNotFound)
 	}
 	return NotionToCustomer(res.Results[0]), nil
+}
+
+func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer appointment.CustomerEntity) error {
+	const op = customerRepositoryName + ".CreateCustomer"
+	if _, err := r.Customer(ctx, customer.Id); !errors.Is(err, entity.ErrNotFound) {
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+		return fmt.Errorf("%s: %w", op, entity.ErrAlreadyExists)
+	}
+	properties := notionapi.Properties{
+		CustomerTitle: &notionapi.TitleProperty{
+			Type:  notionapi.PropertyTypeTitle,
+			Title: notion.ToRichText(customer.Name),
+		},
+		CustomerEmail: &notionapi.EmailProperty{
+			Type:  notionapi.PropertyTypeEmail,
+			Email: customer.Email,
+		},
+		CustomerPhoneNumber: &notionapi.PhoneNumberProperty{
+			Type:        notionapi.PropertyTypePhoneNumber,
+			PhoneNumber: customer.PhoneNumber,
+		},
+		CustomerUserId: &notionapi.RichTextProperty{
+			Type:     notionapi.PropertyTypeRichText,
+			RichText: notion.ToRichText(customer.Id.String()),
+		},
+	}
+	_, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
+		Parent: notionapi.Parent{
+			DatabaseID: r.customersDatabaseId,
+		},
+		Properties: properties,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
 }

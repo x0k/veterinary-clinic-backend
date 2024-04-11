@@ -19,6 +19,10 @@ type CustomerLoader interface {
 	Customer(context.Context, CustomerId) (CustomerEntity, error)
 }
 
+type CustomerCreator interface {
+	CreateCustomer(context.Context, CustomerEntity) error
+}
+
 type ServiceLoader interface {
 	Service(context.Context, ServiceId) (ServiceEntity, error)
 }

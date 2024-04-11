@@ -1,13 +1,6 @@
 package entity
 
-import (
-	"errors"
-	"fmt"
-	"strconv"
-	"strings"
-)
-
-var ErrNotTelegramUser = errors.New("not a telegram user")
+// var ErrNotTelegramUser = errors.New("not a telegram user")
 
 type TelegramUserId int64
 
@@ -34,18 +27,18 @@ func (id TelegramUserId) Int() int64 {
 // 	}
 // }
 
-func IsTelegramUserId(userId UserId) bool {
-	return strings.HasPrefix(string(userId), "tg-")
-}
+// func IsTelegramUserId(userId UserId) bool {
+// 	return strings.HasPrefix(string(userId), "tg-")
+// }
 
-func UserIdToTelegramUserId(userId UserId) (TelegramUserId, error) {
-	if !IsTelegramUserId(userId) {
-		fmt.Println(string(userId))
-		return 0, ErrNotTelegramUser
-	}
-	id, err := strconv.ParseInt(string(userId)[3:], 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return TelegramUserId(id), nil
-}
+// func UserIdToTelegramUserId(userId UserId) (TelegramUserId, error) {
+// 	if !IsTelegramUserId(userId) {
+// 		fmt.Println(string(userId))
+// 		return 0, ErrNotTelegramUser
+// 	}
+// 	id, err := strconv.ParseInt(string(userId)[3:], 10, 64)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return TelegramUserId(id), nil
+// }

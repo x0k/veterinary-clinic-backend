@@ -42,6 +42,9 @@ var (
 		Contact: true,
 		Text:    "Предоставить номер телефона",
 	}
+	CancelRegisterTelegramCustomerBtn = &telebot.ReplyButton{
+		Text: "Отменить регистрацию",
+	}
 	CancelMakeAppointmentDateBtn = &telebot.InlineButton{
 		Text:   "Назад",
 		Unique: "cncl-mk-app-dt",

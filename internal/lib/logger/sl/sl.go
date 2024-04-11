@@ -14,3 +14,10 @@ func Err(err error) slog.Attr {
 		Value: slog.StringValue(err.Error()),
 	}
 }
+
+func Component(component string) slog.Attr {
+	return slog.Attr{
+		Key:   "component",
+		Value: slog.StringValue(component),
+	}
+}

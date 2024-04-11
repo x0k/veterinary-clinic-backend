@@ -47,7 +47,7 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	customerId := appointment.TelegramUserIdToCustomerId(userId)
 	_, err := u.customerLoader.Customer(ctx, customerId)
 	if errors.Is(err, entity.ErrNotFound) {
-		return u.registrationPresenter.RenderRegistration()
+		return u.registrationPresenter.RenderRegistration(userId)
 	}
 	if err != nil {
 		u.log.Error(ctx, "failed to find customer", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))

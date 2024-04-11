@@ -76,3 +76,14 @@ func (c *ExpirableStateContainer[S]) SaveByKey(key StateId, value S) {
 	c.keys.Push(key)
 	c.values[key] = value
 }
+
+func (c *ExpirableStateContainer[S]) Pop(key StateId) (S, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	value, ok := c.values[key]
+	if ok {
+		c.keys.Remove(key)
+		delete(c.values, key)
+	}
+	return value, ok
+}

@@ -18,10 +18,8 @@ func NewErrorTextPresenter() *ErrorTextPresenter {
 func (p *ErrorTextPresenter) RenderError(err error) (adapters_telegram.TextResponse, error) {
 	// TODO: Handle domain errors
 	return adapters_telegram.TextResponse{
-		Text: errorText,
-		Options: &telebot.SendOptions{
-			ParseMode: telebot.ModeMarkdownV2,
-		},
+		Text:    errorText,
+		Options: &telebot.SendOptions{},
 	}, nil
 }
 
@@ -36,9 +34,8 @@ func (p *ErrorQueryPresenter) RenderError(err error) (adapters_telegram.QueryRes
 	return adapters_telegram.QueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{
-				ID:        fmt.Sprintf("%p", err),
-				Type:      "article",
-				ParseMode: telebot.ModeMarkdownV2,
+				ID:   fmt.Sprintf("%p", err),
+				Type: "article",
 			},
 			Title: "Ошибка",
 			Text:  errorText,

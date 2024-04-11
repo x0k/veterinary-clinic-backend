@@ -19,6 +19,7 @@ import (
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 	"gopkg.in/telebot.v3"
@@ -147,8 +148,16 @@ func New(
 	)
 	m.Append(expirableServiceIdContainer)
 
-	makeAppointmentController := adapters_telegram.NewController("make_appointment_controller", appointment_telegram_controller.NewMakeAppointment(
+	expirableTelegramUserIdContainer := adapters.NewExpirableStateContainer[entity.TelegramUserId](
+		"expirable_telegram_user_id_container",
+		uint64(time.Now().UnixNano()),
+		3*time.Minute,
+	)
+	m.Append(expirableTelegramUserIdContainer)
+
+	makeAppointmentController := adapters_telegram.NewController("make_appointment_controller", appointment_telegram_controller.NewStartMakeAppointmentDialog(
 		bot,
+		expirableTelegramUserIdContainer,
 		appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
 			log,
 			customerRepository,
@@ -156,7 +165,15 @@ func New(
 			appointment_telegram_presenter.NewServicesPickerPresenter(
 				expirableServiceIdContainer,
 			),
-			appointment_telegram_presenter.NewRegistrationPresenter(),
+			appointment_telegram_presenter.NewRegistrationPresenter(
+				expirableTelegramUserIdContainer,
+			),
+			errorPresenter,
+		),
+		appointment_telegram_use_case.NewRegisterCustomerUseCase(
+			log,
+			customerRepository,
+			appointment_telegram_presenter.NewSuccessRegistrationPresenter(),
 			errorPresenter,
 		),
 	))
