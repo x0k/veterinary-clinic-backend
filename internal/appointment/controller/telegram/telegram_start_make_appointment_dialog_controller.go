@@ -2,7 +2,6 @@ package appointment_telegram_controller
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
@@ -30,7 +29,7 @@ func NewStartMakeAppointmentDialog(
 			if err != nil {
 				return err
 			}
-			return telegram_adapters.Send(c, res)
+			return res.Send(c)
 		}
 		bot.Handle("/appointment", startMakeAppointmentHandler)
 		bot.Handle(appointment_telegram_adapters.StartMakeAppointmentDialogBtn, startMakeAppointmentHandler)
@@ -41,7 +40,11 @@ func NewStartMakeAppointmentDialog(
 			}
 			tgUserId, ok := tgUserIdLoader.Pop(adapters.StateId(strconv.FormatInt(cnt.UserID, 10)))
 			if !ok {
-				return fmt.Errorf("user id %d is not found in registration queue", cnt.UserID)
+				res, err := errorPresenter.RenderError(appointment_telegram_adapters.ErrUnknownState)
+				if err != nil {
+					return err
+				}
+				return res.Send(c)
 			}
 			res, err := registerCustomerUseCase.RegisterCustomer(
 				ctx,
@@ -54,7 +57,7 @@ func NewStartMakeAppointmentDialog(
 			if err != nil {
 				return err
 			}
-			return telegram_adapters.Send(c, res)
+			return res.Send(c)
 		})
 		bot.Handle(appointment_telegram_adapters.CancelRegisterTelegramCustomerBtn, func(c telebot.Context) error {
 			return c.Send("Регистрация отменена", &telebot.SendOptions{

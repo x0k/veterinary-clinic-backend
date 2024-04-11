@@ -31,5 +31,5 @@ type ServicesPickerPresenter[R any] interface {
 }
 
 type DatePickerPresenter[R any] interface {
-	RenderDatePicker(serviceId ServiceId, schedule Schedule) (R, error)
+	RenderDatePicker(now time.Time, serviceId ServiceId, schedule Schedule) (R, error)
 }

@@ -21,7 +21,7 @@ func NewSchedule(
 			if err != nil {
 				return err
 			}
-			return telegram_adapters.Send(c, res)
+			return res.Send(c)
 		}
 
 		bot.Handle("/schedule", scheduleHandler)
@@ -36,7 +36,7 @@ func NewSchedule(
 			if err != nil {
 				return err
 			}
-			return telegram_adapters.Edit(c, res)
+			return res.Edit(c)
 		})
 		return nil
 	}

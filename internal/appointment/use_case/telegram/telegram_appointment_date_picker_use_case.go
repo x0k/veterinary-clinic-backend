@@ -8,13 +8,21 @@ import (
 )
 
 type AppointmentDatePickerUseCase[R any] struct {
-	schedulingService   appointment.SchedulingService
+	schedulingService   *appointment.SchedulingService
 	datePickerPresenter appointment.DatePickerPresenter[R]
 	errorPresenter      appointment.ErrorPresenter[R]
 }
 
-func NewAppointmentDatePickerUseCase[R any]() *AppointmentDatePickerUseCase[R] {
-	return &AppointmentDatePickerUseCase[R]{}
+func NewAppointmentDatePickerUseCase[R any](
+	schedulingService *appointment.SchedulingService,
+	datePickerPresenter appointment.DatePickerPresenter[R],
+	errorPresenter appointment.ErrorPresenter[R],
+) *AppointmentDatePickerUseCase[R] {
+	return &AppointmentDatePickerUseCase[R]{
+		schedulingService:   schedulingService,
+		datePickerPresenter: datePickerPresenter,
+		errorPresenter:      errorPresenter,
+	}
 }
 
 func (u *AppointmentDatePickerUseCase[R]) DatePicker(
@@ -27,5 +35,5 @@ func (u *AppointmentDatePickerUseCase[R]) DatePicker(
 	if err != nil {
 		return u.errorPresenter.RenderError(err)
 	}
-	return u.datePickerPresenter.RenderDatePicker(serviceId, schedule)
+	return u.datePickerPresenter.RenderDatePicker(now, serviceId, schedule)
 }

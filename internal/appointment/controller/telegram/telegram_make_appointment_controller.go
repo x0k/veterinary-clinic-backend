@@ -2,6 +2,7 @@ package appointment_telegram_controller
 
 import (
 	"context"
+	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
@@ -21,12 +22,18 @@ func NewMakeAppointment(
 		bot.Handle(appointment_telegram_adapters.MakeAppointmentServiceCallback, func(c telebot.Context) error {
 			serviceId, ok := serviceIdLoader.Load(adapters.NewStateId(c.Callback().Data))
 			if !ok {
-				res, err := errorPresenter.RenderError(appointment.ErrUnknownService)
+				res, err := errorPresenter.RenderError(appointment_telegram_adapters.ErrUnknownState)
 				if err != nil {
 					return err
 				}
-				return telegram_adapters.Send(c, res)
+				return res.Send(c)
 			}
+			now := time.Now()
+			datePicker, err := appointmentDatePickerUseCase.DatePicker(ctx, serviceId, now, now)
+			if err != nil {
+				return err
+			}
+			return datePicker.Edit(c)
 		})
 		return nil
 	}

@@ -1,9 +1,11 @@
 package appointment_telegram_presenter
 
 import (
+	"errors"
 	"fmt"
 
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	"gopkg.in/telebot.v3"
 )
 
@@ -16,6 +18,14 @@ func NewErrorTextPresenter() *ErrorTextPresenter {
 }
 
 func (p *ErrorTextPresenter) RenderError(err error) (telegram_adapters.TextResponses, error) {
+	if errors.Is(err, appointment_telegram_adapters.ErrUnknownState) {
+		return telegram_adapters.TextResponses{{
+			Text: "Выбранное действие устарело\\.\nНачните весь процесс заново\\.",
+			Options: &telebot.SendOptions{
+				ParseMode: telebot.ModeMarkdownV2,
+			},
+		}}, nil
+	}
 	// TODO: Handle domain errors
 	return telegram_adapters.TextResponses{{
 		Text:    errorText,

@@ -11,10 +11,10 @@ type textResponse struct {
 	Options *telebot.SendOptions
 }
 
-type TextResponses = []textResponse
+type TextResponses []textResponse
 
-func Send(c telebot.Context, responses TextResponses) error {
-	for _, response := range responses {
+func (rs TextResponses) Send(c telebot.Context) error {
+	for _, response := range rs {
 		if err := c.Send(response.Text, response.Options); err != nil {
 			return err
 		}
@@ -22,7 +22,7 @@ func Send(c telebot.Context, responses TextResponses) error {
 	return nil
 }
 
-func Edit(c telebot.Context, responses TextResponses) error {
+func (responses TextResponses) Edit(c telebot.Context) error {
 	if len(responses) == 0 {
 		return nil
 	}

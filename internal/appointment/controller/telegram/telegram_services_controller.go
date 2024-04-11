@@ -19,7 +19,7 @@ func NewServices(
 			if err != nil {
 				return err
 			}
-			return telegram_adapters.Send(c, res)
+			return res.Send(c)
 		}
 		bot.Handle("/services", servicesHandler)
 		bot.Handle(appointment_telegram_adapters.ServicesBtn, servicesHandler)
