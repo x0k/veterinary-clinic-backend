@@ -11,7 +11,7 @@ import (
 
 func NewSchedule(
 	bot *telebot.Bot,
-	scheduleUseCase *appointment_use_case.ScheduleUseCase[adapters_telegram.TextResponse],
+	scheduleUseCase *appointment_use_case.ScheduleUseCase[adapters_telegram.TextResponses],
 ) func(context.Context) error {
 	return func(ctx context.Context) error {
 		scheduleHandler := func(c telebot.Context) error {
@@ -20,7 +20,7 @@ func NewSchedule(
 			if err != nil {
 				return err
 			}
-			return c.Send(res.Text, res.Options)
+			return adapters_telegram.Send(c, res)
 		}
 
 		bot.Handle("/schedule", scheduleHandler)
@@ -35,7 +35,7 @@ func NewSchedule(
 			if err != nil {
 				return err
 			}
-			return c.Edit(res.Text, res.Options)
+			return adapters_telegram.Edit(c, res)
 		})
 		return nil
 	}

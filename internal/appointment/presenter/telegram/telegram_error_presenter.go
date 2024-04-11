@@ -15,12 +15,12 @@ func NewErrorTextPresenter() *ErrorTextPresenter {
 	return &ErrorTextPresenter{}
 }
 
-func (p *ErrorTextPresenter) RenderError(err error) (adapters_telegram.TextResponse, error) {
+func (p *ErrorTextPresenter) RenderError(err error) (adapters_telegram.TextResponses, error) {
 	// TODO: Handle domain errors
-	return adapters_telegram.TextResponse{
+	return adapters_telegram.TextResponses{{
 		Text:    errorText,
 		Options: &telebot.SendOptions{},
-	}, nil
+	}}, nil
 }
 
 type ErrorQueryPresenter struct{}

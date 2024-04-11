@@ -8,6 +8,10 @@ import (
 
 type StateId string
 
+func (s StateId) String() string {
+	return string(s)
+}
+
 func NewStateId(str string) StateId {
 	return StateId(str)
 }

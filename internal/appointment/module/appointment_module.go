@@ -155,6 +155,10 @@ func New(
 	)
 	m.Append(expirableTelegramUserIdContainer)
 
+	servicesPickerPresenter := appointment_telegram_presenter.NewServicesPickerPresenter(
+		expirableServiceIdContainer,
+	)
+
 	makeAppointmentController := adapters_telegram.NewController("make_appointment_controller", appointment_telegram_controller.NewStartMakeAppointmentDialog(
 		bot,
 		expirableTelegramUserIdContainer,
@@ -162,9 +166,7 @@ func New(
 			log,
 			customerRepository,
 			servicesRepository,
-			appointment_telegram_presenter.NewServicesPickerPresenter(
-				expirableServiceIdContainer,
-			),
+			servicesPickerPresenter,
 			appointment_telegram_presenter.NewRegistrationPresenter(
 				expirableTelegramUserIdContainer,
 			),
@@ -173,7 +175,10 @@ func New(
 		appointment_telegram_use_case.NewRegisterCustomerUseCase(
 			log,
 			customerRepository,
-			appointment_telegram_presenter.NewSuccessRegistrationPresenter(),
+			servicesRepository,
+			appointment_telegram_presenter.NewSuccessRegistrationPresenter(
+				servicesPickerPresenter,
+			),
 			errorPresenter,
 		),
 	))

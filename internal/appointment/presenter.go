@@ -23,7 +23,7 @@ type RegistrationPresenter[R any] interface {
 }
 
 type SuccessRegistrationPresenter[R any] interface {
-	RenderSuccessRegistration() (R, error)
+	RenderSuccessRegistration(services []ServiceEntity) (R, error)
 }
 
 type ServicesPickerPresenter[R any] interface {

@@ -15,6 +15,7 @@ const registerCustomerUseCaseName = "appointment_telegram_use_case.RegisterCusto
 type RegisterCustomerUseCase[R any] struct {
 	log                          *logger.Logger
 	customerCreator              appointment.CustomerCreator
+	servicesLoader               appointment.ServicesLoader
 	successRegistrationPresenter appointment.SuccessRegistrationPresenter[R]
 	errorPresenter               appointment.ErrorPresenter[R]
 }
@@ -22,12 +23,14 @@ type RegisterCustomerUseCase[R any] struct {
 func NewRegisterCustomerUseCase[R any](
 	log *logger.Logger,
 	customerCreator appointment.CustomerCreator,
+	servicesLoader appointment.ServicesLoader,
 	successRegistrationPresenter appointment.SuccessRegistrationPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
 ) *RegisterCustomerUseCase[R] {
 	return &RegisterCustomerUseCase[R]{
 		log:                          log.With(sl.Component(registerCustomerUseCaseName)),
 		customerCreator:              customerCreator,
+		servicesLoader:               servicesLoader,
 		successRegistrationPresenter: successRegistrationPresenter,
 		errorPresenter:               errorPresenter,
 	}
@@ -40,7 +43,7 @@ func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 	telegramUserFirstName string,
 	telegramUserLastName string,
 	telegramUserPhoneNumber string,
-) (bool, R, error) {
+) (R, error) {
 	customerId := appointment.TelegramUserIdToCustomerId(telegramUserId)
 	customer := appointment.NewCustomer(
 		customerId,
@@ -50,9 +53,12 @@ func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 	)
 	if err := u.customerCreator.CreateCustomer(ctx, customer); err != nil {
 		u.log.Error(ctx, "failed to create customer", sl.Err(err))
-		res, err := u.errorPresenter.RenderError(err)
-		return false, res, err
+		return u.errorPresenter.RenderError(err)
 	}
-	res, err := u.successRegistrationPresenter.RenderSuccessRegistration()
-	return true, res, err
+	services, err := u.servicesLoader.Services(ctx)
+	if err != nil {
+		u.log.Error(ctx, "failed to load services", sl.Err(err))
+		return u.errorPresenter.RenderError(err)
+	}
+	return u.successRegistrationPresenter.RenderSuccessRegistration(services)
 }

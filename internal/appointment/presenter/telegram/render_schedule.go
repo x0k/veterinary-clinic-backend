@@ -7,8 +7,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 )
 
-func RenderSchedule(schedule appointment.Schedule) string {
-	sb := strings.Builder{}
+func writeSchedule(sb *strings.Builder, schedule appointment.Schedule) {
 	sb.WriteString("График работы на ")
 	sb.WriteString(adapters_telegram.EscapeMarkdownString(
 		schedule.Date.Format("02.01.2006")),
@@ -26,5 +25,4 @@ func RenderSchedule(schedule appointment.Schedule) string {
 	if len(schedule.Entries) == 0 {
 		sb.WriteString("Нет записей\n\n")
 	}
-	return sb.String()
 }

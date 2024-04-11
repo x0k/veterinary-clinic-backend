@@ -2,22 +2,37 @@ package appointment_telegram_presenter
 
 import (
 	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"gopkg.in/telebot.v3"
 )
 
 const successRegistrationText = "Вы успешно зарегистрированы!"
 
-type SuccessRegistrationPresenter struct{}
-
-func NewSuccessRegistrationPresenter() *SuccessRegistrationPresenter {
-	return &SuccessRegistrationPresenter{}
+type SuccessRegistrationPresenter struct {
+	servicesPickerPresenter *ServicesPickerPresenter
 }
 
-func (p *SuccessRegistrationPresenter) RenderSuccessRegistration() (adapters_telegram.TextResponse, error) {
-	return adapters_telegram.TextResponse{
-		Text: successRegistrationText,
-		Options: &telebot.SendOptions{
-			ReplyMarkup: &telebot.ReplyMarkup{RemoveKeyboard: true},
+func NewSuccessRegistrationPresenter(
+	servicesPickerPresenter *ServicesPickerPresenter,
+) *SuccessRegistrationPresenter {
+	return &SuccessRegistrationPresenter{
+		servicesPickerPresenter: servicesPickerPresenter,
+	}
+}
+
+func (p *SuccessRegistrationPresenter) RenderSuccessRegistration(services []appointment.ServiceEntity) (adapters_telegram.TextResponses, error) {
+	picker, err := p.servicesPickerPresenter.RenderServicesList(services)
+	if err != nil {
+		return nil, err
+	}
+	return append(adapters_telegram.TextResponses{
+		{
+			Text: successRegistrationText,
+			Options: &telebot.SendOptions{
+				ReplyMarkup: &telebot.ReplyMarkup{
+					RemoveKeyboard: true,
+				},
+			},
 		},
-	}, nil
+	}, picker...), nil
 }

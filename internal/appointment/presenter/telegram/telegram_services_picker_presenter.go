@@ -19,21 +19,14 @@ func NewServicesPickerPresenter(
 	}
 }
 
-func (p *ServicesPickerPresenter) RenderServicesList(services []appointment.ServiceEntity) (adapters_telegram.TextResponse, error) {
-	buttons := make([][]telebot.InlineButton, 0, len(services))
-	for _, service := range services {
-		buttons = append(buttons, []telebot.InlineButton{{
-			Text:   service.Title,
-			Unique: adapters.MakeAppointmentService,
-			Data:   string(p.stateSaver.Save(service.Id)),
-		}})
-	}
-	return adapters_telegram.TextResponse{
+func (p *ServicesPickerPresenter) RenderServicesList(services []appointment.ServiceEntity) (adapters_telegram.TextResponses, error) {
+	buttons := makeServicesButtons(p.stateSaver, services)
+	return adapters_telegram.TextResponses{{
 		Text: "Выберите услугу:",
 		Options: &telebot.SendOptions{
 			ReplyMarkup: &telebot.ReplyMarkup{
 				InlineKeyboard: buttons,
 			},
 		},
-	}, nil
+	}}, nil
 }

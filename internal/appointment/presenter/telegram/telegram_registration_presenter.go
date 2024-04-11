@@ -21,20 +21,21 @@ func NewRegistrationPresenter(
 	}
 }
 
-func (p *RegistrationPresenter) RenderRegistration(telegramUserId entity.TelegramUserId) (adapters_telegram.TextResponse, error) {
+func (p *RegistrationPresenter) RenderRegistration(telegramUserId entity.TelegramUserId) (adapters_telegram.TextResponses, error) {
 	p.stateSaver.SaveByKey(
 		adapters.NewStateId(strconv.FormatInt(telegramUserId.Int(), 10)),
 		telegramUserId,
 	)
-	return adapters_telegram.TextResponse{
+	return adapters_telegram.TextResponses{{
 		Text: "Для записи на прием, необходимо уточнить ваш номер телефона.",
 		Options: &telebot.SendOptions{
 			ReplyMarkup: &telebot.ReplyMarkup{
+				OneTimeKeyboard: true,
 				ReplyKeyboard: [][]telebot.ReplyButton{
 					{*adapters_telegram.RegisterTelegramCustomerBtn},
 					{*adapters_telegram.CancelRegisterTelegramCustomerBtn},
 				},
 			},
-		},
+		}},
 	}, nil
 }

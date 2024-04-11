@@ -3,6 +3,7 @@ package appointment_telegram_presenter
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
@@ -66,9 +67,11 @@ func NewScheduleTextPresenter(
 	}
 }
 
-func (p *ScheduleTextPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (adapters_telegram.TextResponse, error) {
-	return adapters_telegram.TextResponse{
-		Text: RenderSchedule(schedule),
+func (p *ScheduleTextPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (adapters_telegram.TextResponses, error) {
+	sb := strings.Builder{}
+	writeSchedule(&sb, schedule)
+	return adapters_telegram.TextResponses{{
+		Text: sb.String(),
 		Options: &telebot.SendOptions{
 			ParseMode: telebot.ModeMarkdownV2,
 			ReplyMarkup: &telebot.ReplyMarkup{
@@ -77,7 +80,7 @@ func (p *ScheduleTextPresenter) RenderSchedule(now time.Time, schedule appointme
 				},
 			},
 		},
-	}, nil
+	}}, nil
 }
 
 type ScheduleQueryPresenter struct {
@@ -97,6 +100,8 @@ func NewScheduleQueryPresenter(
 }
 
 func (p *ScheduleQueryPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (adapters_telegram.QueryResponse, error) {
+	sb := strings.Builder{}
+	writeSchedule(&sb, schedule)
 	return adapters_telegram.QueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{
@@ -110,7 +115,7 @@ func (p *ScheduleQueryPresenter) RenderSchedule(now time.Time, schedule appointm
 				},
 			},
 			Title: "График работы",
-			Text:  RenderSchedule(schedule),
+			Text:  sb.String(),
 		},
 	}, nil
 }

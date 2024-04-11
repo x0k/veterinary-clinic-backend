@@ -10,7 +10,7 @@ import (
 
 func NewServices(
 	bot *telebot.Bot,
-	servicesUseCase *appointment_use_case.ServicesUseCase[adapters_telegram.TextResponse],
+	servicesUseCase *appointment_use_case.ServicesUseCase[adapters_telegram.TextResponses],
 ) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		servicesHandler := func(c telebot.Context) error {
@@ -18,7 +18,7 @@ func NewServices(
 			if err != nil {
 				return err
 			}
-			return c.Send(res.Text, res.Options)
+			return adapters_telegram.Send(c, res)
 		}
 		bot.Handle("/services", servicesHandler)
 		bot.Handle(adapters_telegram.ServicesBtn, servicesHandler)
