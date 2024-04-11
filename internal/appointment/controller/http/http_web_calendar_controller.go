@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/httpx"
@@ -19,8 +19,8 @@ func UseWebCalendarRouter(
 	log *logger.Logger,
 	bot *telebot.Bot,
 	webCalendarAppOrigin adapters_web_calendar.AppOrigin,
-	telegramIniDataParser *adapters_telegram.InitDataParser,
-	scheduleUseCase *appointment_use_case.ScheduleUseCase[adapters_telegram.QueryResponse],
+	telegramIniDataParser *telegram_adapters.InitDataParser,
+	scheduleUseCase *appointment_use_case.ScheduleUseCase[telegram_adapters.QueryResponse],
 ) *http.ServeMux {
 
 	jsonBodyDecoder := &httpx.JsonBodyDecoder{

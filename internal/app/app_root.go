@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/jomei/notionapi"
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
@@ -32,7 +32,7 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 		middleware.AutoRespond(),
 		middleware.Recover(),
 	)
-	m.Append(adapters_telegram.NewService("telegram_bot", bot))
+	m.Append(telegram_adapters.NewService("telegram_bot", bot))
 
 	notion := notionapi.NewClient(cfg.Notion.Token)
 
@@ -41,7 +41,7 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	profilerModule := profiler_module.New(&cfg.Profiler, log)
 	m.Append(profilerModule)
 
-	telegramInitDataParser := adapters_telegram.NewInitDataParser(
+	telegramInitDataParser := telegram_adapters.NewInitDataParser(
 		cfg.Telegram.Token,
 		cfg.Telegram.InitDataExpiry,
 	)

@@ -3,7 +3,7 @@ package appointment_telegram_presenter
 import (
 	"fmt"
 
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	"gopkg.in/telebot.v3"
 )
 
@@ -15,9 +15,9 @@ func NewErrorTextPresenter() *ErrorTextPresenter {
 	return &ErrorTextPresenter{}
 }
 
-func (p *ErrorTextPresenter) RenderError(err error) (adapters_telegram.TextResponses, error) {
+func (p *ErrorTextPresenter) RenderError(err error) (telegram_adapters.TextResponses, error) {
 	// TODO: Handle domain errors
-	return adapters_telegram.TextResponses{{
+	return telegram_adapters.TextResponses{{
 		Text:    errorText,
 		Options: &telebot.SendOptions{},
 	}}, nil
@@ -29,9 +29,9 @@ func NewErrorQueryPresenter() *ErrorQueryPresenter {
 	return &ErrorQueryPresenter{}
 }
 
-func (p *ErrorQueryPresenter) RenderError(err error) (adapters_telegram.QueryResponse, error) {
+func (p *ErrorQueryPresenter) RenderError(err error) (telegram_adapters.QueryResponse, error) {
 	// TODO: Handle domain errors
-	return adapters_telegram.QueryResponse{
+	return telegram_adapters.QueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{
 				ID:   fmt.Sprintf("%p", err),

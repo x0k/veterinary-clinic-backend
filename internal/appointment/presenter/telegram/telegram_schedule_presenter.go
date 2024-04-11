@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	"gopkg.in/telebot.v3"
 )
 
@@ -30,7 +31,7 @@ func newSchedulePresenter(
 func (p *schedulePresenter) scheduleButtons(now time.Time, schedule appointment.Schedule) []telebot.InlineButton {
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if now.Add(-24 * time.Hour).Before(schedule.PrevDate) {
-		buttons = append(buttons, *adapters_telegram.PreviousScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
+		buttons = append(buttons, *appointment_telegram_adapters.PreviousScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
 	}
 	webAppParams := url.Values{}
 	webAppParams.Add("r", p.calendarInputRequestOptions)
@@ -47,7 +48,7 @@ func (p *schedulePresenter) scheduleButtons(now time.Time, schedule appointment.
 			URL: url,
 		},
 	})
-	buttons = append(buttons, *adapters_telegram.NextScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
+	buttons = append(buttons, *appointment_telegram_adapters.NextScheduleBtn.With(schedule.NextDate.Format(time.DateOnly)))
 	return buttons
 }
 
@@ -67,10 +68,10 @@ func NewScheduleTextPresenter(
 	}
 }
 
-func (p *ScheduleTextPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (adapters_telegram.TextResponses, error) {
+func (p *ScheduleTextPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (telegram_adapters.TextResponses, error) {
 	sb := strings.Builder{}
 	writeSchedule(&sb, schedule)
-	return adapters_telegram.TextResponses{{
+	return telegram_adapters.TextResponses{{
 		Text: sb.String(),
 		Options: &telebot.SendOptions{
 			ParseMode: telebot.ModeMarkdownV2,
@@ -99,10 +100,10 @@ func NewScheduleQueryPresenter(
 	}
 }
 
-func (p *ScheduleQueryPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (adapters_telegram.QueryResponse, error) {
+func (p *ScheduleQueryPresenter) RenderSchedule(now time.Time, schedule appointment.Schedule) (telegram_adapters.QueryResponse, error) {
 	sb := strings.Builder{}
 	writeSchedule(&sb, schedule)
-	return adapters_telegram.QueryResponse{
+	return telegram_adapters.QueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{
 				ID:        fmt.Sprintf("%p", &schedule),

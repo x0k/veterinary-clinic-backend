@@ -8,7 +8,7 @@ import (
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	adapters_http "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_http_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/http"
@@ -30,7 +30,7 @@ func New(
 	log *logger.Logger,
 	bot *telebot.Bot,
 	notion *notionapi.Client,
-	telegramInitDataParser *adapters_telegram.InitDataParser,
+	telegramInitDataParser *telegram_adapters.InitDataParser,
 ) (*module.Module, error) {
 	m := module.New(log.Logger, "appointment")
 
@@ -42,7 +42,7 @@ func New(
 
 	errorPresenter := appointment_telegram_presenter.NewErrorTextPresenter()
 
-	servicesController := adapters_telegram.NewController("services_controller", appointment_telegram_controller.NewServices(
+	servicesController := telegram_adapters.NewController("services_controller", appointment_telegram_controller.NewServices(
 		bot,
 		appointment_use_case.NewServicesUseCase(
 			log,
@@ -93,7 +93,7 @@ func New(
 
 	webCalendarHandlerUrl := adapters_web_calendar.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
 
-	scheduleController := adapters_telegram.NewController("schedule_controller", appointment_telegram_controller.NewSchedule(
+	scheduleController := telegram_adapters.NewController("schedule_controller", appointment_telegram_controller.NewSchedule(
 		bot,
 		appointment_use_case.NewScheduleUseCase(
 			log,
@@ -159,7 +159,7 @@ func New(
 		expirableServiceIdContainer,
 	)
 
-	makeAppointmentController := adapters_telegram.NewController("make_appointment_controller", appointment_telegram_controller.NewStartMakeAppointmentDialog(
+	makeAppointmentController := telegram_adapters.NewController("make_appointment_controller", appointment_telegram_controller.NewStartMakeAppointmentDialog(
 		bot,
 		expirableTelegramUserIdContainer,
 		appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(

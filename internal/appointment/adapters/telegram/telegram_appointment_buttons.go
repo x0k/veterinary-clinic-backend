@@ -1,4 +1,4 @@
-package adapters_telegram
+package appointment_telegram_adapters
 
 import "gopkg.in/telebot.v3"
 

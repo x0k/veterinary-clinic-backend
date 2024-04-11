@@ -1,4 +1,4 @@
-package adapters_telegram
+package telegram_adapters
 
 import (
 	"time"

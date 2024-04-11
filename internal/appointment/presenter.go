@@ -29,3 +29,7 @@ type SuccessRegistrationPresenter[R any] interface {
 type ServicesPickerPresenter[R any] interface {
 	RenderServicesList(services []ServiceEntity) (R, error)
 }
+
+type DatePickerPresenter[R any] interface {
+	RenderDatePicker(serviceId ServiceId, schedule Schedule) (R, error)
+}

@@ -7,8 +7,7 @@ import (
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jomei/notionapi"
-	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	appointment_module "github.com/x0k/veterinary-clinic-backend/internal/appointment/module"
 	profiler_module "github.com/x0k/veterinary-clinic-backend/internal/profiler"
 )
@@ -29,13 +28,9 @@ type NotionConfig struct {
 }
 
 type TelegramConfig struct {
-	Token          adapters_telegram.Token `yaml:"token" env:"TELEGRAM_TOKEN" env-required:"true"`
+	Token          telegram_adapters.Token `yaml:"token" env:"TELEGRAM_TOKEN" env-required:"true"`
 	PollerTimeout  time.Duration           `yaml:"poller_timeout" env:"TELEGRAM_POLLER_TIMEOUT" env-default:"10s"`
 	InitDataExpiry time.Duration           `yaml:"init_data_expiry" env:"TELEGRAM_INIT_DATA_EXPIRY" env-default:"24h"`
-}
-
-type ProductionCalendarConfig struct {
-	Url adapters.ProductionCalendarUrl `yaml:"url" env:"PRODUCTION_CALENDAR_URL" env-required:"true"`
 }
 
 type AppointmentChangeDetectorConfig struct {

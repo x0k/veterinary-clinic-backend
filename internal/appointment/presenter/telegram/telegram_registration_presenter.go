@@ -4,7 +4,8 @@ import (
 	"strconv"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	adapters_telegram "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"gopkg.in/telebot.v3"
 )
@@ -21,19 +22,19 @@ func NewRegistrationPresenter(
 	}
 }
 
-func (p *RegistrationPresenter) RenderRegistration(telegramUserId entity.TelegramUserId) (adapters_telegram.TextResponses, error) {
+func (p *RegistrationPresenter) RenderRegistration(telegramUserId entity.TelegramUserId) (telegram_adapters.TextResponses, error) {
 	p.stateSaver.SaveByKey(
 		adapters.NewStateId(strconv.FormatInt(telegramUserId.Int(), 10)),
 		telegramUserId,
 	)
-	return adapters_telegram.TextResponses{{
+	return telegram_adapters.TextResponses{{
 		Text: "Для записи на прием, необходимо уточнить ваш номер телефона.",
 		Options: &telebot.SendOptions{
 			ReplyMarkup: &telebot.ReplyMarkup{
 				OneTimeKeyboard: true,
 				ReplyKeyboard: [][]telebot.ReplyButton{
-					{*adapters_telegram.RegisterTelegramCustomerBtn},
-					{*adapters_telegram.CancelRegisterTelegramCustomerBtn},
+					{*appointment_telegram_adapters.RegisterTelegramCustomerBtn},
+					{*appointment_telegram_adapters.CancelRegisterTelegramCustomerBtn},
 				},
 			},
 		}},

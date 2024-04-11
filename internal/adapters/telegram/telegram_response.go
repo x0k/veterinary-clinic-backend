@@ -1,4 +1,4 @@
-package adapters_telegram
+package telegram_adapters
 
 import (
 	"regexp"
@@ -26,7 +26,9 @@ func Edit(c telebot.Context, responses TextResponses) error {
 	if len(responses) == 0 {
 		return nil
 	}
-	c.Edit(responses[0].Text, responses[0].Options)
+	if err := c.Edit(responses[0].Text, responses[0].Options); err != nil {
+		return err
+	}
 	for i := 1; i < len(responses); i++ {
 		if err := c.Reply(responses[i].Text, responses[i].Options); err != nil {
 			return err
