@@ -50,7 +50,7 @@ func NewRecord(
 	dateTimePeriod entity.DateTimePeriod,
 	customerId CustomerId,
 	serviceId ServiceId,
-	now time.Time,
+	createdAt time.Time,
 ) (RecordEntity, error) {
 	if status == RecordAwaits && isArchived {
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidStatusForArchivedRecord, status)
@@ -65,7 +65,7 @@ func NewRecord(
 		DateTimePeriod: dateTimePeriod,
 		CustomerId:     customerId,
 		ServiceId:      serviceId,
-		CreatedAt:      now,
+		CreatedAt:      createdAt,
 	}, nil
 }
 
@@ -75,6 +75,10 @@ func (r *RecordEntity) SetId(id RecordId) error {
 	}
 	r.Id = id
 	return nil
+}
+
+func (r *RecordEntity) SetCreatedAt(t time.Time) {
+	r.CreatedAt = t
 }
 
 func (r *RecordEntity) Archive() error {

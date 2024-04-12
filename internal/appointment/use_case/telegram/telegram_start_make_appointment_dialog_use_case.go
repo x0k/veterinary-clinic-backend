@@ -14,29 +14,35 @@ import (
 const startMakeAppointmentDialogUseCaseName = "appointment_telegram_use_case.StartMakeAppointmentDialogUseCase"
 
 type StartMakeAppointmentDialogUseCase[R any] struct {
-	log                     *logger.Logger
-	customerLoader          appointment.CustomerLoader
-	servicesLoader          appointment.ServicesLoader
-	servicesPickerPresenter appointment.ServicesPickerPresenter[R]
-	registrationPresenter   appointment.RegistrationPresenter[R]
-	errorPresenter          appointment.ErrorPresenter[R]
+	log                             *logger.Logger
+	customerLoader                  appointment.CustomerLoader
+	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader
+	servicesLoader                  appointment.ServicesLoader
+	appointmentInfoPresenter        appointment.AppointmentInfoPresenter[R]
+	servicesPickerPresenter         appointment.ServicesPickerPresenter[R]
+	registrationPresenter           appointment.RegistrationPresenter[R]
+	errorPresenter                  appointment.ErrorPresenter[R]
 }
 
 func NewStartMakeAppointmentDialogUseCase[R any](
 	log *logger.Logger,
 	customerLoader appointment.CustomerLoader,
+	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader,
 	servicesLoader appointment.ServicesLoader,
+	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R],
 	servicesPickerPresenter appointment.ServicesPickerPresenter[R],
 	registrationPresenter appointment.RegistrationPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
 ) *StartMakeAppointmentDialogUseCase[R] {
 	return &StartMakeAppointmentDialogUseCase[R]{
-		log:                     log.With(sl.Component(startMakeAppointmentDialogUseCaseName)),
-		customerLoader:          customerLoader,
-		servicesLoader:          servicesLoader,
-		servicesPickerPresenter: servicesPickerPresenter,
-		registrationPresenter:   registrationPresenter,
-		errorPresenter:          errorPresenter,
+		log:                             log.With(sl.Component(startMakeAppointmentDialogUseCaseName)),
+		customerLoader:                  customerLoader,
+		customerActiveAppointmentLoader: customerActiveAppointmentLoader,
+		servicesLoader:                  servicesLoader,
+		appointmentInfoPresenter:        appointmentInfoPresenter,
+		servicesPickerPresenter:         servicesPickerPresenter,
+		registrationPresenter:           registrationPresenter,
+		errorPresenter:                  errorPresenter,
 	}
 }
 
@@ -45,13 +51,21 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	userId entity.TelegramUserId,
 ) (R, error) {
 	customerIdentity := appointment.NewTelegramCustomerIdentity(userId)
-	_, err := u.customerLoader.Customer(ctx, customerIdentity)
+	customer, err := u.customerLoader.Customer(ctx, customerIdentity)
 	if errors.Is(err, entity.ErrNotFound) {
 		return u.registrationPresenter.RenderRegistration(userId)
 	}
 	if err != nil {
 		u.log.Error(ctx, "failed to find customer", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))
 		return u.errorPresenter.RenderError(err)
+	}
+	existedAppointment, err := u.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
+	if !errors.Is(err, entity.ErrNotFound) {
+		if err != nil {
+			u.log.Error(ctx, "failed to find customer active appointment", sl.Err(err))
+			return u.errorPresenter.RenderError(err)
+		}
+		return u.appointmentInfoPresenter.RenderInfo(existedAppointment)
 	}
 	services, err := u.servicesLoader.Services(ctx)
 	if err != nil {

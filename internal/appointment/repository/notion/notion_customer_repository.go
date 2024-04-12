@@ -28,13 +28,13 @@ func NewCustomer(
 	}
 }
 
-func (r *CustomerRepository) Customer(ctx context.Context, id appointment.CustomerIdentity) (appointment.CustomerEntity, error) {
+func (r *CustomerRepository) Customer(ctx context.Context, identity appointment.CustomerIdentity) (appointment.CustomerEntity, error) {
 	const op = customerRepositoryName + ".Customer"
 	res, err := r.client.Database.Query(ctx, r.customersDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.PropertyFilter{
 			Property: CustomerUserId,
 			RichText: &notionapi.TextFilterCondition{
-				Equals: id.String(),
+				Equals: identity.String(),
 			},
 		},
 	})
@@ -82,5 +82,5 @@ func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appoi
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
-	return customer.SetId(appointment.NewCustomerId(string(res.ID)))
+	return customer.SetId(appointment.NewCustomerId(res.ID.String()))
 }

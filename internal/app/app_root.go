@@ -30,7 +30,7 @@ func NewRoot(cfg *Config, log *logger.Logger) (*module.Root, error) {
 	bot.Use(
 		middleware.Logger(slog.NewLogLogger(log.Logger.Handler(), slog.LevelDebug)),
 		middleware.AutoRespond(),
-		middleware.Recover(),
+		// middleware.Recover(),
 	)
 	m.Append(telegram_adapters.NewService("telegram_bot", bot))
 

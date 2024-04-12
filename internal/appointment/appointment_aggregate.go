@@ -1,11 +1,16 @@
 package appointment
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
+
+var ErrAppointmentInvalidCustomer = errors.New("invalid customer")
+var ErrAppointmentInvalidService = errors.New("invalid service")
 
 type AppointmentAggregate struct {
 	// Root Entity
@@ -14,12 +19,18 @@ type AppointmentAggregate struct {
 	customer CustomerEntity
 }
 
-func NewAppointmentAggregate(record RecordEntity, service ServiceEntity, customer CustomerEntity) AppointmentAggregate {
+func NewAppointmentAggregate(record RecordEntity, service ServiceEntity, customer CustomerEntity) (AppointmentAggregate, error) {
+	if record.CustomerId != customer.Id {
+		return AppointmentAggregate{}, ErrAppointmentInvalidCustomer
+	}
+	if record.ServiceId != service.Id {
+		return AppointmentAggregate{}, ErrAppointmentInvalidService
+	}
 	return AppointmentAggregate{
 		record:   record,
 		service:  service,
 		customer: customer,
-	}
+	}, nil
 }
 
 func (a *AppointmentAggregate) Id() RecordId {
@@ -30,6 +41,10 @@ func (a *AppointmentAggregate) SetId(recordId RecordId) error {
 	return a.record.SetId(recordId)
 }
 
+func (a *AppointmentAggregate) SetCreatedAt(t time.Time) {
+	a.record.SetCreatedAt(t)
+}
+
 func (a *AppointmentAggregate) Title() (string, error) {
 	idType, err := a.customer.IdentityType()
 	if err != nil {
@@ -38,8 +53,8 @@ func (a *AppointmentAggregate) Title() (string, error) {
 	return fmt.Sprintf(
 		"%s, %s, %s",
 		a.service.Title,
+		strings.ToUpper(idType.String()),
 		a.record.CreatedAt.Format("02.01.06"),
-		idType,
 	), nil
 }
 

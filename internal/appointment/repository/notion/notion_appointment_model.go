@@ -90,6 +90,50 @@ const (
 	RecordCreatedAt      = "Дата записи"
 )
 
+func NotionToRecordStatus(notionStatus string) (appointment.RecordStatus, bool, error) {
+	switch notionStatus {
+	case RecordAwaits:
+		return appointment.RecordAwaits, false, nil
+	case RecordDone:
+		return appointment.RecordDone, false, nil
+	case RecordNotAppear:
+		return appointment.RecordNotAppear, false, nil
+	case RecordDoneArchived:
+		return appointment.RecordDone, true, nil
+	case RecordNotAppearArchived:
+		return appointment.RecordNotAppear, true, nil
+	default:
+		return "", false, fmt.Errorf("%w: %s", ErrUnknownRecordStatus, notionStatus)
+	}
+}
+
+func NotionToRecord(page notionapi.Page) (appointment.RecordEntity, error) {
+	status, isArchived, err := NotionToRecordStatus(notion.Select(page.Properties, RecordState))
+	if err != nil {
+		return appointment.RecordEntity{}, err
+	}
+	period, err := notion.DatePeriod(page.Properties, RecordDateTimePeriod)
+	if err != nil {
+		return appointment.RecordEntity{}, err
+	}
+	return appointment.NewRecord(
+		appointment.NewRecordId(string(page.ID)),
+		status,
+		isArchived,
+		entity.DateTimePeriod{
+			Start: entity.GoTimeToDateTime(period.Start),
+			End:   entity.GoTimeToDateTime(period.End),
+		},
+		appointment.NewCustomerId(
+			notion.Relations(page.Properties, RecordCustomer)[0].ID.String(),
+		),
+		appointment.NewServiceId(
+			notion.Relations(page.Properties, RecordService)[0].ID.String(),
+		),
+		notion.CreatedTime(page.Properties, RecordCreatedAt),
+	)
+}
+
 const (
 	BreakTitle  = "Наименование"
 	BreakPeriod = "Период"

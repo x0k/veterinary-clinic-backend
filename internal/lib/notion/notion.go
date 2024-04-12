@@ -62,6 +62,14 @@ func Relations(properties notionapi.Properties, relationKey string) []notionapi.
 	return properties[relationKey].(*notionapi.RelationProperty).Relation
 }
 
+func Select(properties notionapi.Properties, selectKey string) string {
+	return properties[selectKey].(*notionapi.SelectProperty).Select.Name
+}
+
+func CreatedTime(properties notionapi.Properties, createdTimeKey string) time.Time {
+	return properties[createdTimeKey].(*notionapi.CreatedTimeProperty).CreatedTime
+}
+
 func ToRichText(value string) []notionapi.RichText {
 	return []notionapi.RichText{
 		{

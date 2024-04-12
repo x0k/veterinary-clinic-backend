@@ -40,3 +40,11 @@ type BusyPeriodsLoader interface {
 type WorkBreaksLoader interface {
 	WorkBreaks(context.Context) (WorkBreaks, error)
 }
+
+type CustomerActiveAppointmentLoader interface {
+	CustomerActiveAppointment(context.Context, CustomerEntity) (AppointmentAggregate, error)
+}
+
+type AppointmentRemover interface {
+	RemoveAppointment(context.Context, RecordId) error
+}

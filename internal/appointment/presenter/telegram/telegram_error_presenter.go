@@ -52,3 +52,17 @@ func (p *ErrorQueryPresenter) RenderError(err error) (telegram_adapters.QueryRes
 		},
 	}, nil
 }
+
+type ErrorCallbackPresenter struct{}
+
+func NewErrorCallbackPresenter() *ErrorCallbackPresenter {
+	return &ErrorCallbackPresenter{}
+}
+
+func (p *ErrorCallbackPresenter) RenderError(err error) (telegram_adapters.CallbackResponse, error) {
+	return telegram_adapters.CallbackResponse{
+		Response: &telebot.CallbackResponse{
+			Text: errorText,
+		},
+	}, nil
+}

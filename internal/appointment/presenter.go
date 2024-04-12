@@ -49,3 +49,7 @@ type AppointmentConfirmationPresenter[R any] interface {
 type AppointmentInfoPresenter[R any] interface {
 	RenderInfo(appointment AppointmentAggregate) (R, error)
 }
+
+type AppointmentCancelPresenter[R any] interface {
+	RenderCancel() (R, error)
+}

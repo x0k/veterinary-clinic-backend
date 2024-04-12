@@ -21,6 +21,7 @@ func NewMakeAppointment(
 	appointmentTimePickerUseCase *appointment_telegram_use_case.AppointmentTimePickerUseCase[telegram_adapters.TextResponses],
 	appointmentConfirmationUseCase *appointment_telegram_use_case.AppointmentConfirmationUseCase[telegram_adapters.TextResponses],
 	makeAppointmentUseCase *appointment_use_case.MakeAppointmentUseCase[telegram_adapters.TextResponses],
+	cancelAppointmentUseCase *appointment_use_case.CancelAppointmentUseCase[telegram_adapters.CallbackResponse],
 	errorSender appointment_telegram_adapters.ErrorSender,
 	serviceIdLoader adapters.StateLoader[appointment.ServiceId],
 	appointmentStateLoader adapters.StateLoader[appointment_telegram_adapters.AppointmentSate],
@@ -129,6 +130,20 @@ func NewMakeAppointment(
 		})
 
 		bot.Handle(appointment_telegram_adapters.CancelConfirmationAppointmentBtn, appointmentTimePickerHandler)
+
+		bot.Handle(appointment_telegram_adapters.CancelAppointmentBtn, func(c telebot.Context) error {
+			customerId := appointment.NewTelegramCustomerIdentity(
+				entity.NewTelegramUserId(c.Sender().ID),
+			)
+			res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
+			if err != nil {
+				return err
+			}
+			if err := c.Respond(res.Response); err != nil {
+				return err
+			}
+			return c.Delete()
+		})
 
 		return nil
 	}

@@ -17,18 +17,22 @@ import (
 var ErrInvalidRecordId = errors.New("invalid record id")
 var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
+var ErrAnotherAppointmentIsAlreadyScheduled = errors.New("another appointment is already scheduled")
+var ErrInvalidAppointmentStatus = errors.New("invalid appointment status")
 
 type SchedulingService struct {
 	log       *logger.Logger
 	periodsMu sync.Mutex
 	periods   []entity.DateTimePeriod
 
-	sampleRateInMinutes      SampleRateInMinutes
-	appointmentCreator       AppointmentCreator
-	productionCalendarLoader ProductionCalendarLoader
-	workingHoursLoader       WorkingHoursLoader
-	busyPeriodsLoader        BusyPeriodsLoader
-	workBreaksLoader         WorkBreaksLoader
+	sampleRateInMinutes             SampleRateInMinutes
+	appointmentCreator              AppointmentCreator
+	productionCalendarLoader        ProductionCalendarLoader
+	workingHoursLoader              WorkingHoursLoader
+	busyPeriodsLoader               BusyPeriodsLoader
+	workBreaksLoader                WorkBreaksLoader
+	customerActiveAppointmentLoader CustomerActiveAppointmentLoader
+	appointmentRemover              AppointmentRemover
 }
 
 func NewSchedulingService(
@@ -39,15 +43,19 @@ func NewSchedulingService(
 	workingHoursLoader WorkingHoursLoader,
 	busyPeriodsLoader BusyPeriodsLoader,
 	workBreaksLoader WorkBreaksLoader,
+	customerActiveAppointmentLoader CustomerActiveAppointmentLoader,
+	appointmentRemover AppointmentRemover,
 ) *SchedulingService {
 	return &SchedulingService{
-		log:                      log.With(slog.String("component", "SchedulingService")),
-		sampleRateInMinutes:      sampleRateInMinutes,
-		appointmentCreator:       appointmentCreator,
-		productionCalendarLoader: productionCalendarLoader,
-		workingHoursLoader:       workingHoursLoader,
-		busyPeriodsLoader:        busyPeriodsLoader,
-		workBreaksLoader:         workBreaksLoader,
+		log:                             log.With(slog.String("component", "SchedulingService")),
+		sampleRateInMinutes:             sampleRateInMinutes,
+		appointmentCreator:              appointmentCreator,
+		productionCalendarLoader:        productionCalendarLoader,
+		workingHoursLoader:              workingHoursLoader,
+		busyPeriodsLoader:               busyPeriodsLoader,
+		workBreaksLoader:                workBreaksLoader,
+		customerActiveAppointmentLoader: customerActiveAppointmentLoader,
+		appointmentRemover:              appointmentRemover,
 	}
 }
 
@@ -101,6 +109,13 @@ func (s *SchedulingService) MakeAppointment(
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()
+	existedAppointment, err := s.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
+	if !errors.Is(err, entity.ErrNotFound) {
+		if err != nil {
+			return AppointmentAggregate{}, err
+		}
+		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrAnotherAppointmentIsAlreadyScheduled, existedAppointment.Id())
+	}
 	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
 		return AppointmentAggregate{}, err
@@ -142,7 +157,10 @@ func (s *SchedulingService) MakeAppointment(
 	if err != nil {
 		return AppointmentAggregate{}, err
 	}
-	app := NewAppointmentAggregate(record, service, customer)
+	app, err := NewAppointmentAggregate(record, service, customer)
+	if err != nil {
+		return AppointmentAggregate{}, err
+	}
 	if err := s.appointmentCreator.CreateAppointment(ctx, &app); err != nil {
 		return AppointmentAggregate{}, err
 	}
@@ -225,6 +243,20 @@ func (s *SchedulingService) SampledFreeTimeSlots(
 		s.sampleRateInMinutes,
 		freeTimeSlots,
 	), nil
+}
+
+func (s *SchedulingService) CancelAppointmentForCustomer(
+	ctx context.Context,
+	customer CustomerEntity,
+) error {
+	app, err := s.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
+	if err != nil {
+		return err
+	}
+	if app.Status() != RecordAwaits {
+		return fmt.Errorf("%w: %s", ErrInvalidAppointmentStatus, app.Status())
+	}
+	return s.appointmentRemover.RemoveAppointment(ctx, app.Id())
 }
 
 func (s *SchedulingService) productionCalendar(ctx context.Context) (ProductionCalendar, error) {
