@@ -132,26 +132,64 @@ func New(
 		return nil, err
 	}
 
+	webCalendarDatePickerUrl := web_calendar_adapters.NewDatePickerUrl(
+		cfg.WebCalendar.HandlerUrlRoot,
+	)
+
+	expirableAppointmentStateContainer := adapters.NewExpirableStateContainer[appointment_telegram_adapters.AppointmentSate](
+		"expirable_appointment_state_container",
+		uint64(time.Now().UnixNano()),
+		5*time.Minute,
+	)
+	m.Append(expirableAppointmentStateContainer)
+
+	errorQueryPresenter := appointment_telegram_presenter.NewErrorQueryPresenter()
+
+	webCalendarServerMux := http.NewServeMux()
+	if err := appointment_http_controller.UseWebCalendarRouter(
+		webCalendarServerMux,
+		log,
+		bot,
+		webCalendarAppOrigin,
+		telegramInitDataParser,
+		appointment_use_case.NewScheduleUseCase(
+			log,
+			schedulingService,
+			appointment_telegram_presenter.NewScheduleQueryPresenter(
+				cfg.WebCalendar.AppUrl,
+				webCalendarHandlerUrl,
+			),
+			errorQueryPresenter,
+		),
+	); err != nil {
+		return nil, err
+	}
+	if err := appointment_http_controller.UseDatePickerRouter(
+		webCalendarServerMux,
+		log,
+		bot,
+		webCalendarAppOrigin,
+		telegramInitDataParser,
+		appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
+			schedulingService,
+			appointment_telegram_presenter.NewDatePickerQueryPresenter(
+				cfg.WebCalendar.AppUrl,
+				webCalendarDatePickerUrl,
+				expirableAppointmentStateContainer,
+			),
+			errorQueryPresenter,
+		),
+	); err != nil {
+		return nil, err
+	}
+
 	webCalendarService := http_adapters.NewService(
 		"web_calendar_server",
 		&http.Server{
 			Addr: cfg.WebCalendar.HandlerAddress.String(),
 			Handler: http_adapters.Logging(
 				log,
-				appointment_http_controller.UseWebCalendarRouter(
-					http.NewServeMux(), log, bot,
-					webCalendarAppOrigin,
-					telegramInitDataParser,
-					appointment_use_case.NewScheduleUseCase(
-						log,
-						schedulingService,
-						appointment_telegram_presenter.NewScheduleQueryPresenter(
-							cfg.WebCalendar.AppUrl,
-							webCalendarHandlerUrl,
-						),
-						appointment_telegram_presenter.NewErrorQueryPresenter(),
-					),
-				),
+				webCalendarServerMux,
 			),
 		},
 		m,
@@ -181,21 +219,23 @@ func New(
 		expirableServiceIdContainer,
 	)
 
+	startMakeAppointmentDialogUseCase := appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
+		log,
+		customerRepository,
+		servicesRepository,
+		servicesPickerPresenter,
+		appointment_telegram_presenter.NewRegistrationPresenter(
+			expirableTelegramUserIdContainer,
+		),
+		errorPresenter,
+	)
+
 	startMakeAppointmentDialogController := telegram_adapters.NewController(
 		"start_make_appointment_dialog_controller",
 		appointment_telegram_controller.NewStartMakeAppointmentDialog(
 			bot,
 			expirableTelegramUserIdContainer,
-			appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
-				log,
-				customerRepository,
-				servicesRepository,
-				servicesPickerPresenter,
-				appointment_telegram_presenter.NewRegistrationPresenter(
-					expirableTelegramUserIdContainer,
-				),
-				errorPresenter,
-			),
+			startMakeAppointmentDialogUseCase,
 			appointment_telegram_use_case.NewRegisterCustomerUseCase(
 				log,
 				customerRepository,
@@ -210,17 +250,6 @@ func New(
 	)
 	m.PostStart(startMakeAppointmentDialogController)
 
-	webCalendarDatePickerUrl := web_calendar_adapters.NewDatePickerUrl(
-		cfg.WebCalendar.HandlerUrlRoot,
-	)
-
-	expirableAppointmentStateContainer := adapters.NewExpirableStateContainer[appointment_telegram_adapters.AppointmentSate](
-		"expirable_appointment_state_container",
-		uint64(time.Now().UnixNano()),
-		5*time.Minute,
-	)
-	m.Append(expirableAppointmentStateContainer)
-
 	makeAppointmentController := telegram_adapters.NewController(
 		"make_appointment_dialog_controller",
 		appointment_telegram_controller.NewMakeAppointment(
@@ -234,8 +263,10 @@ func New(
 				),
 				errorPresenter,
 			),
+			startMakeAppointmentDialogUseCase,
 			errorPresenter,
 			expirableServiceIdContainer,
+			expirableAppointmentStateContainer,
 		),
 	)
 	m.PostStart(makeAppointmentController)

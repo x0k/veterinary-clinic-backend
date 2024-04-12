@@ -84,13 +84,13 @@ type DatePickerTextPresenter struct {
 
 func NewDatePickerTextPresenter(
 	webCalendarAppUrl web_calendar_adapters.AppUrl,
-	webCalendarHandlerUrl web_calendar_adapters.DatePickerUrl,
+	webCalendarDatePickerUrl web_calendar_adapters.DatePickerUrl,
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate],
 ) *DatePickerTextPresenter {
 	return &DatePickerTextPresenter{
 		datePickerPresenter: newDatePickerPresenter(
 			webCalendarAppUrl,
-			webCalendarHandlerUrl,
+			webCalendarDatePickerUrl,
 			stateSaver,
 		),
 	}
@@ -120,13 +120,13 @@ type DatePickerQueryPresenter struct {
 
 func NewDatePickerQueryPresenter(
 	webCalendarAppUrl web_calendar_adapters.AppUrl,
-	webCalendarHandlerUrl web_calendar_adapters.DatePickerUrl,
+	webCalendarDatePickerUrl web_calendar_adapters.DatePickerUrl,
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate],
 ) *DatePickerQueryPresenter {
 	return &DatePickerQueryPresenter{
 		datePickerPresenter: newDatePickerPresenter(
 			webCalendarAppUrl,
-			webCalendarHandlerUrl,
+			webCalendarDatePickerUrl,
 			stateSaver,
 		),
 	}
