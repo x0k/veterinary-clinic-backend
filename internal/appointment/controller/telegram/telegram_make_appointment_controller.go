@@ -8,6 +8,7 @@ import (
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
+	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"gopkg.in/telebot.v3"
@@ -19,6 +20,7 @@ func NewMakeAppointment(
 	appointmentDatePickerUseCase *appointment_telegram_use_case.AppointmentDatePickerUseCase[telegram_adapters.TextResponses],
 	appointmentTimePickerUseCase *appointment_telegram_use_case.AppointmentTimePickerUseCase[telegram_adapters.TextResponses],
 	appointmentConfirmationUseCase *appointment_telegram_use_case.AppointmentConfirmationUseCase[telegram_adapters.TextResponses],
+	makeAppointmentUseCase *appointment_use_case.MakeAppointmentUseCase[telegram_adapters.TextResponses],
 	errorSender appointment_telegram_adapters.ErrorSender,
 	serviceIdLoader adapters.StateLoader[appointment.ServiceId],
 	appointmentStateLoader adapters.StateLoader[appointment_telegram_adapters.AppointmentSate],
@@ -104,7 +106,27 @@ func NewMakeAppointment(
 
 		bot.Handle(appointment_telegram_adapters.CancelMakeAppointmentTimeBtn, appointmentNextDatePickerHandler)
 
-		// TODO: ConfirmMakeAppointmentBtn
+		bot.Handle(appointment_telegram_adapters.ConfirmMakeAppointmentBtn, func(c telebot.Context) error {
+			state, ok := appointmentStateLoader.Load(
+				adapters.NewStateId(c.Callback().Data),
+			)
+			if !ok {
+				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+			}
+			app, err := makeAppointmentUseCase.CreateAppointment(
+				ctx,
+				time.Now(),
+				state.Date,
+				appointment.TelegramUserIdToCustomerId(
+					entity.TelegramUserId(c.Sender().ID),
+				),
+				state.ServiceId,
+			)
+			if err != nil {
+				return err
+			}
+			return app.Edit(c)
+		})
 
 		bot.Handle(appointment_telegram_adapters.CancelConfirmationAppointmentBtn, appointmentTimePickerHandler)
 

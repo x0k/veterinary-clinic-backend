@@ -65,6 +65,10 @@ func (p *Api[T]) IntersectPeriods(a Period[T], b Period[T]) Period[T] {
 	}
 }
 
+func (p *Api[T]) Includes(a Period[T], b Period[T]) bool {
+	return p.cmp(a.Start, b.Start) <= 0 && p.cmp(b.End, a.End) <= 0
+}
+
 func (p *Api[T]) SortAndUnitePeriods(periods []Period[T]) []Period[T] {
 	if len(periods) < 2 {
 		return periods

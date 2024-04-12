@@ -23,19 +23,17 @@ type SchedulingService struct {
 	periodsMu sync.Mutex
 	periods   []entity.DateTimePeriod
 
-	sampleRateInMinutes       SampleRateInMinutes
-	appointmentPeriodsChecker AppointmentPeriodChecker
-	appointmentCreator        AppointmentCreator
-	productionCalendarLoader  ProductionCalendarLoader
-	workingHoursLoader        WorkingHoursLoader
-	busyPeriodsLoader         BusyPeriodsLoader
-	workBreaksLoader          WorkBreaksLoader
+	sampleRateInMinutes      SampleRateInMinutes
+	appointmentCreator       AppointmentCreator
+	productionCalendarLoader ProductionCalendarLoader
+	workingHoursLoader       WorkingHoursLoader
+	busyPeriodsLoader        BusyPeriodsLoader
+	workBreaksLoader         WorkBreaksLoader
 }
 
 func NewSchedulingService(
 	log *logger.Logger,
 	sampleRateInMinutes SampleRateInMinutes,
-	appointmentPeriodChecker AppointmentPeriodChecker,
 	appointmentCreator AppointmentCreator,
 	productionCalendarLoader ProductionCalendarLoader,
 	workingHoursLoader WorkingHoursLoader,
@@ -43,14 +41,13 @@ func NewSchedulingService(
 	workBreaksLoader WorkBreaksLoader,
 ) *SchedulingService {
 	return &SchedulingService{
-		log:                       log.With(slog.String("component", "SchedulingService")),
-		sampleRateInMinutes:       sampleRateInMinutes,
-		appointmentPeriodsChecker: appointmentPeriodChecker,
-		appointmentCreator:        appointmentCreator,
-		productionCalendarLoader:  productionCalendarLoader,
-		workingHoursLoader:        workingHoursLoader,
-		busyPeriodsLoader:         busyPeriodsLoader,
-		workBreaksLoader:          workBreaksLoader,
+		log:                      log.With(slog.String("component", "SchedulingService")),
+		sampleRateInMinutes:      sampleRateInMinutes,
+		appointmentCreator:       appointmentCreator,
+		productionCalendarLoader: productionCalendarLoader,
+		workingHoursLoader:       workingHoursLoader,
+		busyPeriodsLoader:        busyPeriodsLoader,
+		workBreaksLoader:         workBreaksLoader,
 	}
 }
 
@@ -82,25 +79,56 @@ func (s *SchedulingService) unLockPeriod(period entity.DateTimePeriod) error {
 func (s *SchedulingService) MakeAppointment(
 	ctx context.Context,
 	now time.Time,
+	appointmentDate time.Time,
 	customer CustomerEntity,
 	service ServiceEntity,
-	dateTimePeriod entity.DateTimePeriod,
-) (*AppointmentAggregate, error) {
+) (AppointmentAggregate, error) {
+	appointmentDateTime := entity.GoTimeToDateTime(appointmentDate)
+	dateTimePeriod := entity.DateTimePeriod{
+		Start: appointmentDateTime,
+		End: entity.DateTime{
+			Date: appointmentDateTime.Date,
+			Time: entity.MakeTimeShifter(entity.Time{
+				Minutes: service.DurationInMinutes.Minutes(),
+			})(appointmentDateTime.Time),
+		},
+	}
 	if err := s.lockPeriod(dateTimePeriod); err != nil {
-		return nil, err
+		return AppointmentAggregate{}, err
 	}
 	defer func() {
 		if err := s.unLockPeriod(dateTimePeriod); err != nil {
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()
-	// TODO: Check weekends, holidays, etc
-	isBusy, err := s.appointmentPeriodsChecker.IsAppointmentPeriodBusy(ctx, dateTimePeriod)
+	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
-		return nil, err
+		return AppointmentAggregate{}, err
 	}
-	if isBusy {
-		return nil, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
+	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
+	if err != nil {
+		return AppointmentAggregate{}, err
+	}
+	datWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
+	if err != nil {
+		return AppointmentAggregate{}, err
+	}
+	freeTimeSlots, err := s.freeTimeSlots(
+		ctx,
+		now,
+		appointmentDate,
+		productionCalendar,
+		busyPeriods,
+		datWorkBreaks,
+	)
+	if err != nil {
+		return AppointmentAggregate{}, err
+	}
+	if !freeTimeSlots.Includes(entity.TimePeriod{
+		Start: dateTimePeriod.Start.Time,
+		End:   dateTimePeriod.End.Time,
+	}) {
+		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
 	record, err := NewRecord(
 		TemporalRecordId,
@@ -112,14 +140,14 @@ func (s *SchedulingService) MakeAppointment(
 		now,
 	)
 	if err != nil {
-		return nil, err
+		return AppointmentAggregate{}, err
 	}
 	app := NewAppointmentAggregate(record, service, customer)
-	if err := s.appointmentCreator.CreateAppointment(ctx, app); err != nil {
-		return nil, err
+	if err := s.appointmentCreator.CreateAppointment(ctx, &app); err != nil {
+		return AppointmentAggregate{}, err
 	}
 	if app.Id() == TemporalRecordId {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidRecordId, app.Id())
+		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrInvalidRecordId, app.Id())
 	}
 	return app, nil
 }

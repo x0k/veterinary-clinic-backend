@@ -23,3 +23,12 @@ func NewFreeTimeSlots(
 		),
 	), nil
 }
+
+func (slots FreeTimeSlots) Includes(period entity.TimePeriod) bool {
+	for _, s := range slots {
+		if entity.TimePeriodApi.Includes(s, period) {
+			return true
+		}
+	}
+	return false
+}

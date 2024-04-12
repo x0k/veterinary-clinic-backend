@@ -5,41 +5,50 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
 
-type MakeAppointmentUseCase struct {
-	scheduling *appointment.SchedulingService
-	customers  appointment.CustomerLoader
-	services   appointment.ServiceLoader
+type MakeAppointmentUseCase[R any] struct {
+	schedulingService        *appointment.SchedulingService
+	customerLoader           appointment.CustomerLoader
+	serviceLoader            appointment.ServiceLoader
+	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R]
+	errorPresenter           appointment.ErrorPresenter[R]
 }
 
-func NewMakeAppointmentUseCase(
-	appointments *appointment.SchedulingService,
-	customers appointment.CustomerLoader,
-	services appointment.ServiceLoader,
-) *MakeAppointmentUseCase {
-	return &MakeAppointmentUseCase{
-		scheduling: appointments,
-		customers:  customers,
-		services:   services,
+func NewMakeAppointmentUseCase[R any](
+	schedulingService *appointment.SchedulingService,
+	customerLoader appointment.CustomerLoader,
+	serviceLoader appointment.ServiceLoader,
+	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R],
+	errorPresenter appointment.ErrorPresenter[R],
+) *MakeAppointmentUseCase[R] {
+	return &MakeAppointmentUseCase[R]{
+		schedulingService:        schedulingService,
+		customerLoader:           customerLoader,
+		serviceLoader:            serviceLoader,
+		appointmentInfoPresenter: appointmentInfoPresenter,
+		errorPresenter:           errorPresenter,
 	}
 }
 
-func (s *MakeAppointmentUseCase) CreateAppointment(
+func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 	ctx context.Context,
 	now time.Time,
+	appointmentDate time.Time,
 	customerId appointment.CustomerId,
 	serviceId appointment.ServiceId,
-	dateTimePeriod entity.DateTimePeriod,
-) (*appointment.AppointmentAggregate, error) {
-	customer, err := s.customers.Customer(ctx, customerId)
+) (R, error) {
+	customer, err := s.customerLoader.Customer(ctx, customerId)
 	if err != nil {
-		return nil, err
+		return s.errorPresenter.RenderError(err)
 	}
-	service, err := s.services.Service(ctx, serviceId)
+	service, err := s.serviceLoader.Service(ctx, serviceId)
 	if err != nil {
-		return nil, err
+		return s.errorPresenter.RenderError(err)
 	}
-	return s.scheduling.MakeAppointment(ctx, now, customer, service, dateTimePeriod)
+	appointment, err := s.schedulingService.MakeAppointment(ctx, now, appointmentDate, customer, service)
+	if err != nil {
+		return s.errorPresenter.RenderError(err)
+	}
+	return s.appointmentInfoPresenter.RenderInfo(appointment)
 }

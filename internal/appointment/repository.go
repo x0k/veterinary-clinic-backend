@@ -3,13 +3,7 @@ package appointment
 import (
 	"context"
 	"time"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 )
-
-type AppointmentPeriodChecker interface {
-	IsAppointmentPeriodBusy(context.Context, entity.DateTimePeriod) (bool, error)
-}
 
 type AppointmentCreator interface {
 	CreateAppointment(context.Context, *AppointmentAggregate) error

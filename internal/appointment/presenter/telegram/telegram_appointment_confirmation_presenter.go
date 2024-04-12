@@ -11,19 +11,19 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type TelegramConfirmationPresenter struct {
+type ConfirmationPresenter struct {
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate]
 }
 
-func NewTelegramConfirmationPresenter(
+func NewConfirmationPresenter(
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate],
-) *TelegramConfirmationPresenter {
-	return &TelegramConfirmationPresenter{
+) *ConfirmationPresenter {
+	return &ConfirmationPresenter{
 		stateSaver: stateSaver,
 	}
 }
 
-func (p *TelegramConfirmationPresenter) RenderConfirmation(
+func (p *ConfirmationPresenter) RenderConfirmation(
 	service appointment.ServiceEntity,
 	appointmentDateTime time.Time,
 ) (telegram_adapters.TextResponses, error) {

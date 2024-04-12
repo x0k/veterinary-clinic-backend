@@ -45,3 +45,7 @@ type TimePickerPresenter[R any] interface {
 type AppointmentConfirmationPresenter[R any] interface {
 	RenderConfirmation(service ServiceEntity, appointmentDateTime time.Time) (R, error)
 }
+
+type AppointmentInfoPresenter[R any] interface {
+	RenderInfo(appointment AppointmentAggregate) (R, error)
+}

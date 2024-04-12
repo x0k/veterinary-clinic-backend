@@ -100,7 +100,6 @@ func New(
 		log,
 		cfg.SchedulingService.SampleRateInMinutes,
 		appointmentRepository,
-		appointmentRepository,
 		productionCalendarRepository,
 		workingHoursRepository,
 		appointmentRepository,
@@ -277,9 +276,16 @@ func New(
 			),
 			appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
 				servicesRepository,
-				appointment_telegram_presenter.NewTelegramConfirmationPresenter(
+				appointment_telegram_presenter.NewConfirmationPresenter(
 					expirableAppointmentStateContainer,
 				),
+				errorPresenter,
+			),
+			appointment_use_case.NewMakeAppointmentUseCase(
+				schedulingService,
+				customerRepository,
+				servicesRepository,
+				appointment_telegram_presenter.NewAppointmentInfoPresenter(),
 				errorPresenter,
 			),
 			errorSender,

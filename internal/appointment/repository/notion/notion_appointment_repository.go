@@ -72,7 +72,7 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appo
 	period := app.DateTimePeriod()
 	start := notionapi.Date(entity.DateTimeToGoTime(period.Start))
 	end := notionapi.Date(entity.DateTimeToGoTime(period.End))
-	status, err := RecordStatusToNotion(app.State(), app.IsArchived())
+	status, err := RecordStatusToNotion(app.Status(), app.IsArchived())
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

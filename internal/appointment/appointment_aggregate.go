@@ -14,8 +14,8 @@ type AppointmentAggregate struct {
 	customer CustomerEntity
 }
 
-func NewAppointmentAggregate(record RecordEntity, service ServiceEntity, customer CustomerEntity) *AppointmentAggregate {
-	return &AppointmentAggregate{
+func NewAppointmentAggregate(record RecordEntity, service ServiceEntity, customer CustomerEntity) AppointmentAggregate {
+	return AppointmentAggregate{
 		record:   record,
 		service:  service,
 		customer: customer,
@@ -51,7 +51,7 @@ func (a *AppointmentAggregate) DateTimePeriod() entity.DateTimePeriod {
 	return a.record.DateTimePeriod
 }
 
-func (a *AppointmentAggregate) State() RecordStatus {
+func (a *AppointmentAggregate) Status() RecordStatus {
 	return a.record.Status
 }
 
@@ -61,6 +61,10 @@ func (a *AppointmentAggregate) IsArchived() bool {
 
 func (a *AppointmentAggregate) ServiceId() ServiceId {
 	return a.service.Id
+}
+
+func (a *AppointmentAggregate) Service() ServiceEntity {
+	return a.service
 }
 
 func (a *AppointmentAggregate) CustomerId() CustomerId {
