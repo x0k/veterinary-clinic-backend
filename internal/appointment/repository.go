@@ -10,11 +10,11 @@ type AppointmentCreator interface {
 }
 
 type CustomerLoader interface {
-	Customer(context.Context, CustomerId) (CustomerEntity, error)
+	Customer(context.Context, CustomerIdentity) (CustomerEntity, error)
 }
 
 type CustomerCreator interface {
-	CreateCustomer(context.Context, CustomerEntity) error
+	CreateCustomer(context.Context, *CustomerEntity) error
 }
 
 type ServiceLoader interface {

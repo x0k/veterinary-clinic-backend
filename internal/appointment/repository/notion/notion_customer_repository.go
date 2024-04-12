@@ -28,7 +28,7 @@ func NewCustomer(
 	}
 }
 
-func (r *CustomerRepository) Customer(ctx context.Context, id appointment.CustomerId) (appointment.CustomerEntity, error) {
+func (r *CustomerRepository) Customer(ctx context.Context, id appointment.CustomerIdentity) (appointment.CustomerEntity, error) {
 	const op = customerRepositoryName + ".Customer"
 	res, err := r.client.Database.Query(ctx, r.customersDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.PropertyFilter{
@@ -47,9 +47,9 @@ func (r *CustomerRepository) Customer(ctx context.Context, id appointment.Custom
 	return NotionToCustomer(res.Results[0]), nil
 }
 
-func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer appointment.CustomerEntity) error {
+func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appointment.CustomerEntity) error {
 	const op = customerRepositoryName + ".CreateCustomer"
-	if _, err := r.Customer(ctx, customer.Id); !errors.Is(err, entity.ErrNotFound) {
+	if _, err := r.Customer(ctx, customer.Identity); !errors.Is(err, entity.ErrNotFound) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
@@ -70,10 +70,10 @@ func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer appoin
 		},
 		CustomerUserId: &notionapi.RichTextProperty{
 			Type:     notionapi.PropertyTypeRichText,
-			RichText: notion.ToRichText(customer.Id.String()),
+			RichText: notion.ToRichText(customer.Identity.String()),
 		},
 	}
-	_, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
+	res, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
 		Parent: notionapi.Parent{
 			DatabaseID: r.customersDatabaseId,
 		},
@@ -82,5 +82,5 @@ func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer appoin
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
-	return nil
+	return customer.SetId(appointment.NewCustomerId(string(res.ID)))
 }

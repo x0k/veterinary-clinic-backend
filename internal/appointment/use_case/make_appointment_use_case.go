@@ -5,9 +5,14 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
+const makeAppointmentUseCaseName = "appointment_use_case.MakeAppointmentUseCase"
+
 type MakeAppointmentUseCase[R any] struct {
+	log                      *logger.Logger
 	schedulingService        *appointment.SchedulingService
 	customerLoader           appointment.CustomerLoader
 	serviceLoader            appointment.ServiceLoader
@@ -16,6 +21,7 @@ type MakeAppointmentUseCase[R any] struct {
 }
 
 func NewMakeAppointmentUseCase[R any](
+	log *logger.Logger,
 	schedulingService *appointment.SchedulingService,
 	customerLoader appointment.CustomerLoader,
 	serviceLoader appointment.ServiceLoader,
@@ -23,6 +29,7 @@ func NewMakeAppointmentUseCase[R any](
 	errorPresenter appointment.ErrorPresenter[R],
 ) *MakeAppointmentUseCase[R] {
 	return &MakeAppointmentUseCase[R]{
+		log:                      log.With(sl.Component(makeAppointmentUseCaseName)),
 		schedulingService:        schedulingService,
 		customerLoader:           customerLoader,
 		serviceLoader:            serviceLoader,
@@ -35,19 +42,22 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 	ctx context.Context,
 	now time.Time,
 	appointmentDate time.Time,
-	customerId appointment.CustomerId,
+	customerId appointment.CustomerIdentity,
 	serviceId appointment.ServiceId,
 ) (R, error) {
 	customer, err := s.customerLoader.Customer(ctx, customerId)
 	if err != nil {
+		s.log.Error(ctx, "failed to load customer", sl.Err(err))
 		return s.errorPresenter.RenderError(err)
 	}
 	service, err := s.serviceLoader.Service(ctx, serviceId)
 	if err != nil {
+		s.log.Error(ctx, "failed to load service", sl.Err(err))
 		return s.errorPresenter.RenderError(err)
 	}
 	appointment, err := s.schedulingService.MakeAppointment(ctx, now, appointmentDate, customer, service)
 	if err != nil {
+		s.log.Error(ctx, "failed to make appointment", sl.Err(err))
 		return s.errorPresenter.RenderError(err)
 	}
 	return s.appointmentInfoPresenter.RenderInfo(appointment)

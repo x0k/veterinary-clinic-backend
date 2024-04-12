@@ -44,14 +44,20 @@ func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 	telegramUserLastName string,
 	telegramUserPhoneNumber string,
 ) (R, error) {
-	customerId := appointment.TelegramUserIdToCustomerId(telegramUserId)
+	customerIdentity := appointment.NewTelegramCustomerIdentity(telegramUserId)
 	customer := appointment.NewCustomer(
-		customerId,
+		appointment.TemporalCustomerId,
+		customerIdentity,
 		fmt.Sprintf("%s %s", telegramUserFirstName, telegramUserLastName),
 		telegramUserPhoneNumber,
 		fmt.Sprintf("https://t.me/%s", telegramUserName),
 	)
-	if err := u.customerCreator.CreateCustomer(ctx, customer); err != nil {
+	if err := u.customerCreator.CreateCustomer(ctx, &customer); err != nil {
+		u.log.Error(ctx, "failed to create customer", sl.Err(err))
+		return u.errorPresenter.RenderError(err)
+	}
+	if customer.Id == appointment.TemporalCustomerId {
+		err := appointment.ErrInvalidCustomerId
 		u.log.Error(ctx, "failed to create customer", sl.Err(err))
 		return u.errorPresenter.RenderError(err)
 	}

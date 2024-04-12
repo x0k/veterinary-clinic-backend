@@ -117,8 +117,8 @@ func NewMakeAppointment(
 				ctx,
 				time.Now(),
 				state.Date,
-				appointment.TelegramUserIdToCustomerId(
-					entity.TelegramUserId(c.Sender().ID),
+				appointment.NewTelegramCustomerIdentity(
+					entity.NewTelegramUserId(c.Sender().ID),
 				),
 				state.ServiceId,
 			)

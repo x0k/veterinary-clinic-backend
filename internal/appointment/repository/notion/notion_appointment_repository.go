@@ -34,39 +34,6 @@ func NewAppointment(
 	}
 }
 
-func (r *AppointmentRepository) IsAppointmentPeriodBusy(ctx context.Context, period entity.DateTimePeriod) (bool, error) {
-	const op = appointmentRepositoryName + ".IsAppointmentPeriodBusy"
-	after := notionapi.Date(entity.DateTimeToGoTime(period.Start))
-	before := notionapi.Date(entity.DateTimeToGoTime(period.End))
-	// TODO: Test notion api to query appointments with overlapping periods
-	res, err := r.client.Database.Query(ctx, r.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
-		Filter: notionapi.AndCompoundFilter{
-			notionapi.PropertyFilter{
-				Property: RecordDateTimePeriod,
-				Date: &notionapi.DateFilterCondition{
-					After: &after,
-				},
-			},
-			notionapi.PropertyFilter{
-				Property: RecordDateTimePeriod,
-				Date: &notionapi.DateFilterCondition{
-					Before: &before,
-				},
-			},
-			notionapi.PropertyFilter{
-				Property: RecordState,
-				Select: &notionapi.SelectFilterCondition{
-					Equals: RecordAwaits,
-				},
-			},
-		},
-	})
-	if err != nil {
-		return false, fmt.Errorf("%s: %w", op, err)
-	}
-	return len(res.Results) > 0, nil
-}
-
 func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
 	const op = appointmentRepositoryName + ".CreateAppointment"
 	period := app.DateTimePeriod()
@@ -106,10 +73,10 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appo
 				},
 			},
 		},
-		RecordCreatedAt: notionapi.CreatedTimeProperty{
-			Type:        notionapi.PropertyTypeCreatedTime,
-			CreatedTime: app.CreatedAt(),
-		},
+		// RecordCreatedAt: notionapi.CreatedTimeProperty{
+		// 	Type:        notionapi.PropertyTypeCreatedTime,
+		// 	CreatedTime: app.CreatedAt(),
+		// },
 		RecordService: notionapi.RelationProperty{
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{

@@ -171,6 +171,7 @@ func New(
 		webCalendarAppOrigin,
 		telegramInitDataParser,
 		appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
+			log,
 			schedulingService,
 			appointment_telegram_presenter.NewDatePickerQueryPresenter(
 				cfg.WebCalendar.AppUrl,
@@ -258,6 +259,7 @@ func New(
 			bot,
 			startMakeAppointmentDialogUseCase,
 			appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
+				log,
 				schedulingService,
 				appointment_telegram_presenter.NewDatePickerTextPresenter(
 					cfg.WebCalendar.AppUrl,
@@ -267,6 +269,7 @@ func New(
 				errorPresenter,
 			),
 			appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
+				log,
 				schedulingService,
 				servicesRepository,
 				appointment_telegram_presenter.NewTimePickerPresenter(
@@ -275,6 +278,7 @@ func New(
 				errorPresenter,
 			),
 			appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
+				log,
 				servicesRepository,
 				appointment_telegram_presenter.NewConfirmationPresenter(
 					expirableAppointmentStateContainer,
@@ -282,6 +286,7 @@ func New(
 				errorPresenter,
 			),
 			appointment_use_case.NewMakeAppointmentUseCase(
+				log,
 				schedulingService,
 				customerRepository,
 				servicesRepository,

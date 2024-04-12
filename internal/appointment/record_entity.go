@@ -11,7 +11,7 @@ import (
 var ErrInvalidStatusForArchivedRecord = errors.New("invalid status for archived record")
 var ErrInvalidDateTimePeriod = errors.New("invalid date time period")
 var ErrRecordIsArchived = errors.New("record is archived")
-var ErrIdIsNotTemporal = errors.New("id is not temporal")
+var ErrRecordIdIsNotTemporal = errors.New("id is not temporal")
 
 type RecordStatus string
 
@@ -71,7 +71,7 @@ func NewRecord(
 
 func (r *RecordEntity) SetId(id RecordId) error {
 	if r.Id != TemporalRecordId {
-		return fmt.Errorf("%w: %s", ErrIdIsNotTemporal, r.Id)
+		return fmt.Errorf("%w: %s", ErrRecordIdIsNotTemporal, r.Id)
 	}
 	r.Id = id
 	return nil

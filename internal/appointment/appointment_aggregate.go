@@ -31,7 +31,7 @@ func (a *AppointmentAggregate) SetId(recordId RecordId) error {
 }
 
 func (a *AppointmentAggregate) Title() (string, error) {
-	idType, err := a.customer.IdType()
+	idType, err := a.customer.IdentityType()
 	if err != nil {
 		return "", err
 	}

@@ -97,11 +97,11 @@ func GoTimeToDateTime(t time.Time) DateTime {
 }
 
 func DateToGoTime(d Date) time.Time {
-	return time.Date(d.Year, time.Month(d.Month), d.Day, 0, 0, 0, 0, time.UTC)
+	return time.Date(d.Year, time.Month(d.Month), d.Day, 0, 0, 0, 0, time.Local)
 }
 
 func DateTimeToGoTime(dt DateTime) time.Time {
-	return time.Date(dt.Year, time.Month(dt.Month), dt.Day, dt.Hours, dt.Minutes, 0, 0, time.UTC)
+	return time.Date(dt.Year, time.Month(dt.Month), dt.Day, dt.Hours, dt.Minutes, 0, 0, time.Local)
 }
 
 func MakeDateTimeShifter(shift DateTime) func(DateTime) DateTime {

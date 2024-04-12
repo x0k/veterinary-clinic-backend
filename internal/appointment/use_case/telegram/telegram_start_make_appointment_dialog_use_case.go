@@ -31,7 +31,7 @@ func NewStartMakeAppointmentDialogUseCase[R any](
 	errorPresenter appointment.ErrorPresenter[R],
 ) *StartMakeAppointmentDialogUseCase[R] {
 	return &StartMakeAppointmentDialogUseCase[R]{
-		log:                     log.With(slog.String("component", startMakeAppointmentDialogUseCaseName)),
+		log:                     log.With(sl.Component(startMakeAppointmentDialogUseCaseName)),
 		customerLoader:          customerLoader,
 		servicesLoader:          servicesLoader,
 		servicesPickerPresenter: servicesPickerPresenter,
@@ -44,8 +44,8 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	ctx context.Context,
 	userId entity.TelegramUserId,
 ) (R, error) {
-	customerId := appointment.TelegramUserIdToCustomerId(userId)
-	_, err := u.customerLoader.Customer(ctx, customerId)
+	customerIdentity := appointment.NewTelegramCustomerIdentity(userId)
+	_, err := u.customerLoader.Customer(ctx, customerIdentity)
 	if errors.Is(err, entity.ErrNotFound) {
 		return u.registrationPresenter.RenderRegistration(userId)
 	}

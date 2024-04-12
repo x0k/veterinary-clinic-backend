@@ -2,7 +2,6 @@ package appointment_use_case
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
@@ -26,7 +25,7 @@ func NewScheduleUseCase[R any](
 	errorPresenter appointment.ErrorPresenter[R],
 ) *ScheduleUseCase[R] {
 	return &ScheduleUseCase[R]{
-		log:               log.With(slog.String("component", scheduleUseCaseName)),
+		log:               log.With(sl.Component(scheduleUseCaseName)),
 		schedulingService: schedulingService,
 		schedulePresenter: schedulePresenter,
 		errorPresenter:    errorPresenter,

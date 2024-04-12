@@ -5,9 +5,14 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
+const appointmentTimePickerUseCaseName = "appointment_telegram_use_case.AppointmentTimePickerUseCase"
+
 type AppointmentTimePickerUseCase[R any] struct {
+	log                 *logger.Logger
 	schedulingService   *appointment.SchedulingService
 	serviceLoader       appointment.ServiceLoader
 	timePickerPresenter appointment.TimePickerPresenter[R]
@@ -15,12 +20,14 @@ type AppointmentTimePickerUseCase[R any] struct {
 }
 
 func NewAppointmentTimePickerUseCase[R any](
+	log *logger.Logger,
 	schedulingService *appointment.SchedulingService,
 	serviceLoader appointment.ServiceLoader,
 	timePickerPresenter appointment.TimePickerPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
 ) *AppointmentTimePickerUseCase[R] {
 	return &AppointmentTimePickerUseCase[R]{
+		log:                 log.With(sl.Component(appointmentTimePickerUseCaseName)),
 		schedulingService:   schedulingService,
 		serviceLoader:       serviceLoader,
 		timePickerPresenter: timePickerPresenter,
@@ -36,6 +43,7 @@ func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 ) (R, error) {
 	service, err := u.serviceLoader.Service(ctx, serviceId)
 	if err != nil {
+		u.log.Error(ctx, "failed to load service", sl.Err(err))
 		return u.errorPresenter.RenderError(err)
 	}
 	sampledFreeTimeSlots, err := u.schedulingService.SampledFreeTimeSlots(
@@ -45,6 +53,7 @@ func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 		service.DurationInMinutes,
 	)
 	if err != nil {
+		u.log.Error(ctx, "failed to get sampled free time slots", sl.Err(err))
 		return u.errorPresenter.RenderError(err)
 	}
 	return u.timePickerPresenter.RenderTimePicker(serviceId, appointmentDate, sampledFreeTimeSlots)
