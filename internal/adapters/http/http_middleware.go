@@ -1,4 +1,4 @@
-package http_adpters
+package http_adapters
 
 import (
 	"log/slog"

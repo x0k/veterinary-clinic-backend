@@ -7,7 +7,7 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	http_adpters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
+	http_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
@@ -34,6 +34,17 @@ func New(
 	telegramInitDataParser *telegram_adapters.InitDataParser,
 ) (*module.Module, error) {
 	m := module.New(log.Logger, "appointment")
+
+	greetController := telegram_adapters.NewController(
+		"greet_controller",
+		appointment_telegram_controller.NewGreet(
+			bot,
+			appointment_telegram_use_case.NewGreetUseCase(
+				appointment_telegram_presenter.NewGreet(),
+			),
+		),
+	)
+	m.PostStart(greetController)
 
 	servicesRepository := appointment_notion_repository.NewService(
 		notion,
@@ -121,11 +132,11 @@ func New(
 		return nil, err
 	}
 
-	webCalendarService := http_adpters.NewService(
+	webCalendarService := http_adapters.NewService(
 		"web_calendar_server",
 		&http.Server{
 			Addr: cfg.WebCalendar.HandlerAddress.String(),
-			Handler: http_adpters.Logging(
+			Handler: http_adapters.Logging(
 				log,
 				appointment_http_controller.UseWebCalendarRouter(
 					http.NewServeMux(), log, bot,
