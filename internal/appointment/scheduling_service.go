@@ -129,51 +129,47 @@ func (s *SchedulingService) Schedule(
 	now time.Time,
 	preferredDate time.Time,
 ) (Schedule, error) {
-	productionCalendar, err := s.productionCalendarLoader.ProductionCalendar(ctx)
+	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
 		return Schedule{}, err
 	}
-	productionCalendar = productionCalendar.WithoutSaturdayWeekend()
-	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
+	appointmentDate := productionCalendar.DayOrNextWorkingDay(preferredDate)
+	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
 	if err != nil {
 		return Schedule{}, err
 	}
-	date := productionCalendar.DayOrNextWorkingDay(preferredDate)
-	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, date)
+	dayWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
 	if err != nil {
 		return Schedule{}, err
 	}
-	workBreaks, err := s.workBreaksLoader.WorkBreaks(ctx)
+	freeTimeSlots, err := s.freeTimeSlots(
+		ctx,
+		now,
+		appointmentDate,
+		productionCalendar,
+		busyPeriods,
+		dayWorkBreaks,
+	)
 	if err != nil {
 		return Schedule{}, err
 	}
 	return NewSchedule(
 		now,
-		date,
+		appointmentDate,
 		productionCalendar,
-		workingHours,
+		freeTimeSlots,
 		busyPeriods,
-		workBreaks,
-	)
+		dayWorkBreaks,
+	), nil
 }
 
-func (s *SchedulingService) FreeTimeSlots(
+func (s *SchedulingService) SampledFreeTimeSlots(
 	ctx context.Context,
 	now time.Time,
 	appointmentDate time.Time,
 	durationInMinutes entity.DurationInMinutes,
 ) (SampledFreeTimeSlots, error) {
-	productionCalendar, err := s.productionCalendarLoader.ProductionCalendar(ctx)
-	if err != nil {
-		return SampledFreeTimeSlots{}, err
-	}
-	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
-	if err != nil {
-		return SampledFreeTimeSlots{}, err
-	}
-	dayTimePeriods, err := workingHours.ForDay(appointmentDate).
-		OmitPast(entity.GoTimeToDateTime(now)).
-		ConsiderProductionCalendar(productionCalendar)
+	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
@@ -181,16 +177,15 @@ func (s *SchedulingService) FreeTimeSlots(
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
-	workBreaks, err := s.workBreaksLoader.WorkBreaks(ctx)
+	dayWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
-	dayWorkBreaks, err := workBreaks.ForDay(appointmentDate)
-	if err != nil {
-		return SampledFreeTimeSlots{}, err
-	}
-	freeTimeSlots, err := NewFreeTimeSlots(
-		dayTimePeriods,
+	freeTimeSlots, err := s.freeTimeSlots(
+		ctx,
+		now,
+		appointmentDate,
+		productionCalendar,
 		busyPeriods,
 		dayWorkBreaks,
 	)
@@ -202,4 +197,45 @@ func (s *SchedulingService) FreeTimeSlots(
 		s.sampleRateInMinutes,
 		freeTimeSlots,
 	), nil
+}
+
+func (s *SchedulingService) productionCalendar(ctx context.Context) (ProductionCalendar, error) {
+	pc, err := s.productionCalendarLoader.ProductionCalendar(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return pc.WithoutSaturdayWeekend(), nil
+}
+
+func (s *SchedulingService) dayWorkBreaks(ctx context.Context, day time.Time) (DayWorkBreaks, error) {
+	workBreaks, err := s.workBreaksLoader.WorkBreaks(ctx)
+	if err != nil {
+		return DayWorkBreaks{}, err
+	}
+	return workBreaks.ForDay(day)
+}
+
+func (s *SchedulingService) freeTimeSlots(
+	ctx context.Context,
+	now time.Time,
+	appointmentDate time.Time,
+	productionCalendar ProductionCalendar,
+	busyPeriods BusyPeriods,
+	dayWorkBreaks DayWorkBreaks,
+) (FreeTimeSlots, error) {
+	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
+	if err != nil {
+		return FreeTimeSlots{}, err
+	}
+	datTimePeriods, err := workingHours.ForDay(appointmentDate).
+		OmitPast(entity.GoTimeToDateTime(now)).
+		ConsiderProductionCalendar(productionCalendar)
+	if err != nil {
+		return FreeTimeSlots{}, err
+	}
+	return NewFreeTimeSlots(
+		datTimePeriods,
+		busyPeriods,
+		dayWorkBreaks,
+	)
 }

@@ -15,9 +15,9 @@ func writeSchedule(sb *strings.Builder, schedule appointment.Schedule) {
 	sb.WriteString(":\n\n")
 	for _, period := range schedule.Entries {
 		sb.WriteByte('*')
-		sb.WriteString(period.Start.String())
+		sb.WriteString(period.Start.Time.String())
 		sb.WriteString(" \\- ")
-		sb.WriteString(period.End.String())
+		sb.WriteString(period.End.Time.String())
 		sb.WriteString("*\n")
 		sb.WriteString(telegram_adapters.EscapeMarkdownString(period.Title))
 		sb.WriteString("\n\n")

@@ -41,3 +41,7 @@ type GreetPresenter[R any] interface {
 type TimePickerPresenter[R any] interface {
 	RenderTimePicker(serviceId ServiceId, appointmentDate time.Time, slots SampledFreeTimeSlots) (R, error)
 }
+
+type AppointmentConfirmationPresenter[R any] interface {
+	RenderConfirmation(service ServiceEntity, appointmentDateTime time.Time) (R, error)
+}

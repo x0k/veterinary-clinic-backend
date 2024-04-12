@@ -231,6 +231,8 @@ func New(
 		errorPresenter,
 	)
 
+	errorSender := appointment_telegram_adapters.NewErrorSender(errorPresenter)
+
 	startMakeAppointmentDialogController := telegram_adapters.NewController(
 		"start_make_appointment_dialog_controller",
 		appointment_telegram_controller.NewStartMakeAppointmentDialog(
@@ -246,7 +248,7 @@ func New(
 				),
 				errorPresenter,
 			),
-			errorPresenter,
+			errorSender,
 		),
 	)
 	m.PostStart(startMakeAppointmentDialogController)
@@ -273,7 +275,14 @@ func New(
 				),
 				errorPresenter,
 			),
-			errorPresenter,
+			appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
+				servicesRepository,
+				appointment_telegram_presenter.NewTelegramConfirmationPresenter(
+					expirableAppointmentStateContainer,
+				),
+				errorPresenter,
+			),
+			errorSender,
 			expirableServiceIdContainer,
 			expirableAppointmentStateContainer,
 		),

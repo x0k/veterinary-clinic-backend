@@ -6,7 +6,6 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
-	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/entity"
@@ -18,7 +17,7 @@ func NewStartMakeAppointmentDialog(
 	tgUserIdLoader adapters.StatePopper[entity.TelegramUserId],
 	startMakeAppointmentDialogUseCase *appointment_telegram_use_case.StartMakeAppointmentDialogUseCase[telegram_adapters.TextResponses],
 	registerCustomerUseCase *appointment_telegram_use_case.RegisterCustomerUseCase[telegram_adapters.TextResponses],
-	errorPresenter appointment.ErrorPresenter[telegram_adapters.TextResponses],
+	errorSender appointment_telegram_adapters.ErrorSender,
 ) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		startMakeAppointmentHandler := func(c telebot.Context) error {
@@ -40,11 +39,7 @@ func NewStartMakeAppointmentDialog(
 			}
 			tgUserId, ok := tgUserIdLoader.Pop(adapters.StateId(strconv.FormatInt(cnt.UserID, 10)))
 			if !ok {
-				res, err := errorPresenter.RenderError(appointment_telegram_adapters.ErrUnknownState)
-				if err != nil {
-					return err
-				}
-				return res.Send(c)
+				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
 			}
 			res, err := registerCustomerUseCase.RegisterCustomer(
 				ctx,

@@ -8,51 +8,31 @@ import (
 
 type Schedule struct {
 	Date     time.Time
-	Entries  ScheduleEntries
+	Entries  scheduleEntries
 	NextDate time.Time
 	PrevDate time.Time
 }
 
 func NewSchedule(
 	now time.Time,
-	appointmentDate time.Time,
+	scheduleDate time.Time,
 	productionCalendar ProductionCalendar,
-	workingHours WorkingHours,
+	freeTimeSlots FreeTimeSlots,
 	busyPeriods BusyPeriods,
-	workBreaks WorkBreaks,
-) (Schedule, error) {
-	next := productionCalendar.DayOrNextWorkingDay(appointmentDate.AddDate(0, 0, 1))
-	prev := productionCalendar.DayOrPrevWorkingDay(appointmentDate.AddDate(0, 0, -1))
-	dayWorkBreaks, err := workBreaks.ForDay(appointmentDate)
-	if err != nil {
-		return Schedule{}, err
-	}
-	dayTimePeriods, err := workingHours.ForDay(appointmentDate).
-		OmitPast(entity.GoTimeToDateTime(now)).
-		ConsiderProductionCalendar(productionCalendar)
-	if err != nil {
-		return Schedule{}, err
-	}
-	freeTimeSlots, err := NewFreeTimeSlots(
-		dayTimePeriods,
-		busyPeriods,
-		dayWorkBreaks,
-	)
-	if err != nil {
-		return Schedule{}, err
-	}
+	dayWorkBreaks DayWorkBreaks,
+) Schedule {
+	next := productionCalendar.DayOrNextWorkingDay(scheduleDate.AddDate(0, 0, 1))
+	prev := productionCalendar.DayOrPrevWorkingDay(scheduleDate.AddDate(0, 0, -1))
 	entries := newScheduleEntries(
+		entity.GoTimeToDate(scheduleDate),
 		freeTimeSlots,
 		busyPeriods,
 		dayWorkBreaks,
-	)
-	if entity.GoTimeToDate(appointmentDate) == entity.GoTimeToDate(now) {
-		entries = entries.OmitPast(now)
-	}
+	).OmitPast(entity.GoTimeToDateTime(now))
 	return Schedule{
-		Date:     appointmentDate,
+		Date:     scheduleDate,
 		Entries:  entries,
 		NextDate: next,
 		PrevDate: prev,
-	}, nil
+	}
 }

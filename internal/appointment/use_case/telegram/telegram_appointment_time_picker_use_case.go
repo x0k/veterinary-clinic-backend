@@ -38,7 +38,7 @@ func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 	if err != nil {
 		return u.errorPresenter.RenderError(err)
 	}
-	sampledFreeTimeSlots, err := u.schedulingService.FreeTimeSlots(
+	sampledFreeTimeSlots, err := u.schedulingService.SampledFreeTimeSlots(
 		ctx,
 		now,
 		appointmentDate,
