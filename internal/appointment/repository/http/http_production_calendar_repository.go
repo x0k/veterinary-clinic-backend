@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	adapters_production_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/production_calendar"
+	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/production_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
@@ -19,7 +19,7 @@ const productionCalendarRepositoryName = "appointment_http_repository.Production
 
 type ProductionCalendarRepository struct {
 	log                *logger.Logger
-	calendarUrl        adapters_production_calendar.Url
+	calendarUrl        production_calendar_adapters.Url
 	client             *http.Client
 	mu                 sync.RWMutex
 	productionCalendar appointment.ProductionCalendar
@@ -27,7 +27,7 @@ type ProductionCalendarRepository struct {
 
 func NewProductionCalendar(
 	log *logger.Logger,
-	calendarUrl adapters_production_calendar.Url,
+	calendarUrl production_calendar_adapters.Url,
 	client *http.Client,
 ) *ProductionCalendarRepository {
 	return &ProductionCalendarRepository{

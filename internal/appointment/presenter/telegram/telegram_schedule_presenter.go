@@ -7,20 +7,20 @@ import (
 	"time"
 
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
-	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
+	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	"gopkg.in/telebot.v3"
 )
 
 type schedulePresenter struct {
-	calendarWebAppUrl           adapters_web_calendar.AppUrl
+	calendarWebAppUrl           web_calendar_adapters.AppUrl
 	calendarInputRequestOptions string
 }
 
 func newSchedulePresenter(
-	webCalendarAppUrl adapters_web_calendar.AppUrl,
-	webCalendarHandlerUrl adapters_web_calendar.HandlerUrl,
+	webCalendarAppUrl web_calendar_adapters.AppUrl,
+	webCalendarHandlerUrl web_calendar_adapters.HandlerUrl,
 ) schedulePresenter {
 	return schedulePresenter{
 		calendarWebAppUrl:           webCalendarAppUrl,
@@ -35,9 +35,9 @@ func (p *schedulePresenter) scheduleButtons(now time.Time, schedule appointment.
 	}
 	webAppParams := url.Values{}
 	webAppParams.Add("r", p.calendarInputRequestOptions)
-	webAppParams.Add("v", adapters_web_calendar.AppInputValidationSchema)
+	webAppParams.Add("v", web_calendar_adapters.AppInputValidationSchema)
 	webAppParams.Add("w", fmt.Sprintf(
-		adapters_web_calendar.AppOptionsTemplate,
+		web_calendar_adapters.AppOptionsTemplate,
 		time.Now().Format(time.DateOnly),
 		schedule.Date.Format(time.DateOnly),
 	))
@@ -57,8 +57,8 @@ type ScheduleTextPresenter struct {
 }
 
 func NewScheduleTextPresenter(
-	calendarWebAppUrl adapters_web_calendar.AppUrl,
-	calendarWebHandlerUrl adapters_web_calendar.HandlerUrl,
+	calendarWebAppUrl web_calendar_adapters.AppUrl,
+	calendarWebHandlerUrl web_calendar_adapters.HandlerUrl,
 ) *ScheduleTextPresenter {
 	return &ScheduleTextPresenter{
 		schedulePresenter: newSchedulePresenter(
@@ -89,8 +89,8 @@ type ScheduleQueryPresenter struct {
 }
 
 func NewScheduleQueryPresenter(
-	calendarWebAppUrl adapters_web_calendar.AppUrl,
-	calendarWebHandlerUrl adapters_web_calendar.HandlerUrl,
+	calendarWebAppUrl web_calendar_adapters.AppUrl,
+	calendarWebHandlerUrl web_calendar_adapters.HandlerUrl,
 ) *ScheduleQueryPresenter {
 	return &ScheduleQueryPresenter{
 		schedulePresenter: newSchedulePresenter(

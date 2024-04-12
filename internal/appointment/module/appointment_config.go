@@ -2,8 +2,8 @@ package appointment_module
 
 import (
 	"github.com/jomei/notionapi"
-	adapters_production_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/production_calendar"
-	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
+	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/production_calendar"
+	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 )
 
 type NotionConfig struct {
@@ -14,14 +14,14 @@ type NotionConfig struct {
 }
 
 type ProductionCalendarConfig struct {
-	Url                   adapters_production_calendar.Url `yaml:"url" env:"APPOINTMENT_PRODUCTION_CALENDAR_URL" env-required:"true"`
+	Url                   production_calendar_adapters.Url `yaml:"url" env:"APPOINTMENT_PRODUCTION_CALENDAR_URL" env-required:"true"`
 	TLSInsecureSkipVerify bool                             `yaml:"tls_insecure_skip_verify" env:"APPOINTMENT_PRODUCTION_CALENDAR_TLS_INSECURE_SKIP_VERIFY" env-default:"false"`
 }
 
 type WebCalendarConfig struct {
-	AppUrl         adapters_web_calendar.AppUrl         `yaml:"app_url" env:"APPOINTMENT_WEB_CALENDAR_APP_URL" env-required:"true"`
-	HandlerAddress adapters_web_calendar.HandlerAddress `yaml:"handler_address" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_ADDRESS" env-required:"true"`
-	HandlerUrlRoot adapters_web_calendar.HandlerUrlRoot `yaml:"handler_url_root" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_URL_ROOT" env-required:"true"`
+	AppUrl         web_calendar_adapters.AppUrl         `yaml:"app_url" env:"APPOINTMENT_WEB_CALENDAR_APP_URL" env-required:"true"`
+	HandlerAddress web_calendar_adapters.HandlerAddress `yaml:"handler_address" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_ADDRESS" env-required:"true"`
+	HandlerUrlRoot web_calendar_adapters.HandlerUrlRoot `yaml:"handler_url_root" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_URL_ROOT" env-required:"true"`
 }
 
 type Config struct {

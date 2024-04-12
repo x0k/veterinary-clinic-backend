@@ -1,3 +1,3 @@
-package adapters_production_calendar
+package production_calendar_adapters
 
 type Url string

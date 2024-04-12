@@ -8,12 +8,13 @@ import (
 )
 
 type Module struct {
-	name     string
-	log      *slog.Logger
-	wg       sync.WaitGroup
-	services []Service
-	fatal    chan error
-	stopped  atomic.Bool
+	name      string
+	log       *slog.Logger
+	wg        sync.WaitGroup
+	services  []Service
+	postStart []Hook
+	fatal     chan error
+	stopped   atomic.Bool
 }
 
 func New(log *slog.Logger, name string) *Module {
@@ -30,6 +31,10 @@ func (m *Module) Name() string {
 
 func (m *Module) Append(services ...Service) {
 	m.services = append(m.services, services...)
+}
+
+func (m *Module) PostStart(hooks ...Hook) {
+	m.postStart = append(m.postStart, hooks...)
 }
 
 func (m *Module) Fatal(ctx context.Context, err error) {
@@ -72,6 +77,13 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 			}
 			m.log.LogAttrs(ctx, slog.LevelInfo, "stopped", slog.String("service", service.Name()))
 		}()
+	}
+
+	for _, hook := range m.postStart {
+		m.log.LogAttrs(ctx, slog.LevelInfo, "starting", slog.String("hook", hook.Name()))
+		if err := hook.Run(ctx); err != nil {
+			m.Fatal(ctx, err)
+		}
 	}
 
 	err := awaiter(ctx)

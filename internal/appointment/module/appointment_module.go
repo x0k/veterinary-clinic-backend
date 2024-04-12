@@ -7,9 +7,9 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	adapters_http "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
+	http_adpters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
-	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
+	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_http_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/http"
@@ -55,7 +55,7 @@ func New(
 			),
 		),
 	)
-	m.Append(servicesController)
+	m.PostStart(servicesController)
 
 	appointmentRepository := appointment_notion_repository.NewAppointment(
 		log,
@@ -95,7 +95,7 @@ func New(
 		workBreaksRepository,
 	)
 
-	webCalendarHandlerUrl := adapters_web_calendar.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
+	webCalendarHandlerUrl := web_calendar_adapters.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
 
 	scheduleController := telegram_adapters.NewController(
 		"schedule_controller",
@@ -112,20 +112,20 @@ func New(
 			),
 		),
 	)
-	m.Append(scheduleController)
+	m.PostStart(scheduleController)
 
-	webCalendarAppOrigin, err := adapters_web_calendar.NewAppOrigin(
+	webCalendarAppOrigin, err := web_calendar_adapters.NewAppOrigin(
 		cfg.WebCalendar.AppUrl,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	webCalendarService := adapters_http.NewService(
+	webCalendarService := http_adpters.NewService(
 		"web_calendar_server",
 		&http.Server{
 			Addr: cfg.WebCalendar.HandlerAddress.String(),
-			Handler: adapters_http.Logging(
+			Handler: http_adpters.Logging(
 				log,
 				appointment_http_controller.UseWebCalendarRouter(
 					http.NewServeMux(), log, bot,
@@ -197,9 +197,9 @@ func New(
 			errorPresenter,
 		),
 	)
-	m.Append(startMakeAppointmentDialogController)
+	m.PostStart(startMakeAppointmentDialogController)
 
-	webCalendarDatePickerUrl := adapters_web_calendar.NewDatePickerUrl(
+	webCalendarDatePickerUrl := web_calendar_adapters.NewDatePickerUrl(
 		cfg.WebCalendar.HandlerUrlRoot,
 	)
 
@@ -227,7 +227,7 @@ func New(
 			expirableServiceIdContainer,
 		),
 	)
-	m.Append(makeAppointmentController)
+	m.PostStart(makeAppointmentController)
 
 	return m, nil
 }

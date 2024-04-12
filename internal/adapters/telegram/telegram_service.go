@@ -8,7 +8,7 @@ import (
 )
 
 func NewService(name string, bot *telebot.Bot) module.Service {
-	return module.NewService("telegram", func(ctx context.Context) error {
+	return module.NewService(name, func(ctx context.Context) error {
 		context.AfterFunc(ctx, func() {
 			bot.Stop()
 		})

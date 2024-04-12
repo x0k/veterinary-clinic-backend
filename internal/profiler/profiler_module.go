@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 
-	adapters_http "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
+	http_adpters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 )
@@ -30,7 +30,7 @@ func New(cfg *Config, log *logger.Logger) *module.Module {
 			Addr:    cfg.Address,
 			Handler: UseHttpRouter(http.NewServeMux()),
 		}
-		m.Append(adapters_http.NewService("profiler_http_server", srv, m))
+		m.Append(http_adpters.NewService("profiler_http_server", srv, m))
 	}
 	return m
 }

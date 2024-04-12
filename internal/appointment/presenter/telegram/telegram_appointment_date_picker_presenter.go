@@ -8,21 +8,21 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
-	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
+	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	"gopkg.in/telebot.v3"
 )
 
 type datePickerPresenter struct {
-	webCalendarAppUrl              adapters_web_calendar.AppUrl
+	webCalendarAppUrl              web_calendar_adapters.AppUrl
 	webCalendarInputRequestOptions string
 	stateSaver                     adapters.StateSaver[appointment_telegram_adapters.AppointmentSate]
 }
 
 func newDatePickerPresenter(
-	webCalendarAppUrl adapters_web_calendar.AppUrl,
-	webCalendarHandlerUrl adapters_web_calendar.DatePickerUrl,
+	webCalendarAppUrl web_calendar_adapters.AppUrl,
+	webCalendarHandlerUrl web_calendar_adapters.DatePickerUrl,
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate],
 ) datePickerPresenter {
 	return datePickerPresenter{
@@ -44,9 +44,9 @@ func (p *datePickerPresenter) buttons(now time.Time, serviceId appointment.Servi
 	}
 	webAppParams := url.Values{}
 	webAppParams.Add("r", p.webCalendarInputRequestOptions)
-	webAppParams.Add("v", adapters_web_calendar.AppInputValidationSchema)
+	webAppParams.Add("v", web_calendar_adapters.AppInputValidationSchema)
 	webAppParams.Add("w", fmt.Sprintf(
-		adapters_web_calendar.AppOptionsTemplate,
+		web_calendar_adapters.AppOptionsTemplate,
 		time.Now().Format(time.DateOnly),
 		schedule.Date.Format(time.DateOnly),
 	))
@@ -83,8 +83,8 @@ type DatePickerTextPresenter struct {
 }
 
 func NewDatePickerTextPresenter(
-	webCalendarAppUrl adapters_web_calendar.AppUrl,
-	webCalendarHandlerUrl adapters_web_calendar.DatePickerUrl,
+	webCalendarAppUrl web_calendar_adapters.AppUrl,
+	webCalendarHandlerUrl web_calendar_adapters.DatePickerUrl,
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate],
 ) *DatePickerTextPresenter {
 	return &DatePickerTextPresenter{
@@ -119,8 +119,8 @@ type DatePickerQueryPresenter struct {
 }
 
 func NewDatePickerQueryPresenter(
-	webCalendarAppUrl adapters_web_calendar.AppUrl,
-	webCalendarHandlerUrl adapters_web_calendar.DatePickerUrl,
+	webCalendarAppUrl web_calendar_adapters.AppUrl,
+	webCalendarHandlerUrl web_calendar_adapters.DatePickerUrl,
 	stateSaver adapters.StateSaver[appointment_telegram_adapters.AppointmentSate],
 ) *DatePickerQueryPresenter {
 	return &DatePickerQueryPresenter{

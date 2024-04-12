@@ -6,7 +6,7 @@ import (
 	"time"
 
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
-	adapters_web_calendar "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
+	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/httpx"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
@@ -18,7 +18,7 @@ func UseWebCalendarRouter(
 	mux *http.ServeMux,
 	log *logger.Logger,
 	bot *telebot.Bot,
-	webCalendarAppOrigin adapters_web_calendar.AppOrigin,
+	webCalendarAppOrigin web_calendar_adapters.AppOrigin,
 	telegramIniDataParser *telegram_adapters.InitDataParser,
 	scheduleUseCase *appointment_use_case.ScheduleUseCase[telegram_adapters.QueryResponse],
 ) *http.ServeMux {
@@ -27,17 +27,17 @@ func UseWebCalendarRouter(
 		MaxBytes: 1 * 1024 * 1024,
 	}
 
-	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", adapters_web_calendar.HandlerPath), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("OPTIONS %s", web_calendar_adapters.HandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", webCalendarAppOrigin.String())
 		w.Header().Set("Access-Control-Allow-Methods", "POST")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mux.HandleFunc(fmt.Sprintf("POST %s", adapters_web_calendar.HandlerPath), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("POST %s", web_calendar_adapters.HandlerPath), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", webCalendarAppOrigin.String())
 		w.Header().Set("Vary", "Accept-Encoding, Origin")
-		res, httpErr := httpx.JSONBody[adapters_web_calendar.AppResultResponse](log.Logger, jsonBodyDecoder, w, r)
+		res, httpErr := httpx.JSONBody[web_calendar_adapters.AppResultResponse](log.Logger, jsonBodyDecoder, w, r)
 		if httpErr != nil {
 			http.Error(w, httpErr.Text, httpErr.Status)
 			return

@@ -1,4 +1,4 @@
-package adapters_web_calendar
+package web_calendar_adapters
 
 import (
 	"fmt"
