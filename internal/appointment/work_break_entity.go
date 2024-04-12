@@ -40,13 +40,15 @@ func NewWorkBreak(
 
 type WorkBreaks []WorkBreak
 
+type DayWorkBreaks []WorkBreak
+
 const date_format = "2006-01-02T15:04:05"
 
 func (workBreaks WorkBreaks) ForDay(
 	date time.Time,
-) (WorkBreaks, error) {
+) (DayWorkBreaks, error) {
 	dateString := fmt.Sprintf("%d %s", date.Weekday(), date.Format(date_format))
-	breaks := make(WorkBreaks, 0, len(workBreaks))
+	breaks := make(DayWorkBreaks, 0, len(workBreaks))
 	for _, wb := range workBreaks {
 		expr, err := regexp.Compile(wb.MatchExpression)
 		if err != nil {

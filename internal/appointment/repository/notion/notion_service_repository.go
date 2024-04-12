@@ -54,7 +54,7 @@ func (s *ServiceRepository) Services(ctx context.Context) ([]appointment.Service
 	})
 }
 
-func (s *ServiceRepository) Service(ctx context.Context, serviceId entity.ServiceId) (appointment.ServiceEntity, error) {
+func (s *ServiceRepository) Service(ctx context.Context, serviceId appointment.ServiceId) (appointment.ServiceEntity, error) {
 	const op = serviceRepositoryName + ".Service"
 	res, err := s.client.Page.Get(ctx, notionapi.PageID(serviceId))
 	if err != nil {

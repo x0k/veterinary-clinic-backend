@@ -98,6 +98,7 @@ func New(
 
 	schedulingService := appointment.NewSchedulingService(
 		log,
+		cfg.SchedulingService.SampleRateInMinutes,
 		appointmentRepository,
 		appointmentRepository,
 		productionCalendarRepository,
@@ -254,6 +255,7 @@ func New(
 		"make_appointment_dialog_controller",
 		appointment_telegram_controller.NewMakeAppointment(
 			bot,
+			startMakeAppointmentDialogUseCase,
 			appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
 				schedulingService,
 				appointment_telegram_presenter.NewDatePickerTextPresenter(
@@ -263,7 +265,14 @@ func New(
 				),
 				errorPresenter,
 			),
-			startMakeAppointmentDialogUseCase,
+			appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
+				schedulingService,
+				servicesRepository,
+				appointment_telegram_presenter.NewTimePickerPresenter(
+					expirableAppointmentStateContainer,
+				),
+				errorPresenter,
+			),
 			errorPresenter,
 			expirableServiceIdContainer,
 			expirableAppointmentStateContainer,

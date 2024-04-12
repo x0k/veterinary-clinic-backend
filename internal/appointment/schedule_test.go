@@ -9,9 +9,9 @@ import (
 
 func TestCalculateSchedulePeriods(t *testing.T) {
 	type args struct {
-		freePeriods FreePeriods
+		freePeriods FreeTimeSlots
 		busyPeriods BusyPeriods
-		workBreaks  WorkBreaks
+		workBreaks  DayWorkBreaks
 	}
 	tests := []struct {
 		name string
@@ -21,7 +21,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 		{
 			name: "Vacation",
 			args: args{
-				freePeriods: FreePeriods{
+				freePeriods: FreeTimeSlots{
 					{
 						Start: entity.Time{
 							Hours:   9,
@@ -34,7 +34,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 					},
 				},
 				busyPeriods: BusyPeriods{},
-				workBreaks: WorkBreaks{
+				workBreaks: DayWorkBreaks{
 					{
 						Id:              "lunch",
 						MatchExpression: `^[1-5]`,

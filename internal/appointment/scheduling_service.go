@@ -19,9 +19,11 @@ var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 
 type SchedulingService struct {
-	log                       *logger.Logger
-	periodsMu                 sync.Mutex
-	periods                   []entity.DateTimePeriod
+	log       *logger.Logger
+	periodsMu sync.Mutex
+	periods   []entity.DateTimePeriod
+
+	sampleRateInMinutes       SampleRateInMinutes
 	appointmentPeriodsChecker AppointmentPeriodChecker
 	appointmentCreator        AppointmentCreator
 	productionCalendarLoader  ProductionCalendarLoader
@@ -32,6 +34,7 @@ type SchedulingService struct {
 
 func NewSchedulingService(
 	log *logger.Logger,
+	sampleRateInMinutes SampleRateInMinutes,
 	appointmentPeriodChecker AppointmentPeriodChecker,
 	appointmentCreator AppointmentCreator,
 	productionCalendarLoader ProductionCalendarLoader,
@@ -41,6 +44,7 @@ func NewSchedulingService(
 ) *SchedulingService {
 	return &SchedulingService{
 		log:                       log.With(slog.String("component", "SchedulingService")),
+		sampleRateInMinutes:       sampleRateInMinutes,
 		appointmentPeriodsChecker: appointmentPeriodChecker,
 		appointmentCreator:        appointmentCreator,
 		productionCalendarLoader:  productionCalendarLoader,
@@ -151,4 +155,51 @@ func (s *SchedulingService) Schedule(
 		busyPeriods,
 		workBreaks,
 	)
+}
+
+func (s *SchedulingService) FreeTimeSlots(
+	ctx context.Context,
+	now time.Time,
+	appointmentDate time.Time,
+	durationInMinutes entity.DurationInMinutes,
+) (SampledFreeTimeSlots, error) {
+	productionCalendar, err := s.productionCalendarLoader.ProductionCalendar(ctx)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	dayTimePeriods, err := workingHours.ForDay(appointmentDate).
+		OmitPast(entity.GoTimeToDateTime(now)).
+		ConsiderProductionCalendar(productionCalendar)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	workBreaks, err := s.workBreaksLoader.WorkBreaks(ctx)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	dayWorkBreaks, err := workBreaks.ForDay(appointmentDate)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	freeTimeSlots, err := NewFreeTimeSlots(
+		dayTimePeriods,
+		busyPeriods,
+		dayWorkBreaks,
+	)
+	if err != nil {
+		return SampledFreeTimeSlots{}, err
+	}
+	return NewSampleFreeTimeSlots(
+		durationInMinutes,
+		s.sampleRateInMinutes,
+		freeTimeSlots,
+	), nil
 }

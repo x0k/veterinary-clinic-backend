@@ -1,11 +1,5 @@
 package adapters
 
-import (
-	"time"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
-)
-
 type StateId string
 
 func (s StateId) String() string {
@@ -30,9 +24,4 @@ type StateLoader[S any] interface {
 
 type StatePopper[S any] interface {
 	Pop(stateId StateId) (S, bool)
-}
-
-type TelegramDatePickerState struct {
-	ServiceId entity.ServiceId
-	Date      time.Time
 }

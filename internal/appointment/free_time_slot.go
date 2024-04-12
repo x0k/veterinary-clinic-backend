@@ -1,14 +1,16 @@
 package appointment
 
-import "github.com/x0k/veterinary-clinic-backend/internal/entity"
+import (
+	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+)
 
 type FreeTimeSlots []entity.TimePeriod
 
 func NewFreeTimeSlots(
-	freePeriods FreePeriods,
+	dayTimePeriods DayTimePeriods,
 	busyPeriods BusyPeriods,
-	workBreaks WorkBreaks,
-) FreeTimeSlots {
+	workBreaks DayWorkBreaks,
+) (FreeTimeSlots, error) {
 	allBusyPeriods := make([]entity.TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
 	copy(allBusyPeriods, busyPeriods)
 	for _, wb := range workBreaks {
@@ -16,8 +18,8 @@ func NewFreeTimeSlots(
 	}
 	return entity.TimePeriodApi.SortAndUnitePeriods(
 		entity.TimePeriodApi.SubtractPeriodsFromPeriods(
-			freePeriods,
+			dayTimePeriods.Periods,
 			allBusyPeriods,
 		),
-	)
+	), nil
 }

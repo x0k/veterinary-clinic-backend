@@ -88,25 +88,12 @@ func (periods ScheduleEntries) SortAndFlat() ScheduleEntries {
 }
 
 func newScheduleEntries(
-	freePeriods FreePeriods,
+	freeTimeSlots FreeTimeSlots,
 	busyPeriods BusyPeriods,
-	workBreaks WorkBreaks,
+	workBreaks DayWorkBreaks,
 ) ScheduleEntries {
-	allBusyPeriods := make([]entity.TimePeriod, len(busyPeriods), len(busyPeriods)+len(workBreaks))
-	copy(allBusyPeriods, busyPeriods)
-	for _, wb := range workBreaks {
-		allBusyPeriods = append(allBusyPeriods, wb.Period)
-	}
-
-	actualFreePeriods := entity.TimePeriodApi.SortAndUnitePeriods(
-		entity.TimePeriodApi.SubtractPeriodsFromPeriods(
-			freePeriods,
-			allBusyPeriods,
-		),
-	)
-
-	periods := make(ScheduleEntries, 0, len(actualFreePeriods)+len(allBusyPeriods))
-	for _, p := range actualFreePeriods {
+	periods := make(ScheduleEntries, 0, len(freeTimeSlots)+len(busyPeriods)+len(workBreaks))
+	for _, p := range freeTimeSlots {
 		periods = append(periods, ScheduleEntry{
 			TimePeriod: p,
 			Type:       FreePeriod,

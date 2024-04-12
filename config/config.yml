@@ -13,6 +13,8 @@ profiler:
   address: 0.0.0.0:6060
 
 appointment:
+  scheduling_service:
+    sample_rate_in_minutes: 30
   notion:
     # services_database_id:
     # records_database_id:

@@ -4,6 +4,7 @@ import (
 	"github.com/jomei/notionapi"
 	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/production_calendar"
 	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 )
 
 type NotionConfig struct {
@@ -24,8 +25,13 @@ type WebCalendarConfig struct {
 	HandlerUrlRoot web_calendar_adapters.HandlerUrlRoot `yaml:"handler_url_root" env:"APPOINTMENT_WEB_CALENDAR_HANDLER_URL_ROOT" env-required:"true"`
 }
 
+type SchedulingServiceConfig struct {
+	SampleRateInMinutes appointment.SampleRateInMinutes `yaml:"sample_rate_in_minutes" env:"APPOINTMENT_SCHEDULING_SERVICE_SAMPLE_RATE_IN_MINUTES" env-default:"30"`
+}
+
 type Config struct {
 	Notion             NotionConfig             `yaml:"notion"`
 	ProductionCalendar ProductionCalendarConfig `yaml:"production_calendar"`
 	WebCalendar        WebCalendarConfig        `yaml:"web_calendar"`
+	SchedulingService  SchedulingServiceConfig  `yaml:"scheduling_service"`
 }
