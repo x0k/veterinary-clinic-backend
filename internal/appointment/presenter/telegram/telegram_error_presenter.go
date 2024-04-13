@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	"gopkg.in/telebot.v3"
 )
@@ -60,6 +61,13 @@ func NewErrorCallbackPresenter() *ErrorCallbackPresenter {
 }
 
 func (p *ErrorCallbackPresenter) RenderError(err error) (telegram_adapters.CallbackResponse, error) {
+	if errors.Is(err, appointment.ErrInvalidAppointmentStatusForCancel) {
+		return telegram_adapters.CallbackResponse{
+			Response: &telebot.CallbackResponse{
+				Text: "Ваша запись не может быть отменена.",
+			},
+		}, nil
+	}
 	return telegram_adapters.CallbackResponse{
 		Response: &telebot.CallbackResponse{
 			Text: errorText,

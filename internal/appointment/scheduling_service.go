@@ -18,7 +18,7 @@ var ErrInvalidRecordId = errors.New("invalid record id")
 var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 var ErrAnotherAppointmentIsAlreadyScheduled = errors.New("another appointment is already scheduled")
-var ErrInvalidAppointmentStatus = errors.New("invalid appointment status")
+var ErrInvalidAppointmentStatusForCancel = errors.New("invalid appointment status")
 
 type SchedulingService struct {
 	log       *logger.Logger
@@ -254,7 +254,7 @@ func (s *SchedulingService) CancelAppointmentForCustomer(
 		return err
 	}
 	if app.Status() != RecordAwaits {
-		return fmt.Errorf("%w: %s", ErrInvalidAppointmentStatus, app.Status())
+		return fmt.Errorf("%w: %s", ErrInvalidAppointmentStatusForCancel, app.Status())
 	}
 	return s.appointmentRemover.RemoveAppointment(ctx, app.Id())
 }

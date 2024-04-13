@@ -34,18 +34,23 @@ func NewCancelAppointmentUseCase[R any](
 	}
 }
 
+// returns (canceled, response, error)
 func (s *CancelAppointmentUseCase[R]) CancelAppointment(
 	ctx context.Context,
 	customerIdentity appointment.CustomerIdentity,
-) (R, error) {
+) (bool, R, error) {
 	customer, err := s.customerLoader.Customer(ctx, customerIdentity)
 	if err != nil {
 		s.log.Error(ctx, "failed to load customer", sl.Err(err))
-		return s.errorPresenter.RenderError(err)
+		res, err := s.errorPresenter.RenderError(err)
+		return false, res, err
 	}
-	if err = s.schedulingService.CancelAppointmentForCustomer(ctx, customer); err != nil {
+	err = s.schedulingService.CancelAppointmentForCustomer(ctx, customer)
+	if err != nil {
 		s.log.Error(ctx, "failed to cancel appointment", sl.Err(err))
-		return s.errorPresenter.RenderError(err)
+		res, err := s.errorPresenter.RenderError(err)
+		return false, res, err
 	}
-	return s.appointmentCancelPresenter.RenderCancel()
+	res, err := s.appointmentCancelPresenter.RenderCancel()
+	return true, res, err
 }

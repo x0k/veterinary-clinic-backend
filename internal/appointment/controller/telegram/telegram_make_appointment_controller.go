@@ -135,14 +135,17 @@ func NewMakeAppointment(
 			customerId := appointment.NewTelegramCustomerIdentity(
 				shared.NewTelegramUserId(c.Sender().ID),
 			)
-			res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
+			isCanceled, res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
 			if err != nil {
 				return err
 			}
 			if err := c.Respond(res.Response); err != nil {
 				return err
 			}
-			return c.Delete()
+			if isCanceled {
+				return c.Delete()
+			}
+			return nil
 		})
 
 		return nil
