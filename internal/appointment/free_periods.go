@@ -1,5 +1,5 @@
 package appointment
 
-import "github.com/x0k/veterinary-clinic-backend/internal/entity"
+import "github.com/x0k/veterinary-clinic-backend/internal/shared"
 
-type FreePeriods []entity.TimePeriod
+type FreePeriods []shared.TimePeriod

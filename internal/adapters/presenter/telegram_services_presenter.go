@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -14,7 +14,7 @@ func NewTelegramServices() *TelegramServicesPresenter {
 	return &TelegramServicesPresenter{}
 }
 
-func (p *TelegramServicesPresenter) RenderServices(services []entity.Service) (adapters.TelegramTextResponse, error) {
+func (p *TelegramServicesPresenter) RenderServices(services []shared.Service) (adapters.TelegramTextResponse, error) {
 	sb := strings.Builder{}
 	sb.WriteString("Услуги: \n\n")
 	for _, service := range services {

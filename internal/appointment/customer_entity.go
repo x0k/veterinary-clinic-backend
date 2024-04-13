@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrUnknownCustomerIdentityType = errors.New("unknown customer identity type")
@@ -29,7 +29,7 @@ func NewCustomerIdentity(identity string) CustomerIdentity {
 	return CustomerIdentity(identity)
 }
 
-func NewTelegramCustomerIdentity(id entity.TelegramUserId) CustomerIdentity {
+func NewTelegramCustomerIdentity(id shared.TelegramUserId) CustomerIdentity {
 	return CustomerIdentity(fmt.Sprintf("%s-%d", TelegramIdentityType, id))
 }
 

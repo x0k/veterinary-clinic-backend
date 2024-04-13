@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 func FetchAndCalculateSchedule(
@@ -15,31 +15,31 @@ func FetchAndCalculateSchedule(
 	openingHoursRepo OpeningHoursLoader,
 	busyPeriodsRepo BusyPeriodsLoader,
 	workBreaksRepo WorkBreaksLoader,
-) (entity.Schedule, error) {
+) (shared.Schedule, error) {
 	productionCalendar, err := productionCalendarRepo.ProductionCalendar(ctx)
 	if err != nil {
-		return entity.Schedule{}, err
+		return shared.Schedule{}, err
 	}
-	date := entity.CalculateNextAvailableDay(productionCalendar, preferredDate)
+	date := shared.CalculateNextAvailableDay(productionCalendar, preferredDate)
 	openingHours, err := openingHoursRepo.OpeningHours(ctx)
 	if err != nil {
-		return entity.Schedule{}, err
+		return shared.Schedule{}, err
 	}
-	freePeriods, err := entity.CalculateFreePeriods(productionCalendar, openingHours, now, date)
+	freePeriods, err := shared.CalculateFreePeriods(productionCalendar, openingHours, now, date)
 	if err != nil {
-		return entity.Schedule{}, err
+		return shared.Schedule{}, err
 	}
 	busyPeriods, err := busyPeriodsRepo.BusyPeriods(ctx, date)
 	if err != nil {
-		return entity.Schedule{}, err
+		return shared.Schedule{}, err
 	}
 	allWorkBreaks, err := workBreaksRepo.WorkBreaks(ctx)
 	if err != nil {
-		return entity.Schedule{}, err
+		return shared.Schedule{}, err
 	}
-	workBreaks, err := entity.CalculateWorkBreaks(allWorkBreaks, date)
+	workBreaks, err := shared.CalculateWorkBreaks(allWorkBreaks, date)
 	if err != nil {
-		return entity.Schedule{}, err
+		return shared.Schedule{}, err
 	}
-	return entity.CalculateSchedule(productionCalendar, freePeriods, busyPeriods, workBreaks, now, date), nil
+	return shared.CalculateSchedule(productionCalendar, freePeriods, busyPeriods, workBreaks, now, date), nil
 }

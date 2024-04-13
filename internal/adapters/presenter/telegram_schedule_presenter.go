@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -25,7 +25,7 @@ func newTelegramSchedulePresenter(
 	}
 }
 
-func (p *telegramSchedulePresenter) scheduleButtons(schedule entity.Schedule) []telebot.InlineButton {
+func (p *telegramSchedulePresenter) scheduleButtons(schedule shared.Schedule) []telebot.InlineButton {
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if schedule.PrevDate != nil {
 		buttons = append(buttons, *adapters.PreviousScheduleBtn.With(schedule.PrevDate.Format(time.DateOnly)))
@@ -67,7 +67,7 @@ func NewTelegramScheduleTextPresenter(
 	}
 }
 
-func (p *TelegramScheduleTextPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramTextResponse, error) {
+func (p *TelegramScheduleTextPresenter) RenderSchedule(schedule shared.Schedule) (adapters.TelegramTextResponse, error) {
 	return adapters.TelegramTextResponse{
 		Text: RenderSchedule(schedule),
 		Options: &telebot.SendOptions{
@@ -97,7 +97,7 @@ func NewTelegramScheduleQueryPresenter(
 	}
 }
 
-func (p *TelegramScheduleQueryPresenter) RenderSchedule(schedule entity.Schedule) (adapters.TelegramQueryResponse, error) {
+func (p *TelegramScheduleQueryPresenter) RenderSchedule(schedule shared.Schedule) (adapters.TelegramQueryResponse, error) {
 	return adapters.TelegramQueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{

@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
-func RenderSchedule(schedule entity.Schedule) string {
+func RenderSchedule(schedule shared.Schedule) string {
 	sb := strings.Builder{}
 	sb.WriteString("График работы на ")
 	sb.WriteString(adapters.EscapeTelegramMarkdownString(

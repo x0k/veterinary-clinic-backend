@@ -8,10 +8,10 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
@@ -23,7 +23,7 @@ type NotionRecordsRepo struct {
 	recordsDatabaseId  notionapi.DatabaseID
 	servicesDatabaseId notionapi.DatabaseID
 	client             *notionapi.Client
-	servicesCache      *containers.Expiable[[]entity.Service]
+	servicesCache      *containers.Expiable[[]shared.Service]
 }
 
 func NewNotionRecords(
@@ -37,7 +37,7 @@ func NewNotionRecords(
 		client:             client,
 		recordsDatabaseId:  recordsDatabaseId,
 		servicesDatabaseId: servicesDatabaseId,
-		servicesCache:      containers.NewExpiable[[]entity.Service](time.Hour),
+		servicesCache:      containers.NewExpiable[[]shared.Service](time.Hour),
 	}
 }
 
@@ -46,7 +46,7 @@ func (s *NotionRecordsRepo) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entity.BusyPeriods, error) {
+func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (shared.BusyPeriods, error) {
 	after := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	afterDate := notionapi.Date(after)
 	beforeDate := notionapi.Date(after.AddDate(0, 0, 1))
@@ -82,14 +82,14 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 		s.log.Error(ctx, "failed to load busy periods", sl.Err(err))
 		return nil, ErrLoadingBusyPeriodsFailed
 	}
-	periods := make([]entity.TimePeriod, 0, len(r.Results))
+	periods := make([]shared.TimePeriod, 0, len(r.Results))
 	for _, page := range r.Results {
 		period, err := DateTimePeriod(page.Properties, RecordDateTimePeriod)
 		if err != nil {
 			s.log.Error(ctx, "failed to parse record period", sl.Err(err))
 			continue
 		}
-		periods = append(periods, entity.TimePeriod{
+		periods = append(periods, shared.TimePeriod{
 			Start: period.Start.Time,
 			End:   period.End.Time,
 		})
@@ -97,13 +97,13 @@ func (s *NotionRecordsRepo) BusyPeriods(ctx context.Context, t time.Time) (entit
 	return periods, nil
 }
 
-func (s *NotionRecordsRepo) Services(ctx context.Context) ([]entity.Service, error) {
-	return s.servicesCache.Load(func() ([]entity.Service, error) {
+func (s *NotionRecordsRepo) Services(ctx context.Context) ([]shared.Service, error) {
+	return s.servicesCache.Load(func() ([]shared.Service, error) {
 		r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
 		if err != nil {
 			return nil, err
 		}
-		services := make([]entity.Service, 0, len(r.Results))
+		services := make([]shared.Service, 0, len(r.Results))
 		for _, result := range r.Results {
 			services = append(services, Service(result))
 		}
@@ -111,23 +111,23 @@ func (s *NotionRecordsRepo) Services(ctx context.Context) ([]entity.Service, err
 	})
 }
 
-func (s *NotionRecordsRepo) Service(ctx context.Context, serviceId entity.ServiceId) (entity.Service, error) {
+func (s *NotionRecordsRepo) Service(ctx context.Context, serviceId shared.ServiceId) (shared.Service, error) {
 	r, err := s.client.Page.Get(ctx, notionapi.PageID(serviceId))
 	if err != nil {
-		return entity.Service{}, err
+		return shared.Service{}, err
 	}
 	if r == nil {
-		return entity.Service{}, usecase.ErrNotFound
+		return shared.Service{}, usecase.ErrNotFound
 	}
 	return Service(*r), nil
 }
 
 func (s *NotionRecordsRepo) Create(
 	ctx context.Context,
-	user entity.User,
-	service entity.Service,
+	user shared.User,
+	service shared.Service,
 	appointmentDateTime time.Time,
-) (entity.Record, error) {
+) (shared.Record, error) {
 	start := notionapi.Date(appointmentDateTime)
 	end := notionapi.Date(
 		appointmentDateTime.Add(time.Duration(service.DurationInMinutes) * time.Minute),
@@ -180,15 +180,15 @@ func (s *NotionRecordsRepo) Create(
 		Properties: properties,
 	})
 	if err != nil {
-		return entity.Record{}, err
+		return shared.Record{}, err
 	}
 	if res == nil {
-		return entity.Record{}, ErrFailedToCreateRecord
+		return shared.Record{}, ErrFailedToCreateRecord
 	}
 	return Record(*res, service)
 }
 
-func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId) error {
+func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId shared.RecordId) error {
 	_, err := s.client.Page.Update(ctx, notionapi.PageID(recordId), &notionapi.PageUpdateRequest{
 		Properties: notionapi.Properties{},
 		Archived:   true,
@@ -196,7 +196,7 @@ func (s *NotionRecordsRepo) Remove(ctx context.Context, recordId entity.RecordId
 	return err
 }
 
-func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.UserId) (entity.Record, error) {
+func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId shared.UserId) (shared.Record, error) {
 	res, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.AndCompoundFilter{
 			notionapi.OrCompoundFilter{
@@ -228,24 +228,24 @@ func (s *NotionRecordsRepo) RecordByUserId(ctx context.Context, userId entity.Us
 		},
 	})
 	if err != nil {
-		return entity.Record{}, err
+		return shared.Record{}, err
 	}
 	if len(res.Results) == 0 {
-		return entity.Record{}, usecase.ErrNotFound
+		return shared.Record{}, usecase.ErrNotFound
 	}
 	page := res.Results[0]
 	relations := Relations(page.Properties, RecordService)
 	if len(relations) == 0 {
-		return entity.Record{}, adapters.ErrInvalidRecord
+		return shared.Record{}, adapters.ErrInvalidRecord
 	}
-	service, err := s.Service(ctx, entity.ServiceId((relations[0].ID)))
+	service, err := s.Service(ctx, shared.ServiceId((relations[0].ID)))
 	if err != nil {
-		return entity.Record{}, err
+		return shared.Record{}, err
 	}
 	return Record(page, service)
 }
 
-func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time) ([]entity.Record, error) {
+func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time) ([]shared.Record, error) {
 	after := notionapi.Date(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()))
 	res, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.AndCompoundFilter{
@@ -293,11 +293,11 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 	if err != nil {
 		return nil, err
 	}
-	servicesMap := make(map[entity.ServiceId]entity.Service, len(services))
+	servicesMap := make(map[shared.ServiceId]shared.Service, len(services))
 	for _, service := range services {
 		servicesMap[service.Id] = service
 	}
-	records := make([]entity.Record, 0, len(res.Results))
+	records := make([]shared.Record, 0, len(res.Results))
 	errs := make([]error, 0, len(res.Results))
 	for _, page := range res.Results {
 		relations := Relations(page.Properties, RecordService)
@@ -305,7 +305,7 @@ func (s *NotionRecordsRepo) LoadActualRecords(ctx context.Context, now time.Time
 			errs = append(errs, adapters.ErrInvalidRecord)
 			continue
 		}
-		service, ok := servicesMap[entity.ServiceId(relations[0].ID)]
+		service, ok := servicesMap[shared.ServiceId(relations[0].ID)]
 		if !ok {
 			errs = append(errs, adapters.ErrInvalidRecord)
 			continue
@@ -356,7 +356,7 @@ func (r *NotionRecordsRepo) ArchiveRecords(ctx context.Context) error {
 			continue
 		}
 		newState := RecordDoneArchived
-		if status == entity.RecordNotAppear {
+		if status == shared.RecordNotAppear {
 			newState = RecordNotAppearArchived
 		}
 		if _, err = r.client.Page.Update(ctx, notionapi.PageID(page.ID), &notionapi.PageUpdateRequest{

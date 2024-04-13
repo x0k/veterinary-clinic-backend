@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -22,7 +22,7 @@ func NewTelegramConfirmationPresenter(
 }
 
 func (p *TelegramConfirmationPresenter) RenderConfirmation(
-	service entity.Service,
+	service shared.Service,
 	appointmentDateTime time.Time,
 ) (adapters.TelegramTextResponse, error) {
 	sb := strings.Builder{}

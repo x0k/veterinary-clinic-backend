@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 type appointmentConfirmationPresenter[R any] interface {
-	RenderConfirmation(service entity.Service, appointmentDateTime time.Time) (R, error)
+	RenderConfirmation(service shared.Service, appointmentDateTime time.Time) (R, error)
 }
 
 type AppointmentConfirmationUseCase[R any] struct {
@@ -29,7 +29,7 @@ func NewAppointmentConfirmationUseCase[R any](
 
 func (u *AppointmentConfirmationUseCase[R]) Confirmation(
 	ctx context.Context,
-	serviceId entity.ServiceId,
+	serviceId shared.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
 	service, err := u.servicesRepo.Service(ctx, serviceId)

@@ -5,12 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 type appointmentInfoPresenter[R any] interface {
-	RenderInfo(appointment entity.Record) (R, error)
+	RenderInfo(appointment shared.Record) (R, error)
 }
 
 type makeAppointmentRecordsRepo interface {
@@ -38,8 +38,8 @@ func NewMakeAppointmentUseCase[R any](
 
 func (u *MakeAppointmentUseCase[R]) Make(
 	ctx context.Context,
-	user entity.User,
-	serviceId entity.ServiceId,
+	user shared.User,
+	serviceId shared.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
 	if rec, err := u.recordsRepo.RecordByUserId(ctx, user.Id); !errors.Is(err, usecase.ErrNotFound) {

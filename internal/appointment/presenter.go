@@ -3,7 +3,7 @@ package appointment
 import (
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type ServicesPresenter[R any] interface {
@@ -19,7 +19,7 @@ type ErrorPresenter[R any] interface {
 }
 
 type RegistrationPresenter[R any] interface {
-	RenderRegistration(telegramUserId entity.TelegramUserId) (R, error)
+	RenderRegistration(telegramUserId shared.TelegramUserId) (R, error)
 }
 
 type SuccessRegistrationPresenter[R any] interface {

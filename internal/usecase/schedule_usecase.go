@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type schedulePresenter[R any] interface {
-	RenderSchedule(schedule entity.Schedule) (R, error)
+	RenderSchedule(schedule shared.Schedule) (R, error)
 }
 
 type ScheduleUseCase[R any] struct {

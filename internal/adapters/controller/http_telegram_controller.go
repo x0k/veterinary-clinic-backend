@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/httpx"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase/make_appointment"
 )
@@ -17,7 +17,7 @@ import (
 func UseHttpTelegramRouter(
 	mux *http.ServeMux,
 	log *logger.Logger,
-	query chan<- entity.DialogMessage[adapters.TelegramQueryResponse],
+	query chan<- shared.DialogMessage[adapters.TelegramQueryResponse],
 	calendarWebAppOrigin adapters.CalendarWebAppOrigin,
 	telegramInitDataParser TelegramInitDataParser,
 	schedule *usecase.ScheduleUseCase[adapters.TelegramQueryResponse],
@@ -75,8 +75,8 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		query <- entity.DialogMessage[adapters.TelegramQueryResponse]{
-			DialogId: entity.DialogId(data.QueryID),
+		query <- shared.DialogMessage[adapters.TelegramQueryResponse]{
+			DialogId: shared.DialogId(data.QueryID),
 			Message:  schedule,
 		}
 		w.WriteHeader(http.StatusOK)
@@ -122,7 +122,7 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
-		datePicker, err := makeAppointmentDatePicker.DatePicker(r.Context(), entity.ServiceId(res.State), time.Now(), selectedDate)
+		datePicker, err := makeAppointmentDatePicker.DatePicker(r.Context(), shared.ServiceId(res.State), time.Now(), selectedDate)
 		if err != nil {
 			log.Error(
 				r.Context(),
@@ -132,8 +132,8 @@ func UseHttpTelegramRouter(
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		query <- entity.DialogMessage[adapters.TelegramQueryResponse]{
-			DialogId: entity.DialogId(data.QueryID),
+		query <- shared.DialogMessage[adapters.TelegramQueryResponse]{
+			DialogId: shared.DialogId(data.QueryID),
 			Message:  datePicker,
 		}
 		w.WriteHeader(http.StatusOK)

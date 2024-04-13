@@ -3,7 +3,7 @@ package appointment
 import (
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type Schedule struct {
@@ -24,11 +24,11 @@ func NewSchedule(
 	next := productionCalendar.DayOrNextWorkingDay(scheduleDate.AddDate(0, 0, 1))
 	prev := productionCalendar.DayOrPrevWorkingDay(scheduleDate.AddDate(0, 0, -1))
 	entries := newScheduleEntries(
-		entity.GoTimeToDate(scheduleDate),
+		shared.GoTimeToDate(scheduleDate),
 		freeTimeSlots,
 		busyPeriods,
 		dayWorkBreaks,
-	).OmitPast(entity.GoTimeToDateTime(now))
+	).OmitPast(shared.GoTimeToDateTime(now))
 	return Schedule{
 		Date:     scheduleDate,
 		Entries:  entries,

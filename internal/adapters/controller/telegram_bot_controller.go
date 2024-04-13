@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase/make_appointment"
 	"gopkg.in/telebot.v3"
@@ -23,7 +23,7 @@ func UseTelegramBotRouter(
 	services *usecase.ServicesUseCase[adapters.TelegramTextResponse],
 	schedule *usecase.ScheduleUseCase[adapters.TelegramTextResponse],
 	makeAppointmentServicePicker *make_appointment.ServicePickerUseCase[adapters.TelegramTextResponse],
-	serviceIdLoader adapters.StateLoader[entity.ServiceId],
+	serviceIdLoader adapters.StateLoader[shared.ServiceId],
 	makeAppointmentDatePicker *make_appointment.DatePickerUseCase[adapters.TelegramTextResponse],
 	datePickerStateLoader adapters.StateLoader[adapters.TelegramDatePickerState],
 	makeAppointmentTimePicker *make_appointment.TimeSlotPickerUseCase[adapters.TelegramTextResponse],
@@ -75,7 +75,7 @@ func UseTelegramBotRouter(
 	makeAppointmentServicePickerHandler := func(c telebot.Context) error {
 		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(
 			ctx,
-			entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID)),
+			shared.TelegramUserIdToUserId(shared.TelegramUserId(c.Sender().ID)),
 		)
 		if err != nil {
 			return err
@@ -128,7 +128,7 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.CancelMakeAppointmentDateBtn, func(c telebot.Context) error {
 		servicePicker, err := makeAppointmentServicePicker.ServicesPicker(
 			ctx,
-			entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID)),
+			shared.TelegramUserIdToUserId(shared.TelegramUserId(c.Sender().ID)),
 		)
 		if err != nil {
 			return err
@@ -185,11 +185,11 @@ func UseTelegramBotRouter(
 		}
 		res, err := makeAppointment.Make(
 			ctx,
-			entity.NewTelegramUser(
-				entity.TelegramUserId(c.Sender().ID),
-				entity.TelegramUsername(c.Sender().Username),
-				entity.TelegramFirstName(c.Sender().FirstName),
-				entity.TelegramLastName(c.Sender().LastName),
+			shared.NewTelegramUser(
+				shared.TelegramUserId(c.Sender().ID),
+				shared.TelegramUsername(c.Sender().Username),
+				shared.TelegramFirstName(c.Sender().FirstName),
+				shared.TelegramLastName(c.Sender().LastName),
 			),
 			state.ServiceId,
 			state.Date,
@@ -203,7 +203,7 @@ func UseTelegramBotRouter(
 	bot.Handle(adapters.CancelConfirmationAppointmentBtn, makeAppointmentTimePickerHandler)
 
 	bot.Handle(adapters.CancelAppointmentBtn, func(c telebot.Context) error {
-		userId := entity.TelegramUserIdToUserId(entity.TelegramUserId(c.Sender().ID))
+		userId := shared.TelegramUserIdToUserId(shared.TelegramUserId(c.Sender().ID))
 		res, err := cancelAppointment.Cancel(ctx, userId)
 		if err != nil {
 			return err

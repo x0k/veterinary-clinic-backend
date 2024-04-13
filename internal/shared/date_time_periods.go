@@ -1,4 +1,4 @@
-package entity
+package shared
 
 import "github.com/x0k/veterinary-clinic-backend/internal/lib/period"
 

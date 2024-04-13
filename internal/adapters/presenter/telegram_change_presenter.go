@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -14,15 +14,15 @@ func NewTelegramChangePresenter() *TelegramChangePresenter {
 	return &TelegramChangePresenter{}
 }
 
-func (p *TelegramChangePresenter) RenderChange(change entity.RecordChange) (adapters.TelegramTextResponse, error) {
+func (p *TelegramChangePresenter) RenderChange(change shared.RecordChange) (adapters.TelegramTextResponse, error) {
 	switch change.Type {
-	case entity.RecordCreated:
+	case shared.RecordCreated:
 		return adapters.TelegramTextResponse{
 			Text: fmt.Sprintf(
 				"Новая запись: %s, %s",
 				adapters.EscapeTelegramMarkdownString(change.Record.Service.Title),
 				adapters.EscapeTelegramMarkdownString(
-					entity.DateTimeToGoTime(change.Record.DateTimePeriod.Start).
+					shared.DateTimeToGoTime(change.Record.DateTimePeriod.Start).
 						Format("02.01.06 15:04"),
 				),
 			),
@@ -30,8 +30,8 @@ func (p *TelegramChangePresenter) RenderChange(change entity.RecordChange) (adap
 				ParseMode: telebot.ModeMarkdownV2,
 			},
 		}, nil
-	case entity.RecordStatusChanged:
-		statusName, err := entity.RecordStatusName(change.Record.Status)
+	case shared.RecordStatusChanged:
+		statusName, err := shared.RecordStatusName(change.Record.Status)
 		if err != nil {
 			return adapters.TelegramTextResponse{}, err
 		}
@@ -41,12 +41,12 @@ func (p *TelegramChangePresenter) RenderChange(change entity.RecordChange) (adap
 				ParseMode: telebot.ModeMarkdownV2,
 			},
 		}, nil
-	case entity.RecordDateTimeChanged:
+	case shared.RecordDateTimeChanged:
 		return adapters.TelegramTextResponse{
 			Text: fmt.Sprintf(
 				"Время записи изменено: %s",
 				adapters.EscapeTelegramMarkdownString(
-					entity.DateTimeToGoTime(change.Record.DateTimePeriod.Start).
+					shared.DateTimeToGoTime(change.Record.DateTimePeriod.Start).
 						Format("02.01.06 15:04"),
 				),
 			),
@@ -54,7 +54,7 @@ func (p *TelegramChangePresenter) RenderChange(change entity.RecordChange) (adap
 				ParseMode: telebot.ModeMarkdownV2,
 			},
 		}, nil
-	case entity.RecordRemoved:
+	case shared.RecordRemoved:
 		return adapters.TelegramTextResponse{
 			Text: fmt.Sprintf(
 				"Запись удалена: %s, %s",
@@ -62,7 +62,7 @@ func (p *TelegramChangePresenter) RenderChange(change entity.RecordChange) (adap
 					change.Record.Service.Title,
 				),
 				adapters.EscapeTelegramMarkdownString(
-					entity.DateTimeToGoTime(change.Record.DateTimePeriod.Start).
+					shared.DateTimeToGoTime(change.Record.DateTimePeriod.Start).
 						Format("02.01.06 15:04"),
 				),
 			),

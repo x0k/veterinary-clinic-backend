@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -15,7 +15,7 @@ func StartTelegramBotQueryHandler(
 	ctx context.Context,
 	log *logger.Logger,
 	bot *telebot.Bot,
-	query <-chan entity.DialogMessage[adapters.TelegramQueryResponse],
+	query <-chan shared.DialogMessage[adapters.TelegramQueryResponse],
 ) {
 	l := log.With(slog.String("component", "adapters.controller.RunTelegramBotQueryHandler"))
 	for {

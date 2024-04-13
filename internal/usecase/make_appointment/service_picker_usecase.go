@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 type servicePickerPresenter[R any] interface {
-	RenderServicesList(services []entity.Service) (R, error)
+	RenderServicesList(services []shared.Service) (R, error)
 }
 
 type ServicePickerUseCase[R any] struct {
@@ -33,7 +33,7 @@ func NewServicePickerUseCase[R any](
 	}
 }
 
-func (u *ServicePickerUseCase[R]) ServicesPicker(ctx context.Context, userId entity.UserId) (R, error) {
+func (u *ServicePickerUseCase[R]) ServicesPicker(ctx context.Context, userId shared.UserId) (R, error) {
 	if record, err := u.recordsRepo.RecordByUserId(ctx, userId); !errors.Is(err, usecase.ErrNotFound) {
 		if err != nil {
 			return *new(R), err

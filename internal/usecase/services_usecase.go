@@ -3,11 +3,11 @@ package usecase
 import (
 	"context"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type servicesPresenter[R any] interface {
-	RenderServices(services []entity.Service) (R, error)
+	RenderServices(services []shared.Service) (R, error)
 }
 
 type ServicesUseCase[R any] struct {

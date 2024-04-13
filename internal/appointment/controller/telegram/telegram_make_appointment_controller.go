@@ -10,7 +10,7 @@ import (
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -63,7 +63,7 @@ func NewMakeAppointment(
 		bot.Handle(appointment_telegram_adapters.CancelMakeAppointmentDateBtn, func(c telebot.Context) error {
 			res, err := startMakeAppointmentDialogUseCase.StartMakeAppointmentDialog(
 				ctx,
-				entity.NewTelegramUserId(c.Sender().ID),
+				shared.NewTelegramUserId(c.Sender().ID),
 			)
 			if err != nil {
 				return err
@@ -119,7 +119,7 @@ func NewMakeAppointment(
 				time.Now(),
 				state.Date,
 				appointment.NewTelegramCustomerIdentity(
-					entity.NewTelegramUserId(c.Sender().ID),
+					shared.NewTelegramUserId(c.Sender().ID),
 				),
 				state.ServiceId,
 			)
@@ -133,7 +133,7 @@ func NewMakeAppointment(
 
 		bot.Handle(appointment_telegram_adapters.CancelAppointmentBtn, func(c telebot.Context) error {
 			customerId := appointment.NewTelegramCustomerIdentity(
-				entity.NewTelegramUserId(c.Sender().ID),
+				shared.NewTelegramUserId(c.Sender().ID),
 			)
 			res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
 			if err != nil {

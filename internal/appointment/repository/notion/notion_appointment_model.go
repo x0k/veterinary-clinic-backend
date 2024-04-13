@@ -8,8 +8,8 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrUnknownRecordStatus = errors.New("unknown record status")
@@ -56,7 +56,7 @@ func NotionToService(page notionapi.Page) appointment.ServiceEntity {
 	return appointment.NewService(
 		appointment.NewServiceId(string(page.ID)),
 		notion.Title(page.Properties, ServiceTitle),
-		entity.DurationInMinutes(
+		shared.DurationInMinutes(
 			notion.Number(page.Properties, ServiceDurationInMinutes),
 		),
 		notion.Text(page.Properties, ServiceDescription),
@@ -120,9 +120,9 @@ func NotionToRecord(page notionapi.Page) (appointment.RecordEntity, error) {
 		appointment.NewRecordId(string(page.ID)),
 		status,
 		isArchived,
-		entity.DateTimePeriod{
-			Start: entity.GoTimeToDateTime(period.Start),
-			End:   entity.GoTimeToDateTime(period.End),
+		shared.DateTimePeriod{
+			Start: shared.GoTimeToDateTime(period.Start),
+			End:   shared.GoTimeToDateTime(period.End),
 		},
 		appointment.NewCustomerId(
 			notion.Relations(page.Properties, RecordCustomer)[0].ID.String(),
@@ -164,9 +164,9 @@ func NotionToWorkBreak(page notionapi.Page) (appointment.WorkBreak, error) {
 		appointment.NewWorkBreakId(string(page.ID)),
 		notion.Title(page.Properties, BreakTitle),
 		sb.String(),
-		entity.TimePeriod{
-			Start: entity.GoTimeToTime(period.Start),
-			End:   entity.GoTimeToTime(period.End),
+		shared.TimePeriod{
+			Start: shared.GoTimeToTime(period.Start),
+			End:   shared.GoTimeToTime(period.End),
 		},
 	), nil
 }

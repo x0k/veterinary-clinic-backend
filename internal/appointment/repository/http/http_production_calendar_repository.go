@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/production_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )

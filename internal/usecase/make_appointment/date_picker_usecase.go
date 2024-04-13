@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 type datePickerPresenter[R any] interface {
-	RenderDatePicker(serviceId entity.ServiceId, schedule entity.Schedule) (R, error)
+	RenderDatePicker(serviceId shared.ServiceId, schedule shared.Schedule) (R, error)
 }
 
 type DatePickerUseCase[R any] struct {
@@ -38,7 +38,7 @@ func NewDatePickerUseCase[R any](
 
 func (u *DatePickerUseCase[R]) DatePicker(
 	ctx context.Context,
-	serviceId entity.ServiceId,
+	serviceId shared.ServiceId,
 	now time.Time,
 	preferredDate time.Time,
 ) (R, error) {

@@ -3,7 +3,7 @@ package appointment
 import (
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type PrevAvailableDayCalculator struct {
@@ -26,7 +26,7 @@ func (c *PrevAvailableDayCalculator) Calculate(
 ) *time.Time {
 	prevDay := fromDate
 	for prevDay.Sub(c.nowDate) >= 0 {
-		prevDayJson := entity.GoTimeToJsonDate(prevDay)
+		prevDayJson := shared.GoTimeToJsonDate(prevDay)
 		if dayType, ok := c.productionCalendar[prevDayJson]; !ok || !IsNonWorkingDayType(dayType) {
 			return &prevDay
 		}

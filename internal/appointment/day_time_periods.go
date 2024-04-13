@@ -4,20 +4,20 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrUnknownDayType = errors.New("unknown day type")
 
 // TODO: Convert to a domain object
 type DayTimePeriods struct {
-	Date    entity.Date
-	Periods []entity.TimePeriod
+	Date    shared.Date
+	Periods []shared.TimePeriod
 }
 
 func NewDayTimePeriods(
-	date entity.Date,
-	periods []entity.TimePeriod,
+	date shared.Date,
+	periods []shared.TimePeriod,
 ) DayTimePeriods {
 	return DayTimePeriods{
 		Date:    date,
@@ -25,37 +25,37 @@ func NewDayTimePeriods(
 	}
 }
 
-func (data DayTimePeriods) OmitPast(now entity.DateTime) DayTimePeriods {
-	compareResult := entity.CompareDate(data.Date, now.Date)
+func (data DayTimePeriods) OmitPast(now shared.DateTime) DayTimePeriods {
+	compareResult := shared.CompareDate(data.Date, now.Date)
 	if compareResult < 0 {
 		return NewDayTimePeriods(
 			data.Date,
-			[]entity.TimePeriod{},
+			[]shared.TimePeriod{},
 		)
 	}
 	if compareResult > 0 {
 		return data
 	}
-	period := entity.TimePeriod{
-		Start: entity.Time{
+	period := shared.TimePeriod{
+		Start: shared.Time{
 			Hours:   0,
 			Minutes: 0,
 		},
 		End: now.Time,
 	}
-	periods := make([]entity.TimePeriod, 0, len(data.Periods))
+	periods := make([]shared.TimePeriod, 0, len(data.Periods))
 	for _, p := range data.Periods {
-		periods = append(periods, entity.TimePeriodApi.SubtractPeriods(p, period)...)
+		periods = append(periods, shared.TimePeriodApi.SubtractPeriods(p, period)...)
 	}
 	return NewDayTimePeriods(
 		data.Date,
-		entity.TimePeriodApi.SortAndUnitePeriods(periods),
+		shared.TimePeriodApi.SortAndUnitePeriods(periods),
 	)
 }
 
 func (data DayTimePeriods) ConsiderProductionCalendar(cal ProductionCalendar) (DayTimePeriods, error) {
-	dayType, ok := cal[entity.GoTimeToJsonDate(
-		entity.DateToGoTime(data.Date),
+	dayType, ok := cal[shared.GoTimeToJsonDate(
+		shared.DateToGoTime(data.Date),
 	)]
 	if !ok {
 		return data, nil
@@ -64,32 +64,32 @@ func (data DayTimePeriods) ConsiderProductionCalendar(cal ProductionCalendar) (D
 	case Weekend:
 		return NewDayTimePeriods(
 			data.Date,
-			[]entity.TimePeriod{},
+			[]shared.TimePeriod{},
 		), nil
 	case Holiday:
 		return NewDayTimePeriods(
 			data.Date,
-			[]entity.TimePeriod{},
+			[]shared.TimePeriod{},
 		), nil
 	case PreHoliday:
 		if len(data.Periods) < 1 {
 			return data, nil
 		}
-		periods := entity.TimePeriodApi.SortAndUnitePeriods(data.Periods)
-		minutesToReduce := entity.DurationInMinutes(-60)
+		periods := shared.TimePeriodApi.SortAndUnitePeriods(data.Periods)
+		minutesToReduce := shared.DurationInMinutes(-60)
 		i := len(periods)
-		var reducedLastPeriod entity.TimePeriod
+		var reducedLastPeriod shared.TimePeriod
 		for minutesToReduce < 0 && i > 0 {
 			i--
 			lastPeriod := periods[i]
-			shift := entity.MakeTimeShifter(entity.Time{
+			shift := shared.MakeTimeShifter(shared.Time{
 				Minutes: int(minutesToReduce),
 			})
-			reducedLastPeriod = entity.TimePeriod{
+			reducedLastPeriod = shared.TimePeriod{
 				Start: lastPeriod.Start,
 				End:   shift(lastPeriod.End),
 			}
-			minutesToReduce = entity.TimePeriodDurationInMinutes(reducedLastPeriod)
+			minutesToReduce = shared.TimePeriodDurationInMinutes(reducedLastPeriod)
 		}
 		if minutesToReduce < 0 {
 			return NewDayTimePeriods(

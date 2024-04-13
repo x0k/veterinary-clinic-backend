@@ -7,8 +7,8 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const customerRepositoryName = "appointment_notion_repository.CustomerRepository"
@@ -42,18 +42,18 @@ func (r *CustomerRepository) Customer(ctx context.Context, identity appointment.
 		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, err)
 	}
 	if res == nil || len(res.Results) == 0 {
-		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, entity.ErrNotFound)
+		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
 	}
 	return NotionToCustomer(res.Results[0]), nil
 }
 
 func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appointment.CustomerEntity) error {
 	const op = customerRepositoryName + ".CreateCustomer"
-	if _, err := r.Customer(ctx, customer.Identity); !errors.Is(err, entity.ErrNotFound) {
+	if _, err := r.Customer(ctx, customer.Identity); !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}
-		return fmt.Errorf("%s: %w", op, entity.ErrAlreadyExists)
+		return fmt.Errorf("%s: %w", op, shared.ErrAlreadyExists)
 	}
 	properties := notionapi.Properties{
 		CustomerTitle: &notionapi.TitleProperty{

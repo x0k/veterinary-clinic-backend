@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrInvalidStatusForArchivedRecord = errors.New("invalid status for archived record")
@@ -37,7 +37,7 @@ type RecordEntity struct {
 	Id             RecordId
 	Status         RecordStatus
 	IsArchived     bool
-	DateTimePeriod entity.DateTimePeriod
+	DateTimePeriod shared.DateTimePeriod
 	CustomerId     CustomerId
 	ServiceId      ServiceId
 	CreatedAt      time.Time
@@ -47,7 +47,7 @@ func NewRecord(
 	id RecordId,
 	status RecordStatus,
 	isArchived bool,
-	dateTimePeriod entity.DateTimePeriod,
+	dateTimePeriod shared.DateTimePeriod,
 	customerId CustomerId,
 	serviceId ServiceId,
 	createdAt time.Time,
@@ -55,7 +55,7 @@ func NewRecord(
 	if status == RecordAwaits && isArchived {
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidStatusForArchivedRecord, status)
 	}
-	if !entity.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
+	if !shared.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
 	}
 	return RecordEntity{
@@ -100,8 +100,8 @@ func (r *RecordEntity) SetStatus(status RecordStatus) error {
 	return nil
 }
 
-func (r *RecordEntity) SetDateTimePeriod(dateTimePeriod entity.DateTimePeriod) error {
-	if !entity.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
+func (r *RecordEntity) SetDateTimePeriod(dateTimePeriod shared.DateTimePeriod) error {
+	if !shared.DateTimePeriodApi.IsValidPeriod(dateTimePeriod) {
 		return fmt.Errorf("%w: %s", ErrInvalidDateTimePeriod, dateTimePeriod)
 	}
 	r.DateTimePeriod = dateTimePeriod

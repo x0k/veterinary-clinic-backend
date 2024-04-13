@@ -7,10 +7,10 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const workBreaksRepositoryName = "appointment_notion_repository.WorkBreaksRepository"
@@ -20,12 +20,12 @@ var staticWorkBreaks = appointment.WorkBreaks{
 		Id:              "lunch",
 		MatchExpression: `^[1-5]`,
 		Title:           "Перерыв на обед",
-		Period: entity.TimePeriod{
-			Start: entity.Time{
+		Period: shared.TimePeriod{
+			Start: shared.Time{
 				Hours:   12,
 				Minutes: 30,
 			},
-			End: entity.Time{
+			End: shared.Time{
 				Hours:   13,
 				Minutes: 30,
 			},

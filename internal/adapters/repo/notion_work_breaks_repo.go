@@ -10,9 +10,10 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
-var staticWorkBreaks = entity.WorkBreaks{
+var staticWorkBreaks = shared.WorkBreaks{
 	{
 		Id:              "lunch",
 		MatchExpression: `^[1-5]`,
@@ -34,7 +35,7 @@ type NotionWorkBreaks struct {
 	log              *logger.Logger
 	breaksDatabaseId notionapi.DatabaseID
 	client           *notionapi.Client
-	breaksCache      *containers.Expiable[entity.WorkBreaks]
+	breaksCache      *containers.Expiable[shared.WorkBreaks]
 }
 
 func NewNotionWorkBreaks(
@@ -46,7 +47,7 @@ func NewNotionWorkBreaks(
 		log:              log.With(slog.String("component", "adapters.repo.NotionBreaksRepo")),
 		client:           client,
 		breaksDatabaseId: breaksDatabaseId,
-		breaksCache:      containers.NewExpiable[entity.WorkBreaks](time.Hour),
+		breaksCache:      containers.NewExpiable[shared.WorkBreaks](time.Hour),
 	}
 }
 
@@ -55,13 +56,13 @@ func (s *NotionWorkBreaks) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *NotionWorkBreaks) WorkBreaks(ctx context.Context) (entity.WorkBreaks, error) {
-	return s.breaksCache.Load(func() (entity.WorkBreaks, error) {
+func (s *NotionWorkBreaks) WorkBreaks(ctx context.Context) (shared.WorkBreaks, error) {
+	return s.breaksCache.Load(func() (shared.WorkBreaks, error) {
 		r, err := s.client.Database.Query(ctx, s.breaksDatabaseId, nil)
 		if err != nil {
 			return nil, err
 		}
-		workBreaks := make(entity.WorkBreaks, len(staticWorkBreaks), len(staticWorkBreaks)+len(r.Results))
+		workBreaks := make(shared.WorkBreaks, len(staticWorkBreaks), len(staticWorkBreaks)+len(r.Results))
 		copy(workBreaks, staticWorkBreaks)
 		for _, result := range r.Results {
 			workBreak, err := WorkBreak(result)

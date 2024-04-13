@@ -6,9 +6,9 @@ import (
 	"log/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const startMakeAppointmentDialogUseCaseName = "appointment_telegram_use_case.StartMakeAppointmentDialogUseCase"
@@ -48,11 +48,11 @@ func NewStartMakeAppointmentDialogUseCase[R any](
 
 func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	ctx context.Context,
-	userId entity.TelegramUserId,
+	userId shared.TelegramUserId,
 ) (R, error) {
 	customerIdentity := appointment.NewTelegramCustomerIdentity(userId)
 	customer, err := u.customerLoader.Customer(ctx, customerIdentity)
-	if errors.Is(err, entity.ErrNotFound) {
+	if errors.Is(err, shared.ErrNotFound) {
 		return u.registrationPresenter.RenderRegistration(userId)
 	}
 	if err != nil {
@@ -60,7 +60,7 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 		return u.errorPresenter.RenderError(err)
 	}
 	existedAppointment, err := u.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
-	if !errors.Is(err, entity.ErrNotFound) {
+	if !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
 			u.log.Error(ctx, "failed to find customer active appointment", sl.Err(err))
 			return u.errorPresenter.RenderError(err)

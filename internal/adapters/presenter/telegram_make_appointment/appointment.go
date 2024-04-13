@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 func WriteAppointment(
 	w *strings.Builder,
-	service entity.Service,
+	service shared.Service,
 	appointmentDateTime time.Time,
 ) {
 	w.WriteString(adapters.EscapeTelegramMarkdownString(service.Title))

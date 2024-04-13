@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrFailedToCompileMatchExpression = errors.New("failed to compile match expression")
@@ -21,14 +21,14 @@ type WorkBreak struct {
 	Id              WorkBreakId
 	Title           string
 	MatchExpression string
-	Period          entity.TimePeriod
+	Period          shared.TimePeriod
 }
 
 func NewWorkBreak(
 	id WorkBreakId,
 	title string,
 	matchExpression string,
-	period entity.TimePeriod,
+	period shared.TimePeriod,
 ) WorkBreak {
 	return WorkBreak{
 		Id:              id,

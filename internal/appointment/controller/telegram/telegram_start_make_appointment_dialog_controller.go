@@ -8,13 +8,13 @@ import (
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
 func NewStartMakeAppointmentDialog(
 	bot *telebot.Bot,
-	tgUserIdLoader adapters.StatePopper[entity.TelegramUserId],
+	tgUserIdLoader adapters.StatePopper[shared.TelegramUserId],
 	startMakeAppointmentDialogUseCase *appointment_telegram_use_case.StartMakeAppointmentDialogUseCase[telegram_adapters.TextResponses],
 	registerCustomerUseCase *appointment_telegram_use_case.RegisterCustomerUseCase[telegram_adapters.TextResponses],
 	errorSender appointment_telegram_adapters.ErrorSender,
@@ -23,7 +23,7 @@ func NewStartMakeAppointmentDialog(
 		startMakeAppointmentHandler := func(c telebot.Context) error {
 			res, err := startMakeAppointmentDialogUseCase.StartMakeAppointmentDialog(
 				ctx,
-				entity.NewTelegramUserId(c.Sender().ID),
+				shared.NewTelegramUserId(c.Sender().ID),
 			)
 			if err != nil {
 				return err

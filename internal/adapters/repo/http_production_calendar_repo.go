@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type HttpProductionCalendarRepo struct {
@@ -20,7 +20,7 @@ type HttpProductionCalendarRepo struct {
 	calendarUrl        adapters.ProductionCalendarUrl
 	client             *http.Client
 	mu                 sync.RWMutex
-	productionCalendar entity.ProductionCalendar
+	productionCalendar shared.ProductionCalendar
 }
 
 func NewHttpProductionCalendar(
@@ -32,7 +32,7 @@ func NewHttpProductionCalendar(
 		log:                log.With(slog.String("component", "adapters.repo.FreePeriodsRepo")),
 		calendarUrl:        calendarUrl,
 		client:             client,
-		productionCalendar: entity.ProductionCalendar{},
+		productionCalendar: shared.ProductionCalendar{},
 	}
 }
 
@@ -50,13 +50,13 @@ func (s *HttpProductionCalendarRepo) Start(ctx context.Context) error {
 	}
 }
 
-func (s *HttpProductionCalendarRepo) ProductionCalendar(ctx context.Context) (entity.ProductionCalendar, error) {
+func (s *HttpProductionCalendarRepo) ProductionCalendar(ctx context.Context) (shared.ProductionCalendar, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return maps.Clone(s.productionCalendar), nil
 }
 
-func (s *HttpProductionCalendarRepo) updateProductionCalendar(calendar entity.ProductionCalendar) {
+func (s *HttpProductionCalendarRepo) updateProductionCalendar(calendar shared.ProductionCalendar) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	maps.Copy(s.productionCalendar, calendar)
@@ -74,7 +74,7 @@ func (s *HttpProductionCalendarRepo) loadProductionCalendar(ctx context.Context)
 		s.log.Error(ctx, "failed to load production calendar", sl.Err(err))
 		return
 	}
-	tmp := entity.ProductionCalendar{}
+	tmp := shared.ProductionCalendar{}
 	err = json.NewDecoder(resp.Body).Decode(&tmp)
 	if err != nil {
 		s.log.Error(ctx, "failed to decode production calendar", sl.Err(err))

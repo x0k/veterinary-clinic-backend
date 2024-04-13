@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -15,7 +15,7 @@ func StartTelegramBotNotificationHandler(
 	ctx context.Context,
 	log *logger.Logger,
 	bot *telebot.Bot,
-	notification <-chan entity.NotificationMessage[adapters.TelegramTextResponse],
+	notification <-chan shared.NotificationMessage[adapters.TelegramTextResponse],
 ) {
 	l := log.With(slog.String("component", "adapters.controller.StartTelegramBotNotificationHandler"))
 	for {
@@ -23,7 +23,7 @@ func StartTelegramBotNotificationHandler(
 		case <-ctx.Done():
 			return
 		case msg := <-notification:
-			tgId, err := entity.UserIdToTelegramUserId(msg.UserId)
+			tgId, err := shared.UserIdToTelegramUserId(msg.UserId)
 			if err != nil {
 				l.Error(ctx, "failed to convert user id to telegram user id", sl.Err(err))
 				continue

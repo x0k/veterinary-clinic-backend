@@ -9,9 +9,9 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	http_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
-	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/web_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
+	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/web_calendar"
 	appointment_http_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/http"
 	appointment_telegram_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/telegram"
 	appointment_telegram_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/telegram"
@@ -20,9 +20,9 @@ import (
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -31,7 +31,7 @@ func New(
 	log *logger.Logger,
 	bot *telebot.Bot,
 	notion *notionapi.Client,
-	telegramInitDataParser *telegram_adapters.InitDataParser,
+	telegramInitDataParser telegram_adapters.InitDataParser,
 ) (*module.Module, error) {
 	m := module.New(log.Logger, "appointment")
 
@@ -207,7 +207,7 @@ func New(
 	)
 	m.Append(expirableServiceIdContainer)
 
-	expirableTelegramUserIdContainer := adapters.NewExpirableStateContainer[entity.TelegramUserId](
+	expirableTelegramUserIdContainer := adapters.NewExpirableStateContainer[shared.TelegramUserId](
 		"expirable_telegram_user_id_container",
 		uint64(time.Now().UnixNano()),
 		3*time.Minute,

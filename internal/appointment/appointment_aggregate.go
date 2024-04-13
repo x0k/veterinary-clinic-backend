@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrAppointmentInvalidCustomer = errors.New("invalid customer")
@@ -62,7 +62,7 @@ func (a *AppointmentAggregate) CreatedAt() time.Time {
 	return a.record.CreatedAt
 }
 
-func (a *AppointmentAggregate) DateTimePeriod() entity.DateTimePeriod {
+func (a *AppointmentAggregate) DateTimePeriod() shared.DateTimePeriod {
 	return a.record.DateTimePeriod
 }
 

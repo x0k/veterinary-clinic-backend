@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type cancelAppointmentPresenter[R any] interface {
@@ -31,9 +31,9 @@ func NewCancelAppointmentUseCase[R any](
 	}
 }
 
-func (u *CancelAppointmentUseCase[R]) Cancel(ctx context.Context, userId entity.UserId) (R, error) {
+func (u *CancelAppointmentUseCase[R]) Cancel(ctx context.Context, userId shared.UserId) (R, error) {
 	rec, err := u.recordsRepo.RecordByUserId(ctx, userId)
-	if err != nil || rec.Status != entity.RecordAwaits {
+	if err != nil || rec.Status != shared.RecordAwaits {
 		return u.presenter.RenderError()
 	}
 	if err = u.recordsRepo.Remove(ctx, rec.Id); err != nil {

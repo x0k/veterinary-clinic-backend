@@ -7,7 +7,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -29,7 +29,7 @@ func (p *AppointmentInfoPresenter) RenderInfo(
 	sb.WriteString("Статус: ")
 	sb.WriteString(telegram_adapters.EscapeMarkdownString(status))
 	sb.WriteString("\n\n")
-	writeAppointment(&sb, app.Service(), entity.DateTimeToGoTime(app.DateTimePeriod().Start))
+	writeAppointment(&sb, app.Service(), shared.DateTimeToGoTime(app.DateTimePeriod().Start))
 	var markup *telebot.ReplyMarkup
 	if app.Status() == appointment.RecordAwaits {
 		markup = &telebot.ReplyMarkup{

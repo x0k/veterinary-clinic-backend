@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -22,9 +22,9 @@ func NewTelegramTimeSlotsPickerPresenter(
 }
 
 func (p *TimeSlotsPickerPresenter) RenderTimePicker(
-	serviceId entity.ServiceId,
+	serviceId shared.ServiceId,
 	appointmentDate time.Time,
-	slots entity.SampledFreeTimeSlots,
+	slots shared.SampledFreeTimeSlots,
 ) (adapters.TelegramTextResponse, error) {
 	buttons := make([][]telebot.InlineButton, 0, len(slots)+1)
 	for _, slot := range slots {

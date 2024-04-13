@@ -1,4 +1,4 @@
-package entity
+package shared
 
 // var ErrNotTelegramUser = errors.New("not a telegram user")
 

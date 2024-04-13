@@ -4,16 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"github.com/x0k/veterinary-clinic-backend/internal/usecase"
 )
 
 type timeSlotPickerPresenter[R any] interface {
-	RenderTimePicker(serviceId entity.ServiceId, appointmentDate time.Time, slots entity.SampledFreeTimeSlots) (R, error)
+	RenderTimePicker(serviceId shared.ServiceId, appointmentDate time.Time, slots shared.SampledFreeTimeSlots) (R, error)
 }
 
 type TimeSlotPickerUseCase[R any] struct {
-	sampleRateInMinutes    entity.SampleRateInMinutes
+	sampleRateInMinutes    shared.SampleRateInMinutes
 	productionCalendarRepo usecase.ProductionCalendarLoader
 	openingHoursRepo       usecase.OpeningHoursLoader
 	busyPeriodsRepo        usecase.BusyPeriodsLoader
@@ -23,7 +23,7 @@ type TimeSlotPickerUseCase[R any] struct {
 }
 
 func NewTimeSlotPickerUseCase[R any](
-	sampleRateInMinutes entity.SampleRateInMinutes,
+	sampleRateInMinutes shared.SampleRateInMinutes,
 	productionCalendarRepo usecase.ProductionCalendarLoader,
 	openingHoursRepo usecase.OpeningHoursLoader,
 	busyPeriodsRepo usecase.BusyPeriodsLoader,
@@ -44,7 +44,7 @@ func NewTimeSlotPickerUseCase[R any](
 
 func (u *TimeSlotPickerUseCase[R]) TimePicker(
 	ctx context.Context,
-	serviceId entity.ServiceId,
+	serviceId shared.ServiceId,
 	now time.Time,
 	appointmentDate time.Time,
 ) (R, error) {
@@ -56,7 +56,7 @@ func (u *TimeSlotPickerUseCase[R]) TimePicker(
 	if err != nil {
 		return *new(R), err
 	}
-	freePeriods, err := entity.CalculateFreePeriods(
+	freePeriods, err := shared.CalculateFreePeriods(
 		productionCalendar,
 		openingHours,
 		now,
@@ -73,11 +73,11 @@ func (u *TimeSlotPickerUseCase[R]) TimePicker(
 	if err != nil {
 		return *new(R), err
 	}
-	workBreaks, err := entity.CalculateWorkBreaks(allWorkBreaks, appointmentDate)
+	workBreaks, err := shared.CalculateWorkBreaks(allWorkBreaks, appointmentDate)
 	if err != nil {
 		return *new(R), err
 	}
-	freeTimeSlots := entity.CalculateFreeTimeSlots(
+	freeTimeSlots := shared.CalculateFreeTimeSlots(
 		freePeriods,
 		busyPeriods,
 		workBreaks,
@@ -86,7 +86,7 @@ func (u *TimeSlotPickerUseCase[R]) TimePicker(
 	if err != nil {
 		return *new(R), err
 	}
-	return u.presenter.RenderTimePicker(serviceId, appointmentDate, entity.SampleFreeTimeSlots(
+	return u.presenter.RenderTimePicker(serviceId, appointmentDate, shared.SampleFreeTimeSlots(
 		service.DurationInMinutes,
 		u.sampleRateInMinutes,
 		freeTimeSlots,

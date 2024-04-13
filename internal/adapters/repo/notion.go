@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jomei/notionapi"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const (
@@ -78,64 +78,64 @@ func Relations(properties notionapi.Properties, relationKey string) []notionapi.
 	return properties[relationKey].(*notionapi.RelationProperty).Relation
 }
 
-func Service(page notionapi.Page) entity.Service {
-	return entity.Service{
-		Id:                entity.ServiceId(page.ID),
+func Service(page notionapi.Page) shared.Service {
+	return shared.Service{
+		Id:                shared.ServiceId(page.ID),
 		Title:             Title(page.Properties, ServiceTitle),
-		DurationInMinutes: entity.DurationInMinutes(Number(page.Properties, ServiceDurationInMinutes)),
+		DurationInMinutes: shared.DurationInMinutes(Number(page.Properties, ServiceDurationInMinutes)),
 		Description:       Text(page.Properties, ServiceDescription),
 		CostDescription:   Text(page.Properties, ServiceCost),
 	}
 }
 
-func RecordStatus(properties notionapi.Properties) (entity.RecordStatus, error) {
+func RecordStatus(properties notionapi.Properties) (shared.RecordStatus, error) {
 	switch properties[RecordState].(*notionapi.SelectProperty).Select.Name {
 	case RecordAwaits:
-		return entity.RecordAwaits, nil
+		return shared.RecordAwaits, nil
 	case RecordDone:
-		return entity.RecordDone, nil
+		return shared.RecordDone, nil
 	case RecordNotAppear:
-		return entity.RecordNotAppear, nil
+		return shared.RecordNotAppear, nil
 	case RecordDoneArchived:
-		return entity.RecordDoneArchived, nil
+		return shared.RecordDoneArchived, nil
 	case RecordNotAppearArchived:
-		return entity.RecordNotAppearArchived, nil
+		return shared.RecordNotAppearArchived, nil
 	default:
-		return entity.RecordStatus(""), entity.ErrInvalidRecordStatus
+		return shared.RecordStatus(""), shared.ErrInvalidRecordStatus
 	}
 }
 
-func DateTimePeriod(properties notionapi.Properties, key string) (entity.DateTimePeriod, error) {
+func DateTimePeriod(properties notionapi.Properties, key string) (shared.DateTimePeriod, error) {
 	date := Date(properties, key)
 	if date == nil || date.Start == nil || date.End == nil {
-		return entity.DateTimePeriod{}, fmt.Errorf("%s: %w", key, entity.ErrInvalidDate)
+		return shared.DateTimePeriod{}, fmt.Errorf("%s: %w", key, shared.ErrInvalidDate)
 	}
-	return entity.DateTimePeriod{
-		Start: entity.GoTimeToDateTime(time.Time(*date.Start)),
-		End:   entity.GoTimeToDateTime(time.Time(*date.End)),
+	return shared.DateTimePeriod{
+		Start: shared.GoTimeToDateTime(time.Time(*date.Start)),
+		End:   shared.GoTimeToDateTime(time.Time(*date.End)),
 	}, nil
 }
 
-func User(properties notionapi.Properties) entity.User {
-	return entity.User{
-		Id:          entity.UserId(Text(properties, RecordUserId)),
+func User(properties notionapi.Properties) shared.User {
+	return shared.User{
+		Id:          shared.UserId(Text(properties, RecordUserId)),
 		Name:        Title(properties, RecordTitle),
 		PhoneNumber: Phone(properties, RecordPhoneNumber),
 		Email:       Email(properties, RecordEmail),
 	}
 }
 
-func Record(page notionapi.Page, service entity.Service) (entity.Record, error) {
+func Record(page notionapi.Page, service shared.Service) (shared.Record, error) {
 	dateTimePeriod, err := DateTimePeriod(page.Properties, RecordDateTimePeriod)
 	if err != nil {
-		return entity.Record{}, err
+		return shared.Record{}, err
 	}
 	status, err := RecordStatus(page.Properties)
 	if err != nil {
-		return entity.Record{}, err
+		return shared.Record{}, err
 	}
-	return entity.Record{
-		Id:             entity.RecordId(page.ID),
+	return shared.Record{
+		Id:             shared.RecordId(page.ID),
 		User:           User(page.Properties),
 		Status:         status,
 		DateTimePeriod: dateTimePeriod,
@@ -152,10 +152,10 @@ func RichText(value string) []notionapi.RichText {
 	}
 }
 
-func WorkBreak(page notionapi.Page) (entity.WorkBreak, error) {
+func WorkBreak(page notionapi.Page) (shared.WorkBreak, error) {
 	period, err := DateTimePeriod(page.Properties, BreakPeriod)
 	if err != nil {
-		return entity.WorkBreak{}, err
+		return shared.WorkBreak{}, err
 	}
 	dt := time.Date(
 		period.Start.Year,
@@ -173,11 +173,11 @@ func WorkBreak(page notionapi.Page) (entity.WorkBreak, error) {
 	}
 	sb.WriteString(dt.Format(time.DateOnly))
 	sb.WriteByte(')')
-	return entity.WorkBreak{
-		Id:              entity.WorkBreakId(page.ID),
+	return shared.WorkBreak{
+		Id:              shared.WorkBreakId(page.ID),
 		Title:           Title(page.Properties, BreakTitle),
 		MatchExpression: sb.String(),
-		Period: entity.TimePeriod{
+		Period: shared.TimePeriod{
 			Start: period.Start.Time,
 			End:   period.End.Time,
 		},

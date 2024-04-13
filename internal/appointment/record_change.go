@@ -3,7 +3,7 @@ package appointment
 import (
 	"maps"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type RecordChangeType int
@@ -53,7 +53,7 @@ func (r *ActualRecordsState) Update(actualRecords []RecordEntity) []RecordChange
 				Type:   RecordStatusChanged,
 				Record: actualRecord,
 			})
-		} else if entity.DateTimePeriodApi.ComparePeriods(oldRecord.DateTimePeriod, actualRecord.DateTimePeriod) != 0 {
+		} else if shared.DateTimePeriodApi.ComparePeriods(oldRecord.DateTimePeriod, actualRecord.DateTimePeriod) != 0 {
 			changes = append(changes, RecordChange{
 				Type:   RecordDateTimeChanged,
 				Record: actualRecord,

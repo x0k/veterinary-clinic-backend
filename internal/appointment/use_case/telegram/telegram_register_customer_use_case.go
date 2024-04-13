@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const registerCustomerUseCaseName = "appointment_telegram_use_case.RegisterCustomerUseCase"
@@ -38,7 +38,7 @@ func NewRegisterCustomerUseCase[R any](
 
 func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 	ctx context.Context,
-	telegramUserId entity.TelegramUserId,
+	telegramUserId shared.TelegramUserId,
 	telegramUserName string,
 	telegramUserFirstName string,
 	telegramUserLastName string,

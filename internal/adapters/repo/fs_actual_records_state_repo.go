@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type FsActualRecordsStateRepo struct {
@@ -33,21 +33,21 @@ func (r *FsActualRecordsStateRepo) Start(ctx context.Context) (err error) {
 	return r.file.Close()
 }
 
-func (s *FsActualRecordsStateRepo) ActualRecordsState(ctx context.Context) (entity.ActualRecordsState, error) {
+func (s *FsActualRecordsStateRepo) ActualRecordsState(ctx context.Context) (shared.ActualRecordsState, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	records := make(map[entity.RecordId]entity.Record, s.lastRecordsCount)
+	records := make(map[shared.RecordId]shared.Record, s.lastRecordsCount)
 	if err := gob.NewDecoder(s.file).Decode(&records); err != nil && err != io.EOF {
-		return entity.ActualRecordsState{}, err
+		return shared.ActualRecordsState{}, err
 	}
 	if _, err := s.file.Seek(0, 0); err != nil {
-		return entity.ActualRecordsState{}, err
+		return shared.ActualRecordsState{}, err
 	}
-	return entity.NewActualRecordsState(records), nil
+	return shared.NewActualRecordsState(records), nil
 }
 
-func (s *FsActualRecordsStateRepo) SaveActualRecordsState(ctx context.Context, state entity.ActualRecordsState) error {
+func (s *FsActualRecordsStateRepo) SaveActualRecordsState(ctx context.Context, state shared.ActualRecordsState) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

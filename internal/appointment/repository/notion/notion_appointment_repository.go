@@ -8,11 +8,11 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const appointmentRepositoryName = "appointment_notion_repository.AppointmentRepository"
@@ -71,7 +71,7 @@ func (s *AppointmentRepository) Service(ctx context.Context, serviceId appointme
 		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, err)
 	}
 	if res == nil {
-		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, entity.ErrNotFound)
+		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
 	}
 	return NotionToService(*res), nil
 }
@@ -79,8 +79,8 @@ func (s *AppointmentRepository) Service(ctx context.Context, serviceId appointme
 func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
 	const op = appointmentRepositoryName + ".CreateAppointment"
 	period := app.DateTimePeriod()
-	start := notionapi.Date(entity.DateTimeToGoTime(period.Start))
-	end := notionapi.Date(entity.DateTimeToGoTime(period.End))
+	start := notionapi.Date(shared.DateTimeToGoTime(period.Start))
+	end := notionapi.Date(shared.DateTimeToGoTime(period.End))
 	status, err := RecordStatusToNotion(app.Status(), app.IsArchived())
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -179,16 +179,16 @@ func (s *AppointmentRepository) BusyPeriods(ctx context.Context, t time.Time) (a
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	periods := make([]entity.TimePeriod, 0, len(r.Results))
+	periods := make([]shared.TimePeriod, 0, len(r.Results))
 	for _, page := range r.Results {
 		period, err := notion.DatePeriod(page.Properties, RecordDateTimePeriod)
 		if err != nil {
 			s.log.Error(ctx, "failed to parse record period", sl.Err(err))
 			continue
 		}
-		periods = append(periods, entity.TimePeriod{
-			Start: entity.GoTimeToTime(period.Start),
-			End:   entity.GoTimeToTime(period.End),
+		periods = append(periods, shared.TimePeriod{
+			Start: shared.GoTimeToTime(period.Start),
+			End:   shared.GoTimeToTime(period.End),
 		})
 	}
 	return periods, nil
@@ -233,7 +233,7 @@ func (s *AppointmentRepository) CustomerActiveAppointment(
 		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, err)
 	}
 	if res == nil || len(res.Results) == 0 {
-		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, entity.ErrNotFound)
+		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
 	}
 	record, err := NotionToRecord(res.Results[0])
 	if err != nil {

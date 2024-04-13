@@ -4,10 +4,10 @@ import (
 	"maps"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
-type ProductionCalendar map[entity.JsonDate]DayType
+type ProductionCalendar map[shared.JsonDate]DayType
 
 func NewProductionCalendar() ProductionCalendar {
 	return make(ProductionCalendar)
@@ -19,7 +19,7 @@ func (p ProductionCalendar) WithoutSaturdayWeekend() ProductionCalendar {
 		if dt != Weekend {
 			continue
 		}
-		t, err := entity.JsonDateToGoTime(d)
+		t, err := shared.JsonDateToGoTime(d)
 		if err != nil || t.Weekday() == time.Saturday {
 			delete(cloned, d)
 		}
@@ -30,7 +30,7 @@ func (p ProductionCalendar) WithoutSaturdayWeekend() ProductionCalendar {
 func (p ProductionCalendar) WorkingDay(today time.Time, shift time.Duration) time.Time {
 	nextDay := today
 	for {
-		nextDayJson := entity.GoTimeToJsonDate(nextDay)
+		nextDayJson := shared.GoTimeToJsonDate(nextDay)
 		if dayType, ok := p[nextDayJson]; !ok || !IsNonWorkingDayType(dayType) {
 			return nextDay
 		}

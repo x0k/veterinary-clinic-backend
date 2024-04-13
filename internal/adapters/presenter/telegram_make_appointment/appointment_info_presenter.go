@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -16,9 +16,9 @@ func NewTelegramAppointmentInfoPresenter() *TelegramAppointmentInfoPresenter {
 }
 
 func (p *TelegramAppointmentInfoPresenter) RenderInfo(
-	record entity.Record,
+	record shared.Record,
 ) (adapters.TelegramTextResponse, error) {
-	status, err := entity.RecordStatusName(record.Status)
+	status, err := shared.RecordStatusName(record.Status)
 	if err != nil {
 		return adapters.TelegramTextResponse{}, err
 	}
@@ -26,9 +26,9 @@ func (p *TelegramAppointmentInfoPresenter) RenderInfo(
 	sb.WriteString("Статус: ")
 	sb.WriteString(adapters.EscapeTelegramMarkdownString(status))
 	sb.WriteString("\n\n")
-	WriteAppointment(&sb, record.Service, entity.DateTimeToGoTime(record.DateTimePeriod.Start))
+	WriteAppointment(&sb, record.Service, shared.DateTimeToGoTime(record.DateTimePeriod.Start))
 	var markup *telebot.ReplyMarkup
-	if record.Status == entity.RecordAwaits {
+	if record.Status == shared.RecordAwaits {
 		markup = &telebot.ReplyMarkup{
 			InlineKeyboard: [][]telebot.InlineButton{
 				{*adapters.CancelAppointmentBtn},

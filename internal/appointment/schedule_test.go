@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 func TestCalculateSchedulePeriods(t *testing.T) {
@@ -23,11 +23,11 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 			args: args{
 				freePeriods: FreeTimeSlots{
 					{
-						Start: entity.Time{
+						Start: shared.Time{
 							Hours:   9,
 							Minutes: 30,
 						},
-						End: entity.Time{
+						End: shared.Time{
 							Hours:   17,
 							Minutes: 0,
 						},
@@ -39,12 +39,12 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 						Id:              "lunch",
 						MatchExpression: `^[1-5]`,
 						Title:           "Перерыв на обед",
-						Period: entity.TimePeriod{
-							Start: entity.Time{
+						Period: shared.TimePeriod{
+							Start: shared.Time{
 								Hours:   12,
 								Minutes: 30,
 							},
-							End: entity.Time{
+							End: shared.Time{
 								Hours:   13,
 								Minutes: 30,
 							},
@@ -54,12 +54,12 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 						Id:              "vacation",
 						MatchExpression: `^\d 2024-03-(2[6-9]|30|31)`,
 						Title:           "Отпуск",
-						Period: entity.TimePeriod{
-							Start: entity.Time{
+						Period: shared.TimePeriod{
+							Start: shared.Time{
 								Hours:   0,
 								Minutes: 0,
 							},
-							End: entity.Time{
+							End: shared.Time{
 								Hours:   23,
 								Minutes: 59,
 							},
@@ -69,15 +69,15 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 			},
 			want: scheduleEntries{
 				{
-					DateTimePeriod: entity.DateTimePeriod{
-						Start: entity.DateTime{
-							Time: entity.Time{
+					DateTimePeriod: shared.DateTimePeriod{
+						Start: shared.DateTime{
+							Time: shared.Time{
 								Hours:   0,
 								Minutes: 0,
 							},
 						},
-						End: entity.DateTime{
-							Time: entity.Time{
+						End: shared.DateTime{
+							Time: shared.Time{
 								Hours:   23,
 								Minutes: 59,
 							},
@@ -91,7 +91,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newScheduleEntries(entity.Date{}, tt.args.freePeriods, tt.args.busyPeriods, tt.args.workBreaks); !reflect.DeepEqual(got, tt.want) {
+			if got := newScheduleEntries(shared.Date{}, tt.args.freePeriods, tt.args.busyPeriods, tt.args.workBreaks); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CalculateSchedulePeriods() = %v, want %v", got, tt.want)
 			}
 		})

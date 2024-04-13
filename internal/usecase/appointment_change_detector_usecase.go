@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrUnexpectedChangeType = errors.New("unexpected change type")
 var ErrInvalidRecordUserId = errors.New("invalid record user id")
 
 type appointmentChangePresenter[R any] interface {
-	RenderChange(change entity.RecordChange) (R, error)
+	RenderChange(change shared.RecordChange) (R, error)
 }
 
 type appointmentChangeActualRecordsStateRepo interface {
@@ -22,18 +22,18 @@ type appointmentChangeActualRecordsStateRepo interface {
 }
 
 type AppointmentChangeDetectorUseCase[R any] struct {
-	adminTelegramUserId   entity.UserId
+	adminTelegramUserId   shared.UserId
 	actualRecordsState    appointmentChangeActualRecordsStateRepo
 	recordsRepo           ActualRecordsLoader
-	telegramNotifications chan<- entity.NotificationMessage[R]
+	telegramNotifications chan<- shared.NotificationMessage[R]
 	presenter             appointmentChangePresenter[R]
 }
 
 func NewAppointmentChangeDetectorUseCase[R any](
-	adminTelegramUserId entity.UserId,
+	adminTelegramUserId shared.UserId,
 	actualRecordsState appointmentChangeActualRecordsStateRepo,
 	recordsRepo ActualRecordsLoader,
-	telegramNotifications chan<- entity.NotificationMessage[R],
+	telegramNotifications chan<- shared.NotificationMessage[R],
 	presenter appointmentChangePresenter[R],
 ) *AppointmentChangeDetectorUseCase[R] {
 	return &AppointmentChangeDetectorUseCase[R]{
@@ -70,30 +70,30 @@ func (u *AppointmentChangeDetectorUseCase[R]) DetectChanges(
 			continue
 		}
 		switch change.Type {
-		case entity.RecordCreated:
-			u.telegramNotifications <- entity.NotificationMessage[R]{
+		case shared.RecordCreated:
+			u.telegramNotifications <- shared.NotificationMessage[R]{
 				UserId:  u.adminTelegramUserId,
 				Message: notification,
 			}
-		case entity.RecordStatusChanged:
-			u.telegramNotifications <- entity.NotificationMessage[R]{
+		case shared.RecordStatusChanged:
+			u.telegramNotifications <- shared.NotificationMessage[R]{
 				UserId:  change.Record.User.Id,
 				Message: notification,
 			}
-		case entity.RecordDateTimeChanged:
-			u.telegramNotifications <- entity.NotificationMessage[R]{
+		case shared.RecordDateTimeChanged:
+			u.telegramNotifications <- shared.NotificationMessage[R]{
 				UserId:  change.Record.User.Id,
 				Message: notification,
 			}
-		case entity.RecordRemoved:
-			if change.Record.Status != entity.RecordAwaits {
+		case shared.RecordRemoved:
+			if change.Record.Status != shared.RecordAwaits {
 				continue
 			}
-			u.telegramNotifications <- entity.NotificationMessage[R]{
+			u.telegramNotifications <- shared.NotificationMessage[R]{
 				UserId:  u.adminTelegramUserId,
 				Message: notification,
 			}
-			u.telegramNotifications <- entity.NotificationMessage[R]{
+			u.telegramNotifications <- shared.NotificationMessage[R]{
 				UserId:  change.Record.User.Id,
 				Message: notification,
 			}

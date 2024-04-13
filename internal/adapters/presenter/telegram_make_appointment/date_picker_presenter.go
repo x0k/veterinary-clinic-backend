@@ -7,7 +7,7 @@ import (
 
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters/presenter"
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -29,7 +29,7 @@ func newTelegramDatePickerPresenter(
 	}
 }
 
-func (p *telegramDatePickerPresenter) buttons(serviceId entity.ServiceId, schedule entity.Schedule) [][]telebot.InlineButton {
+func (p *telegramDatePickerPresenter) buttons(serviceId shared.ServiceId, schedule shared.Schedule) [][]telebot.InlineButton {
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if schedule.PrevDate != nil {
 		buttons = append(buttons, *adapters.PrevMakeAppointmentDateBtn.With(string(
@@ -95,7 +95,7 @@ func NewTelegramDatePickerTextPresenter(
 	}
 }
 
-func (p *TelegramDatePickerTextPresenter) RenderDatePicker(serviceId entity.ServiceId, schedule entity.Schedule) (adapters.TelegramTextResponse, error) {
+func (p *TelegramDatePickerTextPresenter) RenderDatePicker(serviceId shared.ServiceId, schedule shared.Schedule) (adapters.TelegramTextResponse, error) {
 	return adapters.TelegramTextResponse{
 		Text: presenter.RenderSchedule(schedule),
 		Options: &telebot.SendOptions{
@@ -125,7 +125,7 @@ func NewTelegramDatePickerQueryPresenter(
 	}
 }
 
-func (p *TelegramDatePickerQueryPresenter) RenderDatePicker(serviceId entity.ServiceId, schedule entity.Schedule) (adapters.TelegramQueryResponse, error) {
+func (p *TelegramDatePickerQueryPresenter) RenderDatePicker(serviceId shared.ServiceId, schedule shared.Schedule) (adapters.TelegramQueryResponse, error) {
 	return adapters.TelegramQueryResponse{
 		Result: &telebot.ArticleResult{
 			ResultBase: telebot.ResultBase{

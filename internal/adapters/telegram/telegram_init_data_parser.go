@@ -6,22 +6,27 @@ import (
 	initdata "github.com/telegram-mini-apps/init-data-golang"
 )
 
-type InitDataParser struct {
+type InitDataParser interface {
+	Validate(data string) error
+	Parse(data string) (initdata.InitData, error)
+}
+
+type initDataParser struct {
 	telegramToken Token
 	expiredIn     time.Duration
 }
 
-func NewInitDataParser(telegramToken Token, expiredIn time.Duration) *InitDataParser {
-	return &InitDataParser{
+func NewInitDataParser(telegramToken Token, expiredIn time.Duration) InitDataParser {
+	return &initDataParser{
 		telegramToken: telegramToken,
 		expiredIn:     expiredIn,
 	}
 }
 
-func (p *InitDataParser) Validate(data string) error {
+func (p *initDataParser) Validate(data string) error {
 	return initdata.Validate(data, string(p.telegramToken), p.expiredIn)
 }
 
-func (p *InitDataParser) Parse(data string) (initdata.InitData, error) {
+func (p *initDataParser) Parse(data string) (initdata.InitData, error) {
 	return initdata.Parse(data)
 }

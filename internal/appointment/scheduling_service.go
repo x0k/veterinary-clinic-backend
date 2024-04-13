@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/entity"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 var ErrInvalidRecordId = errors.New("invalid record id")
@@ -23,7 +23,7 @@ var ErrInvalidAppointmentStatus = errors.New("invalid appointment status")
 type SchedulingService struct {
 	log       *logger.Logger
 	periodsMu sync.Mutex
-	periods   []entity.DateTimePeriod
+	periods   []shared.DateTimePeriod
 
 	sampleRateInMinutes             SampleRateInMinutes
 	appointmentCreator              AppointmentCreator
@@ -59,12 +59,12 @@ func NewSchedulingService(
 	}
 }
 
-func (s *SchedulingService) lockPeriod(period entity.DateTimePeriod) error {
+func (s *SchedulingService) lockPeriod(period shared.DateTimePeriod) error {
 	s.periodsMu.Lock()
 	defer s.periodsMu.Unlock()
 	for _, p := range s.periods {
-		if entity.DateTimePeriodApi.IsValidPeriod(
-			entity.DateTimePeriodApi.IntersectPeriods(p, period),
+		if shared.DateTimePeriodApi.IsValidPeriod(
+			shared.DateTimePeriodApi.IntersectPeriods(p, period),
 		) {
 			return fmt.Errorf("%w: %s", ErrPeriodIsLocked, period)
 		}
@@ -73,7 +73,7 @@ func (s *SchedulingService) lockPeriod(period entity.DateTimePeriod) error {
 	return nil
 }
 
-func (s *SchedulingService) unLockPeriod(period entity.DateTimePeriod) error {
+func (s *SchedulingService) unLockPeriod(period shared.DateTimePeriod) error {
 	s.periodsMu.Lock()
 	defer s.periodsMu.Unlock()
 	index := slices.Index(s.periods, period)
@@ -91,12 +91,12 @@ func (s *SchedulingService) MakeAppointment(
 	customer CustomerEntity,
 	service ServiceEntity,
 ) (AppointmentAggregate, error) {
-	appointmentDateTime := entity.GoTimeToDateTime(appointmentDate)
-	dateTimePeriod := entity.DateTimePeriod{
+	appointmentDateTime := shared.GoTimeToDateTime(appointmentDate)
+	dateTimePeriod := shared.DateTimePeriod{
 		Start: appointmentDateTime,
-		End: entity.DateTime{
+		End: shared.DateTime{
 			Date: appointmentDateTime.Date,
-			Time: entity.MakeTimeShifter(entity.Time{
+			Time: shared.MakeTimeShifter(shared.Time{
 				Minutes: service.DurationInMinutes.Minutes(),
 			})(appointmentDateTime.Time),
 		},
@@ -110,7 +110,7 @@ func (s *SchedulingService) MakeAppointment(
 		}
 	}()
 	existedAppointment, err := s.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
-	if !errors.Is(err, entity.ErrNotFound) {
+	if !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
 			return AppointmentAggregate{}, err
 		}
@@ -139,7 +139,7 @@ func (s *SchedulingService) MakeAppointment(
 	if err != nil {
 		return AppointmentAggregate{}, err
 	}
-	if !freeTimeSlots.Includes(entity.TimePeriod{
+	if !freeTimeSlots.Includes(shared.TimePeriod{
 		Start: dateTimePeriod.Start.Time,
 		End:   dateTimePeriod.End.Time,
 	}) {
@@ -213,7 +213,7 @@ func (s *SchedulingService) SampledFreeTimeSlots(
 	ctx context.Context,
 	now time.Time,
 	appointmentDate time.Time,
-	durationInMinutes entity.DurationInMinutes,
+	durationInMinutes shared.DurationInMinutes,
 ) (SampledFreeTimeSlots, error) {
 	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
@@ -288,7 +288,7 @@ func (s *SchedulingService) freeTimeSlots(
 		return FreeTimeSlots{}, err
 	}
 	datTimePeriods, err := workingHours.ForDay(appointmentDate).
-		OmitPast(entity.GoTimeToDateTime(now)).
+		OmitPast(shared.GoTimeToDateTime(now)).
 		ConsiderProductionCalendar(productionCalendar)
 	if err != nil {
 		return FreeTimeSlots{}, err
