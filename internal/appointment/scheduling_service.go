@@ -248,15 +248,15 @@ func (s *SchedulingService) SampledFreeTimeSlots(
 func (s *SchedulingService) CancelAppointmentForCustomer(
 	ctx context.Context,
 	customer CustomerEntity,
-) error {
+) (AppointmentAggregate, error) {
 	app, err := s.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
 	if err != nil {
-		return err
+		return AppointmentAggregate{}, err
 	}
 	if app.Status() != RecordAwaits {
-		return fmt.Errorf("%w: %s", ErrInvalidAppointmentStatusForCancel, app.Status())
+		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrInvalidAppointmentStatusForCancel, app.Status())
 	}
-	return s.appointmentRemover.RemoveAppointment(ctx, app.Id())
+	return app, s.appointmentRemover.RemoveAppointment(ctx, app.Id())
 }
 
 func (s *SchedulingService) productionCalendar(ctx context.Context) (ProductionCalendar, error) {

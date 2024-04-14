@@ -14,6 +14,7 @@ import (
 	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/web_calendar"
 	appointment_http_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/http"
 	appointment_telegram_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/telegram"
+	appointment_event "github.com/x0k/veterinary-clinic-backend/internal/appointment/event"
 	appointment_telegram_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/telegram"
 	appointment_http_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/http"
 	appointment_notion_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/notion"
@@ -22,6 +23,7 @@ import (
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
@@ -49,6 +51,8 @@ func New(
 	errorPresenter := appointment_telegram_presenter.NewErrorTextPresenter()
 	errorQueryPresenter := appointment_telegram_presenter.NewErrorQueryPresenter()
 	errorCallbackPresenter := appointment_telegram_presenter.NewErrorCallbackPresenter()
+
+	publisher := pubsub.New[appointment_event.Type]()
 
 	appointmentRepository := appointment_notion_repository.NewAppointment(
 		log,
@@ -294,6 +298,7 @@ func New(
 				appointmentRepository,
 				appointmentInfoPresenter,
 				errorPresenter,
+				publisher,
 			),
 			appointment_use_case.NewCancelAppointmentUseCase(
 				log,
@@ -301,6 +306,7 @@ func New(
 				customerRepository,
 				appointment_telegram_presenter.NewAppointmentCancelPresenter(),
 				errorCallbackPresenter,
+				publisher,
 			),
 			errorSender,
 			expirableServiceIdContainer,
