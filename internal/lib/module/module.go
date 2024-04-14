@@ -13,6 +13,7 @@ type Module struct {
 	wg        sync.WaitGroup
 	services  []Service
 	postStart []Hook
+	preStop   []Hook
 	fatal     chan error
 	stopped   atomic.Bool
 }
@@ -35,6 +36,10 @@ func (m *Module) Append(services ...Service) {
 
 func (m *Module) PostStart(hooks ...Hook) {
 	m.postStart = append(m.postStart, hooks...)
+}
+
+func (m *Module) PreStop(hooks ...Hook) {
+	m.preStop = append(m.preStop, hooks...)
 }
 
 func (m *Module) Fatal(ctx context.Context, err error) {
@@ -80,7 +85,7 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 	}
 
 	for _, hook := range m.postStart {
-		m.log.LogAttrs(ctx, slog.LevelInfo, "starting", slog.String("hook", hook.Name()))
+		m.log.LogAttrs(ctx, slog.LevelInfo, "run post start", slog.String("hook", hook.Name()))
 		if err := hook.Run(ctx); err != nil {
 			m.Fatal(ctx, err)
 		}
@@ -88,8 +93,14 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 
 	err := awaiter(ctx)
 
-	m.log.LogAttrs(ctx, slog.LevelInfo, "stopping")
+	for _, hook := range m.preStop {
+		m.log.LogAttrs(ctx, slog.LevelInfo, "run pre stop", slog.String("hook", hook.Name()))
+		if err := hook.Run(ctx); err != nil {
+			m.Fatal(ctx, err)
+		}
+	}
 
+	m.log.LogAttrs(ctx, slog.LevelInfo, "stopping")
 	m.stopped.Store(true)
 	cancel()
 

@@ -7,7 +7,5 @@ import (
 )
 
 func NewController(name string, controller func(context.Context) error) module.Hook {
-	return module.NewHook(name, func(ctx context.Context) error {
-		return controller(ctx)
-	})
+	return module.NewHook(name, controller)
 }

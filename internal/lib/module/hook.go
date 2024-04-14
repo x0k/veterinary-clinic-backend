@@ -7,6 +7,10 @@ type Hook interface {
 	Run(ctx context.Context) error
 }
 
+type PreStopper interface {
+	PreStop(hooks ...Hook)
+}
+
 type hook struct {
 	name string
 	run  func(ctx context.Context) error
