@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	appointment_event "github.com/x0k/veterinary-clinic-backend/internal/appointment/event"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
@@ -20,7 +19,7 @@ type MakeAppointmentUseCase[R any] struct {
 	serviceLoader            appointment.ServiceLoader
 	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R]
 	errorPresenter           appointment.ErrorPresenter[R]
-	publisher                pubsub.Publisher[appointment_event.Type]
+	publisher                pubsub.Publisher[appointment.EventType]
 }
 
 func NewMakeAppointmentUseCase[R any](
@@ -30,7 +29,7 @@ func NewMakeAppointmentUseCase[R any](
 	serviceLoader appointment.ServiceLoader,
 	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
-	publisher pubsub.Publisher[appointment_event.Type],
+	publisher pubsub.Publisher[appointment.EventType],
 ) *MakeAppointmentUseCase[R] {
 	return &MakeAppointmentUseCase[R]{
 		log:                      log.With(sl.Component(makeAppointmentUseCaseName)),
@@ -60,13 +59,13 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 		s.log.Error(ctx, "failed to load service", sl.Err(err))
 		return s.errorPresenter.RenderError(err)
 	}
-	appointment, err := s.schedulingService.MakeAppointment(ctx, now, appointmentDate, customer, service)
+	app, err := s.schedulingService.MakeAppointment(ctx, now, appointmentDate, customer, service)
 	if err != nil {
 		s.log.Error(ctx, "failed to make appointment", sl.Err(err))
 		return s.errorPresenter.RenderError(err)
 	}
-	if err := s.publisher.Publish(appointment_event.NewAppointmentCreated(appointment)); err != nil {
+	if err := s.publisher.Publish(appointment.NewAppointmentCreated(app)); err != nil {
 		s.log.Error(ctx, "failed to publish event", sl.Err(err))
 	}
-	return s.appointmentInfoPresenter.RenderInfo(appointment)
+	return s.appointmentInfoPresenter.RenderInfo(app)
 }

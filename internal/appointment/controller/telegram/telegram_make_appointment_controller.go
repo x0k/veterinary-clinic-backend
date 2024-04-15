@@ -10,6 +10,7 @@ import (
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
@@ -25,129 +26,132 @@ func NewMakeAppointment(
 	errorSender appointment_telegram_adapters.ErrorSender,
 	serviceIdLoader adapters.StateLoader[appointment.ServiceId],
 	appointmentStateLoader adapters.StateLoader[appointment_telegram_adapters.AppointmentSate],
-) func(context.Context) error {
-	return func(ctx context.Context) error {
-		bot.Handle(appointment_telegram_adapters.MakeAppointmentServiceCallback, func(c telebot.Context) error {
-			serviceId, ok := serviceIdLoader.Load(adapters.NewStateId(c.Callback().Data))
-			if !ok {
-				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
-			}
-			now := time.Now()
-			datePicker, err := appointmentDatePickerUseCase.DatePicker(ctx, serviceId, now, now)
-			if err != nil {
-				return err
-			}
-			return datePicker.Edit(c)
-		})
+) module.Hook {
+	return module.NewHook(
+		"appointment_telegram_controller.NewMakeAppointment",
+		func(ctx context.Context) error {
+			bot.Handle(appointment_telegram_adapters.MakeAppointmentServiceCallback, func(c telebot.Context) error {
+				serviceId, ok := serviceIdLoader.Load(adapters.NewStateId(c.Callback().Data))
+				if !ok {
+					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+				}
+				now := time.Now()
+				datePicker, err := appointmentDatePickerUseCase.DatePicker(ctx, serviceId, now, now)
+				if err != nil {
+					return err
+				}
+				return datePicker.Edit(c)
+			})
 
-		appointmentNextDatePickerHandler := func(c telebot.Context) error {
-			state, ok := appointmentStateLoader.Load(
-				adapters.NewStateId(c.Callback().Data),
-			)
-			if !ok {
-				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+			appointmentNextDatePickerHandler := func(c telebot.Context) error {
+				state, ok := appointmentStateLoader.Load(
+					adapters.NewStateId(c.Callback().Data),
+				)
+				if !ok {
+					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+				}
+				datePicker, err := appointmentDatePickerUseCase.DatePicker(
+					ctx,
+					state.ServiceId,
+					time.Now(),
+					state.Date,
+				)
+				if err != nil {
+					return err
+				}
+				return datePicker.Edit(c)
 			}
-			datePicker, err := appointmentDatePickerUseCase.DatePicker(
-				ctx,
-				state.ServiceId,
-				time.Now(),
-				state.Date,
-			)
-			if err != nil {
-				return err
-			}
-			return datePicker.Edit(c)
-		}
-		bot.Handle(appointment_telegram_adapters.NextMakeAppointmentDateBtn, appointmentNextDatePickerHandler)
+			bot.Handle(appointment_telegram_adapters.NextMakeAppointmentDateBtn, appointmentNextDatePickerHandler)
 
-		bot.Handle(appointment_telegram_adapters.CancelMakeAppointmentDateBtn, func(c telebot.Context) error {
-			res, err := startMakeAppointmentDialogUseCase.StartMakeAppointmentDialog(
-				ctx,
-				shared.NewTelegramUserId(c.Sender().ID),
-			)
-			if err != nil {
-				return err
-			}
-			return res.Edit(c)
-		})
-
-		appointmentTimePickerHandler := func(c telebot.Context) error {
-			state, ok := appointmentStateLoader.Load(
-				adapters.NewStateId(c.Callback().Data),
-			)
-			if !ok {
-				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
-			}
-			timePicker, err := appointmentTimePickerUseCase.TimePicker(
-				ctx,
-				state.ServiceId,
-				time.Now(),
-				state.Date,
-			)
-			if err != nil {
-				return err
-			}
-			return timePicker.Edit(c)
-		}
-		bot.Handle(appointment_telegram_adapters.SelectMakeAppointmentDateBtn, appointmentTimePickerHandler)
-
-		bot.Handle(appointment_telegram_adapters.MakeAppointmentTimeCallback, func(c telebot.Context) error {
-			state, ok := appointmentStateLoader.Load(
-				adapters.NewStateId(c.Callback().Data),
-			)
-			if !ok {
-				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
-			}
-			confirmation, err := appointmentConfirmationUseCase.Confirmation(ctx, state.ServiceId, state.Date)
-			if err != nil {
-				return err
-			}
-			return confirmation.Edit(c)
-		})
-
-		bot.Handle(appointment_telegram_adapters.CancelMakeAppointmentTimeBtn, appointmentNextDatePickerHandler)
-
-		bot.Handle(appointment_telegram_adapters.ConfirmMakeAppointmentBtn, func(c telebot.Context) error {
-			state, ok := appointmentStateLoader.Load(
-				adapters.NewStateId(c.Callback().Data),
-			)
-			if !ok {
-				return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
-			}
-			app, err := makeAppointmentUseCase.CreateAppointment(
-				ctx,
-				time.Now(),
-				state.Date,
-				appointment.NewTelegramCustomerIdentity(
+			bot.Handle(appointment_telegram_adapters.CancelMakeAppointmentDateBtn, func(c telebot.Context) error {
+				res, err := startMakeAppointmentDialogUseCase.StartMakeAppointmentDialog(
+					ctx,
 					shared.NewTelegramUserId(c.Sender().ID),
-				),
-				state.ServiceId,
-			)
-			if err != nil {
-				return err
-			}
-			return app.Edit(c)
-		})
+				)
+				if err != nil {
+					return err
+				}
+				return res.Edit(c)
+			})
 
-		bot.Handle(appointment_telegram_adapters.CancelConfirmationAppointmentBtn, appointmentTimePickerHandler)
+			appointmentTimePickerHandler := func(c telebot.Context) error {
+				state, ok := appointmentStateLoader.Load(
+					adapters.NewStateId(c.Callback().Data),
+				)
+				if !ok {
+					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+				}
+				timePicker, err := appointmentTimePickerUseCase.TimePicker(
+					ctx,
+					state.ServiceId,
+					time.Now(),
+					state.Date,
+				)
+				if err != nil {
+					return err
+				}
+				return timePicker.Edit(c)
+			}
+			bot.Handle(appointment_telegram_adapters.SelectMakeAppointmentDateBtn, appointmentTimePickerHandler)
 
-		bot.Handle(appointment_telegram_adapters.CancelAppointmentBtn, func(c telebot.Context) error {
-			customerId := appointment.NewTelegramCustomerIdentity(
-				shared.NewTelegramUserId(c.Sender().ID),
-			)
-			isCanceled, res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
-			if err != nil {
-				return err
-			}
-			if err := c.Respond(res.Response); err != nil {
-				return err
-			}
-			if isCanceled {
-				return c.Delete()
-			}
+			bot.Handle(appointment_telegram_adapters.MakeAppointmentTimeCallback, func(c telebot.Context) error {
+				state, ok := appointmentStateLoader.Load(
+					adapters.NewStateId(c.Callback().Data),
+				)
+				if !ok {
+					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+				}
+				confirmation, err := appointmentConfirmationUseCase.Confirmation(ctx, state.ServiceId, state.Date)
+				if err != nil {
+					return err
+				}
+				return confirmation.Edit(c)
+			})
+
+			bot.Handle(appointment_telegram_adapters.CancelMakeAppointmentTimeBtn, appointmentNextDatePickerHandler)
+
+			bot.Handle(appointment_telegram_adapters.ConfirmMakeAppointmentBtn, func(c telebot.Context) error {
+				state, ok := appointmentStateLoader.Load(
+					adapters.NewStateId(c.Callback().Data),
+				)
+				if !ok {
+					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
+				}
+				app, err := makeAppointmentUseCase.CreateAppointment(
+					ctx,
+					time.Now(),
+					state.Date,
+					appointment.NewTelegramCustomerIdentity(
+						shared.NewTelegramUserId(c.Sender().ID),
+					),
+					state.ServiceId,
+				)
+				if err != nil {
+					return err
+				}
+				return app.Edit(c)
+			})
+
+			bot.Handle(appointment_telegram_adapters.CancelConfirmationAppointmentBtn, appointmentTimePickerHandler)
+
+			bot.Handle(appointment_telegram_adapters.CancelAppointmentBtn, func(c telebot.Context) error {
+				customerId := appointment.NewTelegramCustomerIdentity(
+					shared.NewTelegramUserId(c.Sender().ID),
+				)
+				isCanceled, res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
+				if err != nil {
+					return err
+				}
+				if err := c.Respond(res.Response); err != nil {
+					return err
+				}
+				if isCanceled {
+					return c.Delete()
+				}
+				return nil
+			})
+
 			return nil
-		})
-
-		return nil
-	}
+		},
+	)
 }

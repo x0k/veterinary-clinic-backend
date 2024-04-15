@@ -13,8 +13,8 @@ import (
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	web_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/web_calendar"
 	appointment_http_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/http"
+	appointment_pubsub_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/pubsub"
 	appointment_telegram_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/telegram"
-	appointment_event "github.com/x0k/veterinary-clinic-backend/internal/appointment/event"
 	appointment_telegram_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/telegram"
 	appointment_http_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/http"
 	appointment_notion_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/notion"
@@ -37,13 +37,10 @@ func New(
 ) (*module.Module, error) {
 	m := module.New(log.Logger, "appointment")
 
-	greetController := telegram_adapters.NewController(
-		"greet_controller",
-		appointment_telegram_controller.NewGreet(
-			bot,
-			appointment_telegram_use_case.NewGreetUseCase(
-				appointment_telegram_presenter.NewGreet(),
-			),
+	greetController := appointment_telegram_controller.NewGreet(
+		bot,
+		appointment_telegram_use_case.NewGreetUseCase(
+			appointment_telegram_presenter.NewGreet(),
 		),
 	)
 	m.PostStart(greetController)
@@ -52,7 +49,7 @@ func New(
 	errorQueryPresenter := appointment_telegram_presenter.NewErrorQueryPresenter()
 	errorCallbackPresenter := appointment_telegram_presenter.NewErrorCallbackPresenter()
 
-	publisher := pubsub.New[appointment_event.Type]()
+	publisher := pubsub.New[appointment.EventType]()
 
 	appointmentRepository := appointment_notion_repository.NewAppointment(
 		log,
@@ -62,16 +59,13 @@ func New(
 	)
 	m.Append(appointmentRepository)
 
-	servicesController := telegram_adapters.NewController(
-		"services_controller",
-		appointment_telegram_controller.NewServices(
-			bot,
-			appointment_use_case.NewServicesUseCase(
-				log,
-				appointmentRepository,
-				appointment_telegram_presenter.NewServices(),
-				errorPresenter,
-			),
+	servicesController := appointment_telegram_controller.NewServices(
+		bot,
+		appointment_use_case.NewServicesUseCase(
+			log,
+			appointmentRepository,
+			appointment_telegram_presenter.NewServices(),
+			errorPresenter,
 		),
 	)
 	m.PostStart(servicesController)
@@ -112,19 +106,16 @@ func New(
 
 	webCalendarHandlerUrl := web_calendar_adapters.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
 
-	scheduleController := telegram_adapters.NewController(
-		"schedule_controller",
-		appointment_telegram_controller.NewSchedule(
-			bot,
-			appointment_use_case.NewScheduleUseCase(
-				log,
-				schedulingService,
-				appointment_telegram_presenter.NewScheduleTextPresenter(
-					cfg.WebCalendar.AppUrl,
-					webCalendarHandlerUrl,
-				),
-				errorPresenter,
+	scheduleController := appointment_telegram_controller.NewSchedule(
+		bot,
+		appointment_use_case.NewScheduleUseCase(
+			log,
+			schedulingService,
+			appointment_telegram_presenter.NewScheduleTextPresenter(
+				cfg.WebCalendar.AppUrl,
+				webCalendarHandlerUrl,
 			),
+			errorPresenter,
 		),
 	)
 	m.PostStart(scheduleController)
@@ -141,7 +132,7 @@ func New(
 	)
 
 	expirableAppointmentStateContainer := adapters.NewExpirableStateContainer[appointment_telegram_adapters.AppointmentSate](
-		"expirable_appointment_state_container",
+		"appointment_module.expirable_appointment_state_container",
 		uint64(time.Now().UnixNano()),
 		5*time.Minute,
 	)
@@ -187,7 +178,7 @@ func New(
 	}
 
 	webCalendarService := http_adapters.NewService(
-		"web_calendar_server",
+		"appointment_module.web_calendar_server",
 		&http.Server{
 			Addr: cfg.WebCalendar.HandlerAddress.String(),
 			Handler: http_adapters.Logging(
@@ -205,14 +196,14 @@ func New(
 	)
 
 	expirableServiceIdContainer := adapters.NewExpirableStateContainer[appointment.ServiceId](
-		"expirable_service_id_container",
+		"appointment_module.expirable_service_id_container",
 		uint64(time.Now().UnixNano()),
 		10*time.Minute,
 	)
 	m.Append(expirableServiceIdContainer)
 
 	expirableTelegramUserIdContainer := adapters.NewExpirableStateContainer[shared.TelegramUserId](
-		"expirable_telegram_user_id_container",
+		"appointment_module.expirable_telegram_user_id_container",
 		uint64(time.Now().UnixNano()),
 		3*time.Minute,
 	)
@@ -239,81 +230,81 @@ func New(
 
 	errorSender := appointment_telegram_adapters.NewErrorSender(errorPresenter)
 
-	startMakeAppointmentDialogController := telegram_adapters.NewController(
-		"start_make_appointment_dialog_controller",
-		appointment_telegram_controller.NewStartMakeAppointmentDialog(
-			bot,
-			expirableTelegramUserIdContainer,
-			startMakeAppointmentDialogUseCase,
-			appointment_telegram_use_case.NewRegisterCustomerUseCase(
-				log,
-				customerRepository,
-				appointmentRepository,
-				appointment_telegram_presenter.NewSuccessRegistrationPresenter(
-					servicesPickerPresenter,
-				),
-				errorPresenter,
+	startMakeAppointmentDialogController := appointment_telegram_controller.NewStartMakeAppointmentDialog(
+		bot,
+		expirableTelegramUserIdContainer,
+		startMakeAppointmentDialogUseCase,
+		appointment_telegram_use_case.NewRegisterCustomerUseCase(
+			log,
+			customerRepository,
+			appointmentRepository,
+			appointment_telegram_presenter.NewSuccessRegistrationPresenter(
+				servicesPickerPresenter,
 			),
-			errorSender,
+			errorPresenter,
 		),
+		errorSender,
 	)
 	m.PostStart(startMakeAppointmentDialogController)
 
-	makeAppointmentController := telegram_adapters.NewController(
-		"make_appointment_dialog_controller",
-		appointment_telegram_controller.NewMakeAppointment(
-			bot,
-			startMakeAppointmentDialogUseCase,
-			appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
-				log,
-				schedulingService,
-				appointment_telegram_presenter.NewDatePickerTextPresenter(
-					cfg.WebCalendar.AppUrl,
-					webCalendarDatePickerUrl,
-					expirableAppointmentStateContainer,
-				),
-				errorPresenter,
+	makeAppointmentController := appointment_telegram_controller.NewMakeAppointment(
+		bot,
+		startMakeAppointmentDialogUseCase,
+		appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
+			log,
+			schedulingService,
+			appointment_telegram_presenter.NewDatePickerTextPresenter(
+				cfg.WebCalendar.AppUrl,
+				webCalendarDatePickerUrl,
+				expirableAppointmentStateContainer,
 			),
-			appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
-				log,
-				schedulingService,
-				appointmentRepository,
-				appointment_telegram_presenter.NewTimePickerPresenter(
-					expirableAppointmentStateContainer,
-				),
-				errorPresenter,
-			),
-			appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
-				log,
-				appointmentRepository,
-				appointment_telegram_presenter.NewConfirmationPresenter(
-					expirableAppointmentStateContainer,
-				),
-				errorPresenter,
-			),
-			appointment_use_case.NewMakeAppointmentUseCase(
-				log,
-				schedulingService,
-				customerRepository,
-				appointmentRepository,
-				appointmentInfoPresenter,
-				errorPresenter,
-				publisher,
-			),
-			appointment_use_case.NewCancelAppointmentUseCase(
-				log,
-				schedulingService,
-				customerRepository,
-				appointment_telegram_presenter.NewAppointmentCancelPresenter(),
-				errorCallbackPresenter,
-				publisher,
-			),
-			errorSender,
-			expirableServiceIdContainer,
-			expirableAppointmentStateContainer,
+			errorPresenter,
 		),
+		appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
+			log,
+			schedulingService,
+			appointmentRepository,
+			appointment_telegram_presenter.NewTimePickerPresenter(
+				expirableAppointmentStateContainer,
+			),
+			errorPresenter,
+		),
+		appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
+			log,
+			appointmentRepository,
+			appointment_telegram_presenter.NewConfirmationPresenter(
+				expirableAppointmentStateContainer,
+			),
+			errorPresenter,
+		),
+		appointment_use_case.NewMakeAppointmentUseCase(
+			log,
+			schedulingService,
+			customerRepository,
+			appointmentRepository,
+			appointmentInfoPresenter,
+			errorPresenter,
+			publisher,
+		),
+		appointment_use_case.NewCancelAppointmentUseCase(
+			log,
+			schedulingService,
+			customerRepository,
+			appointment_telegram_presenter.NewAppointmentCancelPresenter(),
+			errorCallbackPresenter,
+			publisher,
+		),
+		errorSender,
+		expirableServiceIdContainer,
+		expirableAppointmentStateContainer,
 	)
 	m.PostStart(makeAppointmentController)
+
+	appointmentEventsController := appointment_pubsub_controller.NewAppointmentEvents(
+		publisher,
+		m,
+	)
+	m.Append(appointmentEventsController)
 
 	return m, nil
 }
