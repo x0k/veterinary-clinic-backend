@@ -1,11 +1,15 @@
 package appointment
 
+import "github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
+
 type EventType int
 
 const (
 	AppointmentCreated EventType = iota
 	AppointmentCanceled
 )
+
+type Event pubsub.Event[EventType]
 
 type AppointmentCreatedEvent struct {
 	AppointmentAggregate

@@ -7,7 +7,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
 )
 
-func Subscribe[E pubsub.Event[appointment.EventType]](
+func Subscribe[E appointment.Event](
 	subs pubsub.SubscriptionsManager[appointment.EventType],
 	preStopper module.PreStopper,
 ) <-chan E {

@@ -6,6 +6,10 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+type Message interface {
+	Send(c telebot.Context) error
+}
+
 type textResponse struct {
 	Text    string
 	Options *telebot.SendOptions

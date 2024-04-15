@@ -53,3 +53,5 @@ type AppointmentInfoPresenter[R any] interface {
 type AppointmentCancelPresenter[R any] interface {
 	RenderCancel() (R, error)
 }
+
+type EventPresenter[E Event, R any] func(E) (R, error)
