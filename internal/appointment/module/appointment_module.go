@@ -300,8 +300,28 @@ func New(
 	)
 	m.PostStart(makeAppointmentController)
 
+	adminTgId, err := cfg.Notifications.AdminIdentity.ToTelegramUserId()
+	if err != nil {
+		return nil, err
+	}
+	admin := &telebot.User{
+		ID: adminTgId.Int(),
+	}
+	telegramSender := telegram_adapters.NewSender(bot)
+	appointmentCreatedEventPresenter := appointment_telegram_presenter.NewAppointmentCreatedEventPresenter(
+		admin,
+	)
+	appointmentCanceledEventPresenter := appointment_telegram_presenter.NewAppointmentCanceledEventPresenter(
+		admin,
+	)
 	appointmentEventsController := appointment_pubsub_controller.NewAppointmentEvents(
+		log,
 		publisher,
+		appointment_use_case.NewSendAdminNotificationUseCase(
+			telegramSender.Send,
+			appointmentCreatedEventPresenter.Present,
+			appointmentCanceledEventPresenter.Present,
+		),
 		m,
 	)
 	m.Append(appointmentEventsController)

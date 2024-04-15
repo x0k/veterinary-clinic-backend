@@ -13,7 +13,7 @@ env: all run prof migrate debug-env
         export APPOINTMENT_NOTION_RECORDS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-records-db-id)
         export APPOINTMENT_NOTION_BREAKS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-breaks-db-id)
         export APPOINTMENT_NOTION_CUSTOMERS_DATABASE_ID=$(cat ~/Sync/veterinary-clinic/notion-customers-db-id)
-        export NOTIFICATIONS_ADMIN_ID=$(cat ~/Sync/veterinary-clinic/notifications-admin-id)
+        export APPOINTMENT_NOTIFICATIONS_ADMIN_IDENTITY=$(cat ~/Sync/veterinary-clinic/notifications-admin-id)
         export PROFILER_REMOTE_ADDRESS=$(cat ~/Sync/veterinary-clinic/prof-address)
     fi
     export STORAGE_PATH=storage/storage.db

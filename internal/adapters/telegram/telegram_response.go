@@ -7,15 +7,35 @@ import (
 )
 
 type Message interface {
+	Send(bot *telebot.Bot) error
+}
+
+type Response interface {
 	Send(c telebot.Context) error
 }
 
-type textResponse struct {
+type SendableText struct {
 	Text    string
 	Options *telebot.SendOptions
 }
 
-type TextResponses []textResponse
+func NewSendableText(
+	text string,
+	options ...*telebot.SendOptions,
+) SendableText {
+	if len(options) == 0 {
+		return SendableText{
+			Text:    text,
+			Options: &telebot.SendOptions{},
+		}
+	}
+	return SendableText{
+		Text:    text,
+		Options: options[0],
+	}
+}
+
+type TextResponses []SendableText
 
 func (rs TextResponses) Send(c telebot.Context) error {
 	for _, response := range rs {

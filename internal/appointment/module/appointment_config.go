@@ -29,9 +29,14 @@ type SchedulingServiceConfig struct {
 	SampleRateInMinutes appointment.SampleRateInMinutes `yaml:"sample_rate_in_minutes" env:"APPOINTMENT_SCHEDULING_SERVICE_SAMPLE_RATE_IN_MINUTES" env-default:"30"`
 }
 
+type NotificationsConfig struct {
+	AdminIdentity appointment.CustomerIdentity `yaml:"admin_identity" env:"APPOINTMENT_NOTIFICATIONS_ADMIN_IDENTITY" env-required:"true"`
+}
+
 type Config struct {
 	Notion             NotionConfig             `yaml:"notion"`
 	ProductionCalendar ProductionCalendarConfig `yaml:"production_calendar"`
 	WebCalendar        WebCalendarConfig        `yaml:"web_calendar"`
 	SchedulingService  SchedulingServiceConfig  `yaml:"scheduling_service"`
+	Notifications      NotificationsConfig      `yaml:"notifications"`
 }

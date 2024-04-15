@@ -85,3 +85,7 @@ func (a *AppointmentAggregate) Service() ServiceEntity {
 func (a *AppointmentAggregate) CustomerId() CustomerId {
 	return a.customer.Id
 }
+
+func (a *AppointmentAggregate) Customer() CustomerEntity {
+	return a.customer
+}

@@ -28,6 +28,8 @@ appointment:
     handler_address: 0.0.0.0:6012
     # This is should be a https url to the web handler address
     # web_handler_url_root: 
+  notifications:
+    # admin_identity: 
   # appointment_change_detector:
   #   check_interval: 10s
   # storage:
