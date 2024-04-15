@@ -142,11 +142,13 @@ func NewMakeAppointment(
 				if err != nil {
 					return err
 				}
+				if isCanceled {
+					if err := c.Delete(); err != nil {
+						return err
+					}
+				}
 				if err := c.Respond(res.Response); err != nil {
 					return err
-				}
-				if isCanceled {
-					return c.Delete()
 				}
 				return nil
 			})

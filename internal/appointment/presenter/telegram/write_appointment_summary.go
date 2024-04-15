@@ -12,19 +12,26 @@ func writeAppointmentSummary(
 	sb *strings.Builder,
 	app appointment.AppointmentAggregate,
 ) {
+	start := shared.DateTimeToGoTime(app.DateTimePeriod().Start)
+	end := shared.DateTimeToGoTime(app.DateTimePeriod().End)
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
-			shared.DateTimeToGoTime(app.DateTimePeriod().Start).
-				Format("02.01.2006 15:04"),
+			start.Format("02.01.2006 15:04"),
 		),
 	)
-	sb.WriteByte(' ')
+	sb.WriteString(" \\- ")
+	sb.WriteString(
+		telegram_adapters.EscapeMarkdownString(
+			end.Format("15:04"),
+		),
+	)
+	sb.WriteString("\n\n")
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
 			app.Service().Title,
 		),
 	)
-	sb.WriteString("\n")
+	sb.WriteString("\n\n")
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
 			app.Customer().Name,

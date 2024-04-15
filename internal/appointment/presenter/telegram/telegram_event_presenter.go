@@ -19,10 +19,10 @@ func NewAppointmentCreatedEventPresenter(recipient telebot.Recipient) Appointmen
 }
 
 func (p AppointmentCreatedEventPresenter) Present(
-	created appointment.AppointmentCreatedEvent,
+	created appointment.CreatedEvent,
 ) (telegram_adapters.Message, error) {
 	sb := strings.Builder{}
-	sb.WriteString("**Новая запись**:\n\n")
+	sb.WriteString("*Новая запись*:\n\n")
 	writeAppointmentSummary(&sb, created.AppointmentAggregate)
 	return telegram_adapters.NewTextMessages(
 		p.recipient,
@@ -46,10 +46,10 @@ func NewAppointmentCanceledEventPresenter(recipient telebot.Recipient) Appointme
 }
 
 func (p AppointmentCanceledEventPresenter) Present(
-	canceled appointment.AppointmentCanceledEvent,
+	canceled appointment.CanceledEvent,
 ) (telegram_adapters.Message, error) {
 	sb := strings.Builder{}
-	sb.WriteString("**Запись отменена**:\n\n")
+	sb.WriteString("*Запись отменена*:\n\n")
 	writeAppointmentSummary(&sb, canceled.AppointmentAggregate)
 	return telegram_adapters.NewTextMessages(
 		p.recipient,

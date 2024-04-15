@@ -5,36 +5,36 @@ import "github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
 type EventType int
 
 const (
-	AppointmentCreated EventType = iota
-	AppointmentCanceled
+	CreatedEventType EventType = iota
+	CanceledEventType
 )
 
 type Event pubsub.Event[EventType]
 
-type AppointmentCreatedEvent struct {
+type CreatedEvent struct {
 	AppointmentAggregate
 }
 
-func NewAppointmentCreated(appointment AppointmentAggregate) AppointmentCreatedEvent {
-	return AppointmentCreatedEvent{
+func NewCreated(appointment AppointmentAggregate) CreatedEvent {
+	return CreatedEvent{
 		AppointmentAggregate: appointment,
 	}
 }
 
-func (e AppointmentCreatedEvent) Type() EventType {
-	return AppointmentCreated
+func (e CreatedEvent) Type() EventType {
+	return CreatedEventType
 }
 
-type AppointmentCanceledEvent struct {
+type CanceledEvent struct {
 	AppointmentAggregate
 }
 
-func NewAppointmentCanceled(appointment AppointmentAggregate) AppointmentCanceledEvent {
-	return AppointmentCanceledEvent{
+func NewAppointmentCanceled(appointment AppointmentAggregate) CanceledEvent {
+	return CanceledEvent{
 		AppointmentAggregate: appointment,
 	}
 }
 
-func (e AppointmentCanceledEvent) Type() EventType {
-	return AppointmentCanceled
+func (e CanceledEvent) Type() EventType {
+	return CanceledEventType
 }

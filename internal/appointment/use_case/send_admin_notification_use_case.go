@@ -9,14 +9,14 @@ import (
 
 type SendAdminNotificationUseCase[R any] struct {
 	sender                       shared.Sender[R]
-	appointmentCreatedPresenter  appointment.EventPresenter[appointment.AppointmentCreatedEvent, R]
-	appointmentCanceledPresenter appointment.EventPresenter[appointment.AppointmentCanceledEvent, R]
+	appointmentCreatedPresenter  appointment.EventPresenter[appointment.CreatedEvent, R]
+	appointmentCanceledPresenter appointment.EventPresenter[appointment.CanceledEvent, R]
 }
 
 func NewSendAdminNotificationUseCase[R any](
 	sender shared.Sender[R],
-	appointmentCreatedPresenter appointment.EventPresenter[appointment.AppointmentCreatedEvent, R],
-	appointmentCanceledPresenter appointment.EventPresenter[appointment.AppointmentCanceledEvent, R],
+	appointmentCreatedPresenter appointment.EventPresenter[appointment.CreatedEvent, R],
+	appointmentCanceledPresenter appointment.EventPresenter[appointment.CanceledEvent, R],
 ) *SendAdminNotificationUseCase[R] {
 	return &SendAdminNotificationUseCase[R]{
 		sender:                       sender,
@@ -40,9 +40,9 @@ func sendNotification[E appointment.Event, R any](
 
 func (u *SendAdminNotificationUseCase[R]) SendAdminNotification(ctx context.Context, event appointment.Event) error {
 	switch e := event.(type) {
-	case appointment.AppointmentCreatedEvent:
+	case appointment.CreatedEvent:
 		return sendNotification(ctx, u.appointmentCreatedPresenter, e, u.sender)
-	case appointment.AppointmentCanceledEvent:
+	case appointment.CanceledEvent:
 		return sendNotification(ctx, u.appointmentCanceledPresenter, e, u.sender)
 	default:
 		return nil

@@ -64,7 +64,7 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 		s.log.Error(ctx, "failed to make appointment", sl.Err(err))
 		return s.errorPresenter.RenderError(err)
 	}
-	if err := s.publisher.Publish(appointment.NewAppointmentCreated(app)); err != nil {
+	if err := s.publisher.Publish(appointment.NewCreated(app)); err != nil {
 		s.log.Error(ctx, "failed to publish event", sl.Err(err))
 	}
 	return s.appointmentInfoPresenter.RenderInfo(app)

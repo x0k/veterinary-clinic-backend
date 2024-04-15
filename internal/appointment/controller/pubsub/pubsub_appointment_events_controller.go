@@ -11,27 +11,32 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
 )
 
+const appointmentEventsControllerName = "appointment_pubsub_controller.AppointmentEventsController"
+
 func NewAppointmentEvents[R any](
 	log *logger.Logger,
 	subs pubsub.SubscriptionsManager[appointment.EventType],
 	sendAdminNotificationUseCase *appointment_use_case.SendAdminNotificationUseCase[R],
 	preStopper module.PreStopper,
 ) module.Service {
-	h := func(ctx context.Context, err error) {
-		if err != nil {
-			log.Error(ctx, "failed to handle event", sl.Err(err))
-		}
-	}
 	return module.NewService(
-		"appointment_pubsub_controller.NewAppointmentEvents",
+		appointmentEventsControllerName,
 		func(ctx context.Context) error {
+			l := log.With(sl.Component(appointmentEventsControllerName))
+			h := func(ctx context.Context, err error) {
+				if err != nil {
+					l.Error(ctx, "failed to handle event", sl.Err(err))
+				}
+			}
+			appointmentCreated := Subscribe[appointment.CreatedEvent](subs, preStopper)
+			appointmentCanceled := Subscribe[appointment.CanceledEvent](subs, preStopper)
 			for {
 				select {
 				case <-ctx.Done():
 					return nil
-				case e := <-Subscribe[appointment.AppointmentCreatedEvent](subs, preStopper):
+				case e := <-appointmentCreated:
 					h(ctx, sendAdminNotificationUseCase.SendAdminNotification(ctx, e))
-				case e := <-Subscribe[appointment.AppointmentCanceledEvent](subs, preStopper):
+				case e := <-appointmentCanceled:
 					h(ctx, sendAdminNotificationUseCase.SendAdminNotification(ctx, e))
 				}
 			}
