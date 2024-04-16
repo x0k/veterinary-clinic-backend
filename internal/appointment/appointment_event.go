@@ -7,9 +7,11 @@ type EventType int
 const (
 	CreatedEventType EventType = iota
 	CanceledEventType
+	ChangedEventType
 )
 
 type Event pubsub.Event[EventType]
+type Publisher pubsub.Publisher[EventType]
 
 type CreatedEvent struct {
 	AppointmentAggregate
@@ -37,4 +39,22 @@ func NewAppointmentCanceled(appointment AppointmentAggregate) CanceledEvent {
 
 func (e CanceledEvent) Type() EventType {
 	return CanceledEventType
+}
+
+type ChangeType int
+
+const (
+	CreatedChangeType ChangeType = iota
+	StatusChangeType
+	DateTimeChangeType
+	RemovedChangeType
+)
+
+type ChangedEvent struct {
+	ChangeType  ChangeType
+	Appointment AppointmentAggregate
+}
+
+func (e ChangedEvent) Type() EventType {
+	return ChangedEventType
 }
