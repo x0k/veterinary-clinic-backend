@@ -5,6 +5,7 @@ import (
 
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter"
 	"gopkg.in/telebot.v3"
 )
 
@@ -53,6 +54,56 @@ func (p AppointmentCanceledEventPresenter) Present(
 	writeAppointmentSummary(&sb, canceled.AppointmentAggregate)
 	return telegram_adapters.NewTextMessages(
 		p.recipient,
+		telegram_adapters.NewSendableText(
+			sb.String(),
+			&telebot.SendOptions{
+				ParseMode: telebot.ModeMarkdownV2,
+			},
+		),
+	), nil
+}
+
+func writeChangeType(
+	sb *strings.Builder,
+	changeType appointment.ChangeType,
+) {
+	switch changeType {
+	case appointment.CreatedChangeType:
+		sb.WriteString("*Создана запись*")
+	case appointment.StatusChangeType:
+		sb.WriteString("*Статус изменен*")
+	case appointment.DateTimeChangeType:
+		sb.WriteString("*Дата и время изменены*")
+	case appointment.RemovedChangeType:
+		sb.WriteString("*Запись удалена*")
+	}
+}
+
+func AppointmentChangedEventPresenter(
+	event appointment.ChangedEvent,
+) (telegram_adapters.Message, error) {
+	id, err := event.Appointment.Customer().Identity.ToTelegramUserId()
+	if err != nil {
+		return nil, err
+	}
+
+	sb := strings.Builder{}
+	writeChangeType(&sb, event.ChangeType)
+	sb.WriteString(":\n\n")
+
+	state, err := appointment_presenter.RecordState(event.Appointment.Status(), event.Appointment.IsArchived())
+	if err != nil {
+		return nil, err
+	}
+	sb.WriteString(state)
+	sb.WriteString("\n\n")
+
+	writeAppointmentSummary(&sb, event.Appointment)
+
+	return telegram_adapters.NewTextMessages(
+		&telebot.User{
+			ID: id.Int(),
+		},
 		telegram_adapters.NewSendableText(
 			sb.String(),
 			&telebot.SendOptions{

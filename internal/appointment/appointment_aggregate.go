@@ -74,6 +74,10 @@ func (a *AppointmentAggregate) IsArchived() bool {
 	return a.record.IsArchived
 }
 
+func (a *AppointmentAggregate) Record() RecordEntity {
+	return a.record
+}
+
 func (a *AppointmentAggregate) ServiceId() ServiceId {
 	return a.service.Id
 }

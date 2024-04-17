@@ -69,6 +69,7 @@ const (
 	CustomerEmail       = "Почта"
 	CustomerPhoneNumber = "Телефон"
 	CustomerUserId      = "identity"
+	CustomerRecords     = "Записи"
 )
 
 func NotionToCustomer(page notionapi.Page) appointment.CustomerEntity {

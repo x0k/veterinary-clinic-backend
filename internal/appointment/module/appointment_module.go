@@ -7,6 +7,7 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	adapters_cron "github.com/x0k/veterinary-clinic-backend/internal/adapters/cron"
 	http_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
@@ -16,6 +17,7 @@ import (
 	appointment_pubsub_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/pubsub"
 	appointment_telegram_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/telegram"
 	appointment_telegram_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/telegram"
+	appointment_fs_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/fs"
 	appointment_http_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/http"
 	appointment_notion_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/notion"
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
@@ -56,6 +58,7 @@ func New(
 		notion,
 		cfg.Notion.RecordsDatabaseId,
 		cfg.Notion.ServicesDatabaseId,
+		cfg.Notion.CustomersDatabaseId,
 	)
 	m.Append(appointmentRepository)
 
@@ -314,17 +317,48 @@ func New(
 	appointmentCanceledEventPresenter := appointment_telegram_presenter.NewAppointmentCanceledEventPresenter(
 		admin,
 	)
+	appointmentsStateRepository := appointment_fs_repository.NewAppointmentsStateRepository(
+		"appointment_module.appointments_state_repository",
+		cfg.TrackingService.StatePath,
+	)
+	m.Append(appointmentsStateRepository)
+	trackingService := appointment.NewTracking(
+		appointmentRepository.ActualAppointments,
+		appointmentsStateRepository.AppointmentsState,
+		appointmentsStateRepository.SaveAppointmentsState,
+	)
 	appointmentEventsController := appointment_pubsub_controller.NewAppointmentEvents(
-		log,
 		publisher,
 		appointment_use_case.NewSendAdminNotificationUseCase(
+			log,
 			telegramSender.Send,
 			appointmentCreatedEventPresenter.Present,
 			appointmentCanceledEventPresenter.Present,
 		),
+		appointment_use_case.NewSendCustomerNotificationUseCase(
+			log,
+			telegramSender.Send,
+			appointment_telegram_presenter.AppointmentChangedEventPresenter,
+		),
+		appointment_use_case.NewUpdateAppointmentsStateUseCase(
+			log,
+			trackingService,
+		),
 		m,
 	)
 	m.Append(appointmentEventsController)
+
+	detectChangesUseCase := appointment_use_case.NewDetectChangesUseCase(
+		log,
+		trackingService,
+		publisher,
+	)
+	detectChangesCronTask := adapters_cron.NewTask(
+		"appointment_module.detect_changes_cron_task",
+		10*time.Second,
+		detectChangesUseCase.DetectChanges,
+	)
+	m.Append(detectChangesCronTask)
 
 	return m, nil
 }

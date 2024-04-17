@@ -33,10 +33,15 @@ type NotificationsConfig struct {
 	AdminIdentity appointment.CustomerIdentity `yaml:"admin_identity" env:"APPOINTMENT_NOTIFICATIONS_ADMIN_IDENTITY" env-required:"true"`
 }
 
+type TrackingServiceConfig struct {
+	StatePath string `yaml:"state_path" env:"APPOINTMENT_TRACKING_STATE_PATH" env-required:"true"`
+}
+
 type Config struct {
 	Notion             NotionConfig             `yaml:"notion"`
 	ProductionCalendar ProductionCalendarConfig `yaml:"production_calendar"`
 	WebCalendar        WebCalendarConfig        `yaml:"web_calendar"`
 	SchedulingService  SchedulingServiceConfig  `yaml:"scheduling_service"`
 	Notifications      NotificationsConfig      `yaml:"notifications"`
+	TrackingService    TrackingServiceConfig    `yaml:"tracking_service"`
 }

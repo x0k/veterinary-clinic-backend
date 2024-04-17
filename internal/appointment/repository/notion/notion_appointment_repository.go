@@ -18,11 +18,12 @@ import (
 const appointmentRepositoryName = "appointment_notion_repository.AppointmentRepository"
 
 type AppointmentRepository struct {
-	log                *logger.Logger
-	client             *notionapi.Client
-	recordsDatabaseId  notionapi.DatabaseID
-	servicesDatabaseId notionapi.DatabaseID
-	servicesCache      *containers.Expiable[[]appointment.ServiceEntity]
+	log                 *logger.Logger
+	client              *notionapi.Client
+	recordsDatabaseId   notionapi.DatabaseID
+	servicesDatabaseId  notionapi.DatabaseID
+	customersDatabaseId notionapi.DatabaseID
+	servicesCache       *containers.Expiable[[]appointment.ServiceEntity]
 }
 
 func NewAppointment(
@@ -30,13 +31,15 @@ func NewAppointment(
 	client *notionapi.Client,
 	recordsDatabaseId notionapi.DatabaseID,
 	servicesDatabaseId notionapi.DatabaseID,
+	customersDatabaseId notionapi.DatabaseID,
 ) *AppointmentRepository {
 	return &AppointmentRepository{
-		log:                log.With(slog.String("component", appointmentRepositoryName)),
-		client:             client,
-		recordsDatabaseId:  recordsDatabaseId,
-		servicesDatabaseId: servicesDatabaseId,
-		servicesCache:      containers.NewExpiable[[]appointment.ServiceEntity](time.Hour),
+		log:                 log.With(slog.String("component", appointmentRepositoryName)),
+		client:              client,
+		recordsDatabaseId:   recordsDatabaseId,
+		servicesDatabaseId:  servicesDatabaseId,
+		customersDatabaseId: customersDatabaseId,
+		servicesCache:       containers.NewExpiable[[]appointment.ServiceEntity](time.Hour),
 	}
 }
 
@@ -256,4 +259,109 @@ func (s *AppointmentRepository) RemoveAppointment(ctx context.Context, recordId 
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
+}
+
+func (s *AppointmentRepository) ActualAppointments(
+	ctx context.Context,
+	now time.Time,
+) ([]appointment.AppointmentAggregate, error) {
+	const op = appointmentRepositoryName + ".ActualAppointments"
+	after := notionapi.Date(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()))
+	recordsRes, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: notionapi.AndCompoundFilter{
+			notionapi.PropertyFilter{
+				Property: RecordDateTimePeriod,
+				Date: &notionapi.DateFilterCondition{
+					After: &after,
+				},
+			},
+			notionapi.OrCompoundFilter{
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordAwaits,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordDone,
+					},
+				},
+				notionapi.PropertyFilter{
+					Property: RecordState,
+					Select: &notionapi.SelectFilterCondition{
+						Equals: RecordNotAppear,
+					},
+				},
+			},
+		},
+		Sorts: []notionapi.SortObject{
+			{
+				Property:  RecordDateTimePeriod,
+				Direction: notionapi.SortOrderASC,
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	if recordsRes == nil || len(recordsRes.Results) == 0 {
+		return nil, nil
+	}
+	records := make([]appointment.RecordEntity, 0, len(recordsRes.Results))
+	recordIds := make(notionapi.OrCompoundFilter, 0, len(recordsRes.Results))
+	for _, result := range recordsRes.Results {
+		record, err := NotionToRecord(result)
+		if err != nil {
+			s.log.Error(ctx, "failed to convert record", sl.Err(err))
+			continue
+		}
+		records = append(records, record)
+		recordIds = append(recordIds, notionapi.PropertyFilter{
+			Property: CustomerRecords,
+			Relation: &notionapi.RelationFilterCondition{
+				Contains: record.Id.String(),
+			},
+		})
+	}
+	customersRes, err := s.client.Database.Query(ctx, s.customersDatabaseId, &notionapi.DatabaseQueryRequest{
+		Filter: recordIds,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	customersMap := make(map[appointment.CustomerId]appointment.CustomerEntity, len(customersRes.Results))
+	for _, result := range customersRes.Results {
+		customer := NotionToCustomer(result)
+		customersMap[customer.Id] = customer
+	}
+	services, err := s.Services(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	servicesMap := make(map[appointment.ServiceId]appointment.ServiceEntity, len(services))
+	for _, service := range services {
+		servicesMap[service.Id] = service
+	}
+	apps := make([]appointment.AppointmentAggregate, 0, len(records))
+	for _, record := range records {
+		customer, ok := customersMap[record.CustomerId]
+		if !ok {
+			s.log.Error(ctx, "failed to get customer", slog.String("customer_id", record.CustomerId.String()))
+			continue
+		}
+		service, ok := servicesMap[record.ServiceId]
+		if !ok {
+			s.log.Error(ctx, "failed to get service", slog.String("service_id", record.ServiceId.String()))
+			continue
+		}
+		app, err := appointment.NewAppointmentAggregate(record, service, customer)
+		if err != nil {
+			s.log.Error(ctx, "failed to create appointment", sl.Err(err))
+			continue
+		}
+		apps = append(apps, app)
+	}
+	return apps, nil
 }

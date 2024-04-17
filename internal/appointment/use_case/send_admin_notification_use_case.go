@@ -4,21 +4,28 @@ import (
 	"context"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
+const sendAdminNotificationUseCaseName = "appointment_use_case.SendAdminNotificationUseCase"
+
 type SendAdminNotificationUseCase[R any] struct {
+	log                          *logger.Logger
 	sender                       shared.Sender[R]
 	appointmentCreatedPresenter  appointment.EventPresenter[appointment.CreatedEvent, R]
 	appointmentCanceledPresenter appointment.EventPresenter[appointment.CanceledEvent, R]
 }
 
 func NewSendAdminNotificationUseCase[R any](
+	log *logger.Logger,
 	sender shared.Sender[R],
 	appointmentCreatedPresenter appointment.EventPresenter[appointment.CreatedEvent, R],
 	appointmentCanceledPresenter appointment.EventPresenter[appointment.CanceledEvent, R],
 ) *SendAdminNotificationUseCase[R] {
 	return &SendAdminNotificationUseCase[R]{
+		log:                          log.With(sl.Component(sendAdminNotificationUseCaseName)),
 		sender:                       sender,
 		appointmentCreatedPresenter:  appointmentCreatedPresenter,
 		appointmentCanceledPresenter: appointmentCanceledPresenter,
@@ -27,24 +34,26 @@ func NewSendAdminNotificationUseCase[R any](
 
 func sendNotification[E appointment.Event, R any](
 	ctx context.Context,
+	log *logger.Logger,
+	sender shared.Sender[R],
 	presenter appointment.EventPresenter[E, R],
 	event E,
-	sender shared.Sender[R],
-) error {
+) {
 	notification, err := presenter(event)
 	if err != nil {
-		return err
+		log.Error(ctx, "failed to render notification", sl.Err(err))
+		return
 	}
-	return sender(ctx, notification)
+	if err := sender(ctx, notification); err != nil {
+		log.Error(ctx, "failed to send notification", sl.Err(err))
+	}
 }
 
-func (u *SendAdminNotificationUseCase[R]) SendAdminNotification(ctx context.Context, event appointment.Event) error {
+func (u *SendAdminNotificationUseCase[R]) SendAdminNotification(ctx context.Context, event appointment.Event) {
 	switch e := event.(type) {
 	case appointment.CreatedEvent:
-		return sendNotification(ctx, u.appointmentCreatedPresenter, e, u.sender)
+		sendNotification(ctx, u.log, u.sender, u.appointmentCreatedPresenter, e)
 	case appointment.CanceledEvent:
-		return sendNotification(ctx, u.appointmentCanceledPresenter, e, u.sender)
-	default:
-		return nil
+		sendNotification(ctx, u.log, u.sender, u.appointmentCanceledPresenter, e)
 	}
 }
