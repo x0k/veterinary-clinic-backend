@@ -14,7 +14,7 @@ const cancelAppointmentUseCaseName = "appointment_use_case.CancelAppointmentUseC
 type CancelAppointmentUseCase[R any] struct {
 	log                        *logger.Logger
 	schedulingService          *appointment.SchedulingService
-	customerLoader             appointment.CustomerLoader
+	customerLoader             appointment.CustomerByIdentityLoader
 	serviceLoader              appointment.ServiceLoader
 	appointmentCancelPresenter appointment.AppointmentCancelPresenter[R]
 	errorPresenter             appointment.ErrorPresenter[R]
@@ -24,7 +24,7 @@ type CancelAppointmentUseCase[R any] struct {
 func NewCancelAppointmentUseCase[R any](
 	log *logger.Logger,
 	schedulingService *appointment.SchedulingService,
-	customerLoader appointment.CustomerLoader,
+	customerLoader appointment.CustomerByIdentityLoader,
 	serviceLoader appointment.ServiceLoader,
 	appointmentCancelPresenter appointment.AppointmentCancelPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
@@ -46,7 +46,7 @@ func (s *CancelAppointmentUseCase[R]) CancelAppointment(
 	ctx context.Context,
 	customerIdentity appointment.CustomerIdentity,
 ) (bool, R, error) {
-	customer, err := s.customerLoader.Customer(ctx, customerIdentity)
+	customer, err := s.customerLoader(ctx, customerIdentity)
 	if err != nil {
 		s.log.Error(ctx, "failed to load customer", sl.Err(err))
 		res, err := s.errorPresenter.RenderError(err)

@@ -81,8 +81,10 @@ func writeChangeType(
 
 func AppointmentChangedEventPresenter(
 	event appointment.ChangedEvent,
+	customer appointment.CustomerEntity,
+	service appointment.ServiceEntity,
 ) (telegram_adapters.Message, error) {
-	id, err := event.Customer.Identity.ToTelegramUserId()
+	id, err := customer.Identity.ToTelegramUserId()
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +100,7 @@ func AppointmentChangedEventPresenter(
 	sb.WriteString(state)
 	sb.WriteString("\n\n")
 
-	writeAppointmentSummary(&sb, event.Record, event.Customer, event.Service)
+	writeAppointmentSummary(&sb, event.Record, customer, service)
 
 	return telegram_adapters.NewTextMessages(
 		&telebot.User{

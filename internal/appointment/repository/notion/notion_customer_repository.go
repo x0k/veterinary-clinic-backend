@@ -28,7 +28,7 @@ func NewCustomer(
 	}
 }
 
-func (r *CustomerRepository) Customer(ctx context.Context, identity appointment.CustomerIdentity) (appointment.CustomerEntity, error) {
+func (r *CustomerRepository) CustomerByIdentity(ctx context.Context, identity appointment.CustomerIdentity) (appointment.CustomerEntity, error) {
 	const op = customerRepositoryName + ".Customer"
 	res, err := r.client.Database.Query(ctx, r.customersDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.PropertyFilter{
@@ -47,9 +47,21 @@ func (r *CustomerRepository) Customer(ctx context.Context, identity appointment.
 	return NotionToCustomer(res.Results[0]), nil
 }
 
+func (s *CustomerRepository) CustomerById(ctx context.Context, customerId appointment.CustomerId) (appointment.CustomerEntity, error) {
+	const op = customerRepositoryName + ".CustomerById"
+	res, err := s.client.Page.Get(ctx, notionapi.PageID(customerId.String()))
+	if err != nil {
+		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, err)
+	}
+	if res == nil {
+		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
+	}
+	return NotionToCustomer(*res), nil
+}
+
 func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appointment.CustomerEntity) error {
 	const op = customerRepositoryName + ".CreateCustomer"
-	if _, err := r.Customer(ctx, customer.Identity); !errors.Is(err, shared.ErrNotFound) {
+	if _, err := r.CustomerByIdentity(ctx, customer.Identity); !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}

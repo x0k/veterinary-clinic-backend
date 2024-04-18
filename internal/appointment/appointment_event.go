@@ -69,8 +69,16 @@ const (
 type ChangedEvent struct {
 	ChangeType ChangeType
 	Record     RecordEntity
-	Customer   CustomerEntity
-	Service    ServiceEntity
+}
+
+func NewChanged(
+	changeType ChangeType,
+	appointment RecordEntity,
+) ChangedEvent {
+	return ChangedEvent{
+		ChangeType: changeType,
+		Record:     appointment,
+	}
 }
 
 func (e ChangedEvent) Type() EventType {

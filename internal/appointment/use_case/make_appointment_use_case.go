@@ -15,7 +15,7 @@ const makeAppointmentUseCaseName = "appointment_use_case.MakeAppointmentUseCase"
 type MakeAppointmentUseCase[R any] struct {
 	log                      *logger.Logger
 	schedulingService        *appointment.SchedulingService
-	customerLoader           appointment.CustomerLoader
+	customerLoader           appointment.CustomerByIdentityLoader
 	serviceLoader            appointment.ServiceLoader
 	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R]
 	errorPresenter           appointment.ErrorPresenter[R]
@@ -25,7 +25,7 @@ type MakeAppointmentUseCase[R any] struct {
 func NewMakeAppointmentUseCase[R any](
 	log *logger.Logger,
 	schedulingService *appointment.SchedulingService,
-	customerLoader appointment.CustomerLoader,
+	customerLoader appointment.CustomerByIdentityLoader,
 	serviceLoader appointment.ServiceLoader,
 	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
@@ -49,7 +49,7 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 	customerId appointment.CustomerIdentity,
 	serviceId appointment.ServiceId,
 ) (R, error) {
-	customer, err := s.customerLoader.Customer(ctx, customerId)
+	customer, err := s.customerLoader(ctx, customerId)
 	if err != nil {
 		s.log.Error(ctx, "failed to load customer", sl.Err(err))
 		return s.errorPresenter.RenderError(err)

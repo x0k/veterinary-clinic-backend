@@ -24,31 +24,31 @@ func (s *AppointmentsState) Reconcile(actualAppointments []RecordEntity) []Chang
 		oldApp, ok := appsCopy[actualApp.Id]
 		// created
 		if !ok {
-			changes = append(changes, ChangedEvent{
-				ChangeType: CreatedChangeType,
-				Record:     actualApp,
-			})
+			changes = append(changes, NewChanged(
+				CreatedChangeType,
+				actualApp,
+			))
 			continue
 		}
 		if oldApp.Status != actualApp.Status {
-			changes = append(changes, ChangedEvent{
-				ChangeType: StatusChangeType,
-				Record:     actualApp,
-			})
+			changes = append(changes, NewChanged(
+				StatusChangeType,
+				actualApp,
+			))
 		} else if oldApp.DateTimePeriod != actualApp.DateTimePeriod {
-			changes = append(changes, ChangedEvent{
-				ChangeType: DateTimeChangeType,
-				Record:     actualApp,
-			})
+			changes = append(changes, NewChanged(
+				DateTimeChangeType,
+				actualApp,
+			))
 		}
 		delete(appsCopy, actualApp.Id)
 	}
 	for _, app := range appsCopy {
 		delete(s.appointments, app.Id)
-		changes = append(changes, ChangedEvent{
-			ChangeType: RemovedChangeType,
-			Record:     app,
-		})
+		changes = append(changes, NewChanged(
+			RemovedChangeType,
+			app,
+		))
 	}
 	return changes
 }

@@ -7,9 +7,9 @@ import (
 
 type AppointmentCreator func(context.Context, *RecordEntity) error
 
-type CustomerLoader interface {
-	Customer(context.Context, CustomerIdentity) (CustomerEntity, error)
-}
+type CustomerByIdentityLoader func(context.Context, CustomerIdentity) (CustomerEntity, error)
+
+type CustomerByIdLoader func(context.Context, CustomerId) (CustomerEntity, error)
 
 type CustomerCreator interface {
 	CreateCustomer(context.Context, *CustomerEntity) error
@@ -44,3 +44,9 @@ type CustomerActiveAppointmentLoader func(context.Context, CustomerId) (RecordEn
 type AppointmentRemover func(context.Context, RecordId) error
 
 type RecordsArchiver func(context.Context) error
+
+type ActualAppointmentsLoader func(context.Context, time.Time) ([]RecordEntity, error)
+
+type AppointmentsStateLoader func(context.Context) (AppointmentsState, error)
+
+type AppointmentsStateSaver func(context.Context, AppointmentsState) error

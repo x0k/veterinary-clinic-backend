@@ -58,3 +58,5 @@ type AppointmentCancelPresenter[R any] interface {
 }
 
 type EventPresenter[E Event, R any] func(E) (R, error)
+
+type ChangedEventPresenter[R any] func(ChangedEvent, CustomerEntity, ServiceEntity) (R, error)

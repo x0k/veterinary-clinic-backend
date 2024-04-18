@@ -220,7 +220,7 @@ func New(
 
 	startMakeAppointmentDialogUseCase := appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
 		log,
-		customerRepository,
+		customerRepository.CustomerByIdentity,
 		appointmentRepository.CustomerActiveAppointment,
 		appointmentRepository,
 		appointmentInfoPresenter,
@@ -283,7 +283,7 @@ func New(
 		appointment_use_case.NewMakeAppointmentUseCase(
 			log,
 			schedulingService,
-			customerRepository,
+			customerRepository.CustomerByIdentity,
 			appointmentRepository,
 			appointmentInfoPresenter,
 			errorPresenter,
@@ -292,7 +292,7 @@ func New(
 		appointment_use_case.NewCancelAppointmentUseCase(
 			log,
 			schedulingService,
-			customerRepository,
+			customerRepository.CustomerByIdentity,
 			appointmentRepository,
 			appointment_telegram_presenter.NewAppointmentCancelPresenter(),
 			errorCallbackPresenter,
@@ -338,6 +338,8 @@ func New(
 		),
 		appointment_use_case.NewSendCustomerNotificationUseCase(
 			log,
+			customerRepository.CustomerById,
+			appointmentRepository,
 			telegramSender.Send,
 			appointment_telegram_presenter.AppointmentChangedEventPresenter,
 		),
@@ -356,7 +358,7 @@ func New(
 	)
 	detectChangesCronTask := adapters_cron.NewTask(
 		"appointment_module.detect_changes_cron_task",
-		10*time.Second,
+		cfg.TrackingService.TrackingInterval,
 		detectChangesUseCase.DetectChanges,
 	)
 	m.Append(detectChangesCronTask)

@@ -15,7 +15,7 @@ const startMakeAppointmentDialogUseCaseName = "appointment_telegram_use_case.Sta
 
 type StartMakeAppointmentDialogUseCase[R any] struct {
 	log                             *logger.Logger
-	customerLoader                  appointment.CustomerLoader
+	customerLoader                  appointment.CustomerByIdentityLoader
 	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader
 	servicesLoader                  appointment.ServicesLoader
 	serviceLoader                   appointment.ServiceLoader
@@ -27,7 +27,7 @@ type StartMakeAppointmentDialogUseCase[R any] struct {
 
 func NewStartMakeAppointmentDialogUseCase[R any](
 	log *logger.Logger,
-	customerLoader appointment.CustomerLoader,
+	customerLoader appointment.CustomerByIdentityLoader,
 	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader,
 	servicesLoader appointment.ServicesLoader,
 	appointmentInfoPresenter appointment.AppointmentInfoPresenter[R],
@@ -52,7 +52,7 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	userId shared.TelegramUserId,
 ) (R, error) {
 	customerIdentity := appointment.NewTelegramCustomerIdentity(userId)
-	customer, err := u.customerLoader.Customer(ctx, customerIdentity)
+	customer, err := u.customerLoader(ctx, customerIdentity)
 	if errors.Is(err, shared.ErrNotFound) {
 		return u.registrationPresenter.RenderRegistration(userId)
 	}

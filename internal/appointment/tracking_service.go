@@ -4,21 +4,19 @@ import (
 	"context"
 	"sync"
 	"time"
-
-	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type TrackingService struct {
-	appointmentsLoader shared.QueriedLoader[time.Time, []RecordEntity]
+	appointmentsLoader ActualAppointmentsLoader
 	stateMu            sync.Mutex
-	stateLoader        shared.Loader[AppointmentsState]
-	stateSaver         shared.Saver[AppointmentsState]
+	stateLoader        AppointmentsStateLoader
+	stateSaver         AppointmentsStateSaver
 }
 
 func NewTracking(
-	appointmentsLoader shared.QueriedLoader[time.Time, []RecordEntity],
-	stateLoader shared.Loader[AppointmentsState],
-	stateSaver shared.Saver[AppointmentsState],
+	appointmentsLoader ActualAppointmentsLoader,
+	stateLoader AppointmentsStateLoader,
+	stateSaver AppointmentsStateSaver,
 ) *TrackingService {
 	return &TrackingService{
 		appointmentsLoader: appointmentsLoader,
