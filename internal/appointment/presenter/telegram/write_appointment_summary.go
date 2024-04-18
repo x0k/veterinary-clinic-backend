@@ -10,10 +10,12 @@ import (
 
 func writeAppointmentSummary(
 	sb *strings.Builder,
-	app appointment.AppointmentAggregate,
+	app appointment.RecordEntity,
+	customer appointment.CustomerEntity,
+	service appointment.ServiceEntity,
 ) {
-	start := shared.DateTimeToGoTime(app.DateTimePeriod().Start)
-	end := shared.DateTimeToGoTime(app.DateTimePeriod().End)
+	start := shared.DateTimeToGoTime(app.DateTimePeriod.Start)
+	end := shared.DateTimeToGoTime(app.DateTimePeriod.End)
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
 			start.Format("02.01.2006 15:04"),
@@ -28,13 +30,13 @@ func writeAppointmentSummary(
 	sb.WriteString("\n\n")
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
-			app.Service().Title,
+			service.Title,
 		),
 	)
 	sb.WriteString("\n\n")
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
-			app.Customer().Name,
+			customer.Name,
 		),
 	)
 }

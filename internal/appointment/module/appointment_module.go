@@ -98,13 +98,13 @@ func New(
 	schedulingService := appointment.NewSchedulingService(
 		log,
 		cfg.SchedulingService.SampleRateInMinutes,
-		appointmentRepository,
+		appointmentRepository.CreateAppointment,
 		productionCalendarRepository,
 		workingHoursRepository,
 		appointmentRepository,
 		workBreaksRepository,
-		appointmentRepository,
-		appointmentRepository,
+		appointmentRepository.CustomerActiveAppointment,
+		appointmentRepository.RemoveAppointment,
 	)
 
 	webCalendarHandlerUrl := web_calendar_adapters.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
@@ -221,7 +221,7 @@ func New(
 	startMakeAppointmentDialogUseCase := appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
 		log,
 		customerRepository,
-		appointmentRepository,
+		appointmentRepository.CustomerActiveAppointment,
 		appointmentRepository,
 		appointmentInfoPresenter,
 		servicesPickerPresenter,
@@ -293,6 +293,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository,
+			appointmentRepository,
 			appointment_telegram_presenter.NewAppointmentCancelPresenter(),
 			errorCallbackPresenter,
 			publisher,

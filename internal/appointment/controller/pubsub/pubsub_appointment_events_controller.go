@@ -29,10 +29,10 @@ func NewAppointmentEvents[R any](
 				case <-ctx.Done():
 					return nil
 				case e := <-appointmentCreated:
-					updateAppointmentsUseCase.AddAppointment(ctx, e.AppointmentAggregate)
+					updateAppointmentsUseCase.AddAppointment(ctx, e.Record)
 					sendAdminNotificationUseCase.SendAdminNotification(ctx, e)
 				case e := <-appointmentCanceled:
-					updateAppointmentsUseCase.RemoveAppointment(ctx, e.AppointmentAggregate)
+					updateAppointmentsUseCase.RemoveAppointment(ctx, e.Record)
 					sendAdminNotificationUseCase.SendAdminNotification(ctx, e)
 				case e := <-appointmentChanged:
 					sendCustomerNotificationUseCase.SendCustomerNotification(ctx, e)

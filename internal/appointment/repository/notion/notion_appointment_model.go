@@ -119,6 +119,7 @@ func NotionToRecord(page notionapi.Page) (appointment.RecordEntity, error) {
 	}
 	return appointment.NewRecord(
 		appointment.NewRecordId(string(page.ID)),
+		notion.Title(page.Properties, RecordTitle),
 		status,
 		isArchived,
 		shared.DateTimePeriod{

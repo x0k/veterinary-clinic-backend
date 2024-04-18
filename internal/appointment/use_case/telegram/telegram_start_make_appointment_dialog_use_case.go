@@ -18,6 +18,7 @@ type StartMakeAppointmentDialogUseCase[R any] struct {
 	customerLoader                  appointment.CustomerLoader
 	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader
 	servicesLoader                  appointment.ServicesLoader
+	serviceLoader                   appointment.ServiceLoader
 	appointmentInfoPresenter        appointment.AppointmentInfoPresenter[R]
 	servicesPickerPresenter         appointment.ServicesPickerPresenter[R]
 	registrationPresenter           appointment.RegistrationPresenter[R]
@@ -59,13 +60,18 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 		u.log.Error(ctx, "failed to find customer", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))
 		return u.errorPresenter.RenderError(err)
 	}
-	existedAppointment, err := u.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
+	existedAppointment, err := u.customerActiveAppointmentLoader(ctx, customer.Id)
 	if !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
 			u.log.Error(ctx, "failed to find customer active appointment", sl.Err(err))
 			return u.errorPresenter.RenderError(err)
 		}
-		return u.appointmentInfoPresenter.RenderInfo(existedAppointment)
+		service, err := u.serviceLoader.Service(ctx, existedAppointment.ServiceId)
+		if err != nil {
+			u.log.Error(ctx, "failed to load service", sl.Err(err))
+			return u.errorPresenter.RenderError(err)
+		}
+		return u.appointmentInfoPresenter.RenderInfo(existedAppointment, service)
 	}
 	services, err := u.servicesLoader.Services(ctx)
 	if err != nil {

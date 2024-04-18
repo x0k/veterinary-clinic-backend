@@ -3,6 +3,7 @@ package appointment
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
@@ -35,6 +36,7 @@ func (r RecordId) String() string {
 
 type RecordEntity struct {
 	Id             RecordId
+	Title          string
 	Status         RecordStatus
 	IsArchived     bool
 	DateTimePeriod shared.DateTimePeriod
@@ -43,8 +45,26 @@ type RecordEntity struct {
 	CreatedAt      time.Time
 }
 
+func RecordTitle(
+	customer CustomerEntity,
+	service ServiceEntity,
+	createdAt time.Time,
+) (string, error) {
+	idType, err := customer.IdentityType()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s %s %s",
+		service.Title,
+		strings.ToUpper(idType.String()),
+		createdAt.Format("02.01.2006"),
+	), nil
+}
+
 func NewRecord(
 	id RecordId,
+	title string,
 	status RecordStatus,
 	isArchived bool,
 	dateTimePeriod shared.DateTimePeriod,
@@ -60,6 +80,7 @@ func NewRecord(
 	}
 	return RecordEntity{
 		Id:             id,
+		Title:          title,
 		Status:         status,
 		IsArchived:     isArchived,
 		DateTimePeriod: dateTimePeriod,

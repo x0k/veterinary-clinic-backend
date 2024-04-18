@@ -19,9 +19,10 @@ func NewAppointmentInfoPresenter() *AppointmentInfoPresenter {
 }
 
 func (p *AppointmentInfoPresenter) RenderInfo(
-	app appointment.AppointmentAggregate,
+	app appointment.RecordEntity,
+	service appointment.ServiceEntity,
 ) (telegram_adapters.TextResponses, error) {
-	status, err := appointment_presenter.RecordState(app.Status(), app.IsArchived())
+	status, err := appointment_presenter.RecordState(app.Status, app.IsArchived)
 	if err != nil {
 		return telegram_adapters.TextResponses{}, err
 	}
@@ -29,9 +30,9 @@ func (p *AppointmentInfoPresenter) RenderInfo(
 	sb.WriteString("Статус: ")
 	sb.WriteString(telegram_adapters.EscapeMarkdownString(status))
 	sb.WriteString("\n\n")
-	writeAppointment(&sb, app.Service(), shared.DateTimeToGoTime(app.DateTimePeriod().Start))
+	writeAppointment(&sb, service, shared.DateTimeToGoTime(app.DateTimePeriod.Start))
 	var markup *telebot.ReplyMarkup
-	if app.Status() == appointment.RecordAwaits {
+	if app.Status == appointment.RecordAwaits {
 		markup = &telebot.ReplyMarkup{
 			InlineKeyboard: [][]telebot.InlineButton{
 				{*appointment_telegram_adapters.CancelAppointmentBtn},

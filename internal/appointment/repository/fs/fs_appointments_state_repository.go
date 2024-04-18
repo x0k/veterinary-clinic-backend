@@ -44,34 +44,20 @@ func (r *AppointmentsStateRepository) Start(ctx context.Context) (err error) {
 	return r.file.Close()
 }
 
-type appointmentAggregate struct {
-	Record   appointment.RecordEntity
-	Customer appointment.CustomerEntity
-	Service  appointment.ServiceEntity
-}
-
 func (r *AppointmentsStateRepository) AppointmentsState(
 	ctx context.Context,
 ) (appointment.AppointmentsState, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	apps := make([]appointmentAggregate, 0, r.lastAppointmentsCount)
-	if err := gob.NewDecoder(r.file).Decode(&apps); err != nil && err != io.EOF {
+	records := make(map[appointment.RecordId]appointment.RecordEntity, r.lastAppointmentsCount)
+	if err := gob.NewDecoder(r.file).Decode(&records); err != nil && err != io.EOF {
 		return appointment.AppointmentsState{}, err
 	}
 	if _, err := r.file.Seek(0, 0); err != nil {
 		return appointment.AppointmentsState{}, err
 	}
-	result := make(map[appointment.RecordId]appointment.AppointmentAggregate, len(apps))
-	var err error
-	for _, app := range apps {
-		result[app.Record.Id], err = appointment.NewAppointmentAggregate(app.Record, app.Service, app.Customer)
-		if err != nil {
-			return appointment.AppointmentsState{}, err
-		}
-	}
-	return appointment.NewAppointmentsState(result), nil
+	return appointment.NewAppointmentsState(records), nil
 }
 
 func (r *AppointmentsStateRepository) SaveAppointmentsState(
@@ -85,17 +71,9 @@ func (r *AppointmentsStateRepository) SaveAppointmentsState(
 		return err
 	}
 	encoder := gob.NewEncoder(r.file)
-	appointments := appointmentsState.Appointments()
-	apps := make([]appointmentAggregate, 0, len(appointments))
-	for _, app := range appointments {
-		apps = append(apps, appointmentAggregate{
-			Record:   app.Record(),
-			Customer: app.Customer(),
-			Service:  app.Service(),
-		})
-	}
-	r.lastAppointmentsCount = len(apps)
-	if err := encoder.Encode(apps); err != nil {
+	records := appointmentsState.Appointments()
+	r.lastAppointmentsCount = len(records)
+	if err := encoder.Encode(records); err != nil {
 		return err
 	}
 	if _, err := r.file.Seek(0, 0); err != nil {

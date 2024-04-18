@@ -9,14 +9,14 @@ import (
 )
 
 type TrackingService struct {
-	appointmentsLoader shared.QueriedLoader[time.Time, []AppointmentAggregate]
+	appointmentsLoader shared.QueriedLoader[time.Time, []RecordEntity]
 	stateMu            sync.Mutex
 	stateLoader        shared.Loader[AppointmentsState]
 	stateSaver         shared.Saver[AppointmentsState]
 }
 
 func NewTracking(
-	appointmentsLoader shared.QueriedLoader[time.Time, []AppointmentAggregate],
+	appointmentsLoader shared.QueriedLoader[time.Time, []RecordEntity],
 	stateLoader shared.Loader[AppointmentsState],
 	stateSaver shared.Saver[AppointmentsState],
 ) *TrackingService {
@@ -58,7 +58,7 @@ func (s *TrackingService) DetectChanges(
 
 func (s *TrackingService) AddAppointment(
 	ctx context.Context,
-	appointment AppointmentAggregate,
+	appointment RecordEntity,
 ) error {
 	return s.state(ctx, func(state *AppointmentsState) {
 		state.AddAppointment(appointment)
@@ -67,7 +67,7 @@ func (s *TrackingService) AddAppointment(
 
 func (s *TrackingService) RemoveAppointment(
 	ctx context.Context,
-	appointment AppointmentAggregate,
+	appointment RecordEntity,
 ) error {
 	return s.state(ctx, func(state *AppointmentsState) {
 		state.RemoveAppointment(appointment)

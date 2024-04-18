@@ -37,7 +37,7 @@ func (u *DetectChangesUseCase) DetectChanges(ctx context.Context, now time.Time)
 	}
 	for _, change := range changes {
 		if change.ChangeType == appointment.RemovedChangeType &&
-			change.Appointment.Status() != appointment.RecordAwaits {
+			change.Record.Status != appointment.RecordAwaits {
 			continue
 		}
 		if err := u.publisher.Publish(change); err != nil {

@@ -14,12 +14,20 @@ type Event pubsub.Event[EventType]
 type Publisher pubsub.Publisher[EventType]
 
 type CreatedEvent struct {
-	AppointmentAggregate
+	Record   RecordEntity
+	Customer CustomerEntity
+	Service  ServiceEntity
 }
 
-func NewCreated(appointment AppointmentAggregate) CreatedEvent {
+func NewCreated(
+	appointment RecordEntity,
+	customer CustomerEntity,
+	service ServiceEntity,
+) CreatedEvent {
 	return CreatedEvent{
-		AppointmentAggregate: appointment,
+		Record:   appointment,
+		Customer: customer,
+		Service:  service,
 	}
 }
 
@@ -28,12 +36,20 @@ func (e CreatedEvent) Type() EventType {
 }
 
 type CanceledEvent struct {
-	AppointmentAggregate
+	Record   RecordEntity
+	Customer CustomerEntity
+	Service  ServiceEntity
 }
 
-func NewAppointmentCanceled(appointment AppointmentAggregate) CanceledEvent {
+func NewAppointmentCanceled(
+	appointment RecordEntity,
+	customer CustomerEntity,
+	service ServiceEntity,
+) CanceledEvent {
 	return CanceledEvent{
-		AppointmentAggregate: appointment,
+		Record:   appointment,
+		Customer: customer,
+		Service:  service,
 	}
 }
 
@@ -51,8 +67,10 @@ const (
 )
 
 type ChangedEvent struct {
-	ChangeType  ChangeType
-	Appointment AppointmentAggregate
+	ChangeType ChangeType
+	Record     RecordEntity
+	Customer   CustomerEntity
+	Service    ServiceEntity
 }
 
 func (e ChangedEvent) Type() EventType {

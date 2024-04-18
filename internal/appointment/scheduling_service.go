@@ -90,7 +90,7 @@ func (s *SchedulingService) MakeAppointment(
 	appointmentDate time.Time,
 	customer CustomerEntity,
 	service ServiceEntity,
-) (AppointmentAggregate, error) {
+) (RecordEntity, error) {
 	appointmentDateTime := shared.GoTimeToDateTime(appointmentDate)
 	dateTimePeriod := shared.DateTimePeriod{
 		Start: appointmentDateTime,
@@ -102,31 +102,31 @@ func (s *SchedulingService) MakeAppointment(
 		},
 	}
 	if err := s.lockPeriod(dateTimePeriod); err != nil {
-		return AppointmentAggregate{}, err
+		return RecordEntity{}, err
 	}
 	defer func() {
 		if err := s.unLockPeriod(dateTimePeriod); err != nil {
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()
-	existedAppointment, err := s.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
+	existedAppointment, err := s.customerActiveAppointmentLoader(ctx, customer.Id)
 	if !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
-			return AppointmentAggregate{}, err
+			return RecordEntity{}, err
 		}
-		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrAnotherAppointmentIsAlreadyScheduled, existedAppointment.Id())
+		return RecordEntity{}, fmt.Errorf("%w: %s", ErrAnotherAppointmentIsAlreadyScheduled, existedAppointment.Id)
 	}
 	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
-		return AppointmentAggregate{}, err
+		return RecordEntity{}, err
 	}
 	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
 	if err != nil {
-		return AppointmentAggregate{}, err
+		return RecordEntity{}, err
 	}
 	datWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
 	if err != nil {
-		return AppointmentAggregate{}, err
+		return RecordEntity{}, err
 	}
 	freeTimeSlots, err := s.freeTimeSlots(
 		ctx,
@@ -137,16 +137,21 @@ func (s *SchedulingService) MakeAppointment(
 		datWorkBreaks,
 	)
 	if err != nil {
-		return AppointmentAggregate{}, err
+		return RecordEntity{}, err
 	}
 	if !freeTimeSlots.Includes(shared.TimePeriod{
 		Start: dateTimePeriod.Start.Time,
 		End:   dateTimePeriod.End.Time,
 	}) {
-		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
+		return RecordEntity{}, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
+	}
+	title, err := RecordTitle(customer, service, now)
+	if err != nil {
+		return RecordEntity{}, err
 	}
 	record, err := NewRecord(
 		TemporalRecordId,
+		title,
 		RecordAwaits,
 		false,
 		dateTimePeriod,
@@ -154,20 +159,13 @@ func (s *SchedulingService) MakeAppointment(
 		service.Id,
 		now,
 	)
-	if err != nil {
-		return AppointmentAggregate{}, err
+	if err := s.appointmentCreator(ctx, &record); err != nil {
+		return RecordEntity{}, err
 	}
-	app, err := NewAppointmentAggregate(record, service, customer)
-	if err != nil {
-		return AppointmentAggregate{}, err
+	if record.Id == TemporalRecordId {
+		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidRecordId, record.Id)
 	}
-	if err := s.appointmentCreator.CreateAppointment(ctx, &app); err != nil {
-		return AppointmentAggregate{}, err
-	}
-	if app.Id() == TemporalRecordId {
-		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrInvalidRecordId, app.Id())
-	}
-	return app, nil
+	return record, nil
 }
 
 func (s *SchedulingService) Schedule(
@@ -247,16 +245,16 @@ func (s *SchedulingService) SampledFreeTimeSlots(
 
 func (s *SchedulingService) CancelAppointmentForCustomer(
 	ctx context.Context,
-	customer CustomerEntity,
-) (AppointmentAggregate, error) {
-	app, err := s.customerActiveAppointmentLoader.CustomerActiveAppointment(ctx, customer)
+	customerId CustomerId,
+) (RecordEntity, error) {
+	rec, err := s.customerActiveAppointmentLoader(ctx, customerId)
 	if err != nil {
-		return AppointmentAggregate{}, err
+		return RecordEntity{}, err
 	}
-	if app.Status() != RecordAwaits {
-		return AppointmentAggregate{}, fmt.Errorf("%w: %s", ErrInvalidAppointmentStatusForCancel, app.Status())
+	if rec.Status != RecordAwaits {
+		return RecordEntity{}, fmt.Errorf("%w: %s", ErrInvalidAppointmentStatusForCancel, rec.Status)
 	}
-	return app, s.appointmentRemover.RemoveAppointment(ctx, app.Id())
+	return rec, s.appointmentRemover(ctx, rec.Id)
 }
 
 func (s *SchedulingService) productionCalendar(ctx context.Context) (ProductionCalendar, error) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/jomei/notionapi"
@@ -35,7 +34,7 @@ func NewAppointment(
 	customersDatabaseId notionapi.DatabaseID,
 ) *AppointmentRepository {
 	return &AppointmentRepository{
-		log:                 log.With(slog.String("component", appointmentRepositoryName)),
+		log:                 log.With(sl.Component(appointmentRepositoryName)),
 		client:              client,
 		recordsDatabaseId:   recordsDatabaseId,
 		servicesDatabaseId:  servicesDatabaseId,
@@ -80,23 +79,19 @@ func (s *AppointmentRepository) Service(ctx context.Context, serviceId appointme
 	return NotionToService(*res), nil
 }
 
-func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appointment.AppointmentAggregate) error {
+func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appointment.RecordEntity) error {
 	const op = appointmentRepositoryName + ".CreateAppointment"
-	period := app.DateTimePeriod()
+	period := app.DateTimePeriod
 	start := notionapi.Date(shared.DateTimeToGoTime(period.Start))
 	end := notionapi.Date(shared.DateTimeToGoTime(period.End))
-	status, err := RecordStatusToNotion(app.Status(), app.IsArchived())
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	title, err := app.Title()
+	status, err := RecordStatusToNotion(app.Status, app.IsArchived)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	properties := notionapi.Properties{
 		RecordTitle: notionapi.TitleProperty{
 			Type:  notionapi.PropertyTypeTitle,
-			Title: notion.ToRichText(title),
+			Title: notion.ToRichText(app.Title),
 		},
 		RecordDateTimePeriod: notionapi.DateProperty{
 			Type: notionapi.PropertyTypeDate,
@@ -115,7 +110,7 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appo
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
 				{
-					ID: notionapi.PageID(app.CustomerId().String()),
+					ID: notionapi.PageID(app.CustomerId.String()),
 				},
 			},
 		},
@@ -127,7 +122,7 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appo
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
 				{
-					ID: notionapi.PageID(app.ServiceId().String()),
+					ID: notionapi.PageID(app.ServiceId.String()),
 				},
 			},
 		},
@@ -200,15 +195,15 @@ func (s *AppointmentRepository) BusyPeriods(ctx context.Context, t time.Time) (a
 
 func (s *AppointmentRepository) CustomerActiveAppointment(
 	ctx context.Context,
-	customer appointment.CustomerEntity,
-) (appointment.AppointmentAggregate, error) {
+	customerId appointment.CustomerId,
+) (appointment.RecordEntity, error) {
 	const op = appointmentRepositoryName + ".CustomerActiveAppointment"
 	res, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
 		Filter: notionapi.AndCompoundFilter{
 			notionapi.PropertyFilter{
 				Property: RecordCustomer,
 				Relation: &notionapi.RelationFilterCondition{
-					Contains: customer.Id.String(),
+					Contains: customerId.String(),
 				},
 			},
 			notionapi.OrCompoundFilter{
@@ -234,20 +229,12 @@ func (s *AppointmentRepository) CustomerActiveAppointment(
 		},
 	})
 	if err != nil {
-		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, err)
+		return appointment.RecordEntity{}, fmt.Errorf("%s: %w", op, err)
 	}
 	if res == nil || len(res.Results) == 0 {
-		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
+		return appointment.RecordEntity{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
 	}
-	record, err := NotionToRecord(res.Results[0])
-	if err != nil {
-		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, err)
-	}
-	service, err := s.Service(ctx, record.ServiceId)
-	if err != nil {
-		return appointment.AppointmentAggregate{}, fmt.Errorf("%s: %w", op, err)
-	}
-	return appointment.NewAppointmentAggregate(record, service, customer)
+	return NotionToRecord(res.Results[0])
 }
 
 func (s *AppointmentRepository) RemoveAppointment(ctx context.Context, recordId appointment.RecordId) error {
@@ -265,7 +252,7 @@ func (s *AppointmentRepository) RemoveAppointment(ctx context.Context, recordId 
 func (s *AppointmentRepository) ActualAppointments(
 	ctx context.Context,
 	now time.Time,
-) ([]appointment.AppointmentAggregate, error) {
+) ([]appointment.RecordEntity, error) {
 	const op = appointmentRepositoryName + ".ActualAppointments"
 	after := notionapi.Date(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()))
 	recordsRes, err := s.client.Database.Query(ctx, s.recordsDatabaseId, &notionapi.DatabaseQueryRequest{
@@ -311,7 +298,6 @@ func (s *AppointmentRepository) ActualAppointments(
 		return nil, nil
 	}
 	records := make([]appointment.RecordEntity, 0, len(recordsRes.Results))
-	recordIds := make(notionapi.OrCompoundFilter, 0, len(recordsRes.Results))
 	for _, result := range recordsRes.Results {
 		record, err := NotionToRecord(result)
 		if err != nil {
@@ -319,52 +305,8 @@ func (s *AppointmentRepository) ActualAppointments(
 			continue
 		}
 		records = append(records, record)
-		recordIds = append(recordIds, notionapi.PropertyFilter{
-			Property: CustomerRecords,
-			Relation: &notionapi.RelationFilterCondition{
-				Contains: record.Id.String(),
-			},
-		})
 	}
-	customersRes, err := s.client.Database.Query(ctx, s.customersDatabaseId, &notionapi.DatabaseQueryRequest{
-		Filter: recordIds,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	customersMap := make(map[appointment.CustomerId]appointment.CustomerEntity, len(customersRes.Results))
-	for _, result := range customersRes.Results {
-		customer := NotionToCustomer(result)
-		customersMap[customer.Id] = customer
-	}
-	services, err := s.Services(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	servicesMap := make(map[appointment.ServiceId]appointment.ServiceEntity, len(services))
-	for _, service := range services {
-		servicesMap[service.Id] = service
-	}
-	apps := make([]appointment.AppointmentAggregate, 0, len(records))
-	for _, record := range records {
-		customer, ok := customersMap[record.CustomerId]
-		if !ok {
-			s.log.Error(ctx, "failed to get customer", slog.String("customer_id", record.CustomerId.String()))
-			continue
-		}
-		service, ok := servicesMap[record.ServiceId]
-		if !ok {
-			s.log.Error(ctx, "failed to get service", slog.String("service_id", record.ServiceId.String()))
-			continue
-		}
-		app, err := appointment.NewAppointmentAggregate(record, service, customer)
-		if err != nil {
-			s.log.Error(ctx, "failed to create appointment", sl.Err(err))
-			continue
-		}
-		apps = append(apps, app)
-	}
-	return apps, nil
+	return records, nil
 }
 
 func (r *AppointmentRepository) ArchiveRecords(ctx context.Context) error {

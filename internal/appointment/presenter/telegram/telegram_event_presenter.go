@@ -24,7 +24,7 @@ func (p AppointmentCreatedEventPresenter) Present(
 ) (telegram_adapters.Message, error) {
 	sb := strings.Builder{}
 	sb.WriteString("*Новая запись*:\n\n")
-	writeAppointmentSummary(&sb, created.AppointmentAggregate)
+	writeAppointmentSummary(&sb, created.Record, created.Customer, created.Service)
 	return telegram_adapters.NewTextMessages(
 		p.recipient,
 		telegram_adapters.NewSendableText(
@@ -51,7 +51,7 @@ func (p AppointmentCanceledEventPresenter) Present(
 ) (telegram_adapters.Message, error) {
 	sb := strings.Builder{}
 	sb.WriteString("*Запись отменена*:\n\n")
-	writeAppointmentSummary(&sb, canceled.AppointmentAggregate)
+	writeAppointmentSummary(&sb, canceled.Record, canceled.Customer, canceled.Service)
 	return telegram_adapters.NewTextMessages(
 		p.recipient,
 		telegram_adapters.NewSendableText(
@@ -82,7 +82,7 @@ func writeChangeType(
 func AppointmentChangedEventPresenter(
 	event appointment.ChangedEvent,
 ) (telegram_adapters.Message, error) {
-	id, err := event.Appointment.Customer().Identity.ToTelegramUserId()
+	id, err := event.Customer.Identity.ToTelegramUserId()
 	if err != nil {
 		return nil, err
 	}
@@ -91,14 +91,14 @@ func AppointmentChangedEventPresenter(
 	writeChangeType(&sb, event.ChangeType)
 	sb.WriteString(":\n\n")
 
-	state, err := appointment_presenter.RecordState(event.Appointment.Status(), event.Appointment.IsArchived())
+	state, err := appointment_presenter.RecordState(event.Record.Status, event.Record.IsArchived)
 	if err != nil {
 		return nil, err
 	}
 	sb.WriteString(state)
 	sb.WriteString("\n\n")
 
-	writeAppointmentSummary(&sb, event.Appointment)
+	writeAppointmentSummary(&sb, event.Record, event.Customer, event.Service)
 
 	return telegram_adapters.NewTextMessages(
 		&telebot.User{

@@ -47,7 +47,10 @@ type AppointmentConfirmationPresenter[R any] interface {
 }
 
 type AppointmentInfoPresenter[R any] interface {
-	RenderInfo(appointment AppointmentAggregate) (R, error)
+	RenderInfo(
+		appointment RecordEntity,
+		service ServiceEntity,
+	) (R, error)
 }
 
 type AppointmentCancelPresenter[R any] interface {

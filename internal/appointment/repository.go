@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-type AppointmentCreator interface {
-	CreateAppointment(context.Context, *AppointmentAggregate) error
-}
+type AppointmentCreator func(context.Context, *RecordEntity) error
 
 type CustomerLoader interface {
 	Customer(context.Context, CustomerIdentity) (CustomerEntity, error)
@@ -41,12 +39,8 @@ type WorkBreaksLoader interface {
 	WorkBreaks(context.Context) (WorkBreaks, error)
 }
 
-type CustomerActiveAppointmentLoader interface {
-	CustomerActiveAppointment(context.Context, CustomerEntity) (AppointmentAggregate, error)
-}
+type CustomerActiveAppointmentLoader func(context.Context, CustomerId) (RecordEntity, error)
 
-type AppointmentRemover interface {
-	RemoveAppointment(context.Context, RecordId) error
-}
+type AppointmentRemover func(context.Context, RecordId) error
 
 type RecordsArchiver func(context.Context) error
