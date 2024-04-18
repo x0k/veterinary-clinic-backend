@@ -48,3 +48,5 @@ type CustomerActiveAppointmentLoader interface {
 type AppointmentRemover interface {
 	RemoveAppointment(context.Context, RecordId) error
 }
+
+type RecordsArchiver func(context.Context) error

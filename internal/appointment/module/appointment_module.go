@@ -360,5 +360,18 @@ func New(
 	)
 	m.Append(detectChangesCronTask)
 
+	archiveAppointmentUseCase := appointment_use_case.NewArchiveAppointmentsUseCase(
+		log,
+		cfg.ArchivingService.ArchivingHour,
+		cfg.ArchivingService.ArchivingMinute,
+		appointmentRepository.ArchiveRecords,
+	)
+	archiveAppointmentsCronTask := adapters_cron.NewTask(
+		"appointment_module.archive_appointments_cron_task",
+		cfg.ArchivingService.ArchivingInterval,
+		archiveAppointmentUseCase.ArchiveRecords,
+	)
+	m.Append(archiveAppointmentsCronTask)
+
 	return m, nil
 }

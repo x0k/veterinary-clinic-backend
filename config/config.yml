@@ -32,6 +32,8 @@ appointment:
     # admin_identity: 
   tracking_service:
     state_path: "./storage/tracking.state"
-  # appointment_change_detector:
-  #   check_interval: 10s
-  #   path: "./storage/storage.db"
+    tracking_interval: 1m
+  archiving_service:
+    archiving_interval: 24h
+    archiving_hour: 23
+    archiving_minute: 0

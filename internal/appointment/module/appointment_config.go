@@ -1,6 +1,8 @@
 package appointment_module
 
 import (
+	"time"
+
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
@@ -34,7 +36,14 @@ type NotificationsConfig struct {
 }
 
 type TrackingServiceConfig struct {
-	StatePath string `yaml:"state_path" env:"APPOINTMENT_TRACKING_STATE_PATH" env-required:"true"`
+	StatePath        string        `yaml:"state_path" env:"APPOINTMENT_TRACKING_STATE_PATH" env-required:"true"`
+	TrackingInterval time.Duration `yaml:"tracking_interval" env:"APPOINTMENT_TRACKING_TRACKING_INTERVAL" env-default:"1m"`
+}
+
+type ArchivingServiceConfig struct {
+	ArchivingInterval time.Duration `yaml:"archiving_interval" env:"APPOINTMENT_ARCHIVING_SERVICE_ARCHIVING_INTERVAL" env-default:"24h"`
+	ArchivingHour     int           `yaml:"archiving_hour" env:"APPOINTMENT_ARCHIVING_SERVICE_ARCHIVING_HOUR" env-default:"23"`
+	ArchivingMinute   int           `yaml:"archiving_minute" env:"APPOINTMENT_ARCHIVING_SERVICE_ARCHIVING_MINUTE" env-default:"0"`
 }
 
 type Config struct {
@@ -44,4 +53,5 @@ type Config struct {
 	SchedulingService  SchedulingServiceConfig  `yaml:"scheduling_service"`
 	Notifications      NotificationsConfig      `yaml:"notifications"`
 	TrackingService    TrackingServiceConfig    `yaml:"tracking_service"`
+	ArchivingService   ArchivingServiceConfig   `yaml:"archiving_service"`
 }

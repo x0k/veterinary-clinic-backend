@@ -36,6 +36,10 @@ func (u *DetectChangesUseCase) DetectChanges(ctx context.Context, now time.Time)
 		return
 	}
 	for _, change := range changes {
+		if change.ChangeType == appointment.RemovedChangeType &&
+			change.Appointment.Status() != appointment.RecordAwaits {
+			continue
+		}
 		if err := u.publisher.Publish(change); err != nil {
 			u.log.Error(ctx, "failed to publish event", sl.Err(err))
 		}
