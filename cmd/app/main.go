@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log/slog"
 	"os"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/app"
-	"github.com/x0k/veterinary-clinic-backend/internal/config"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
 var (
@@ -18,6 +20,17 @@ func init() {
 }
 
 func main() {
-	cfg := config.MustLoad(config_path)
-	app.Run(cfg)
+	cfg := app.MustLoadConfig(config_path)
+	log := app.MustNewLogger(&cfg.Logger)
+	ctx := context.Background()
+	log.Info(ctx, "starting application", slog.String("log_level", cfg.Logger.Level))
+	root, err := app.NewRoot(cfg, log)
+	if err != nil {
+		log.Error(ctx, "failed to run", sl.Err(err))
+		return
+	}
+	if err := root.Start(ctx); err != nil {
+		log.Error(ctx, "fatal error", sl.Err(err))
+	}
+	log.Info(ctx, "application stopped")
 }
