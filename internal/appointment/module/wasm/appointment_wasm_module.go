@@ -24,11 +24,15 @@ func New(
 	recordsRepository := appointment_js_repository.NewRecordRepository(
 		cfg.RecordsRepository,
 	)
+	productionCalendarRepository := appointment_js_repository.NewProductionCalendarRepository(
+		cfg.ProductionCalendarRepository,
+	)
 
 	schedulingService := appointment.NewSchedulingService(
 		log,
 		cfg.SchedulingService.SampleRateInMinutes,
 		recordsRepository.CreateRecord,
+		productionCalendarRepository.ProductionCalendar,
 	)
 
 	appointment_js_controller.NewSchedule(

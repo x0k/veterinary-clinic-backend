@@ -12,6 +12,7 @@ type SchedulingServiceConfig struct {
 }
 
 type Config struct {
-	SchedulingService SchedulingServiceConfig                          `js:"schedulingService"`
-	RecordsRepository appointment_js_repository.RecordRepositoryConfig `js:"recordsRepository"`
+	SchedulingService            SchedulingServiceConfig                                      `js:"schedulingService"`
+	RecordsRepository            appointment_js_repository.RecordRepositoryConfig             `js:"recordsRepository"`
+	ProductionCalendarRepository appointment_js_repository.ProductionCalendarRepositoryConfig `js:"productionCalendarRepository"`
 }

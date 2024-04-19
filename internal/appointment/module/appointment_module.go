@@ -99,7 +99,7 @@ func New(
 		log,
 		cfg.SchedulingService.SampleRateInMinutes,
 		appointmentRepository.CreateAppointment,
-		productionCalendarRepository,
+		productionCalendarRepository.ProductionCalendar,
 		workingHoursRepository,
 		appointmentRepository,
 		workBreaksRepository,

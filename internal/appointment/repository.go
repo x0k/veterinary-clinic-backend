@@ -23,9 +23,7 @@ type ServicesLoader interface {
 	Services(context.Context) ([]ServiceEntity, error)
 }
 
-type ProductionCalendarLoader interface {
-	ProductionCalendar(context.Context) (ProductionCalendar, error)
-}
+type ProductionCalendarLoader func(context.Context) (ProductionCalendar, error)
 
 type WorkingHoursLoader interface {
 	WorkingHours(context.Context) (WorkingHours, error)
