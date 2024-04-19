@@ -22,29 +22,14 @@ env: all run prof migrate debug-env query
 all:
     air -- --config config/config.yml
 
-query:
-    curl -X POST "https://api.notion.com/v1/databases/${APPOINTMENT_NOTION_CUSTOMERS_DATABASE_ID}/query" \
-    -H 'Authorization: Bearer '"$NOTION_TOKEN"'' \
-    -H 'Notion-Version: 2022-06-28' \
-    -H "Content-Type: application/json" \
-    --data '{
-    "filter": {
-        "or": [
-            {
-                "property": "Записи",
-                "relation": {
-                    "contains": "eb857aa769f448efb6e1ad4e52c12051"
-                }
-            }
-        ]
-    }
-    }'
+wasm:
+    tinygo build -o out/domain.wasm -target wasm cmd/wasm/main.go
 
 build:
-    CGO_ENABLED=1 go build -tags migrate -o bin/app cmd/app/main.go
+    go build -tags migrate -o out/app cmd/app/main.go
 
 run:
-    ./bin/app --config config/config.yml
+    out/app --config config/config.yml
 
 debug-env:
     env > .env.debug.local
@@ -72,4 +57,4 @@ mc:
     migrate create -ext sql -dir $STORAGE_MIGRATIONS_PATH -seq $1
 
 migrate:
-    CGO_ENABLED=1 go run -tags migrate cmd/migrate/main.go
+    go run -tags migrate cmd/migrate/main.go
