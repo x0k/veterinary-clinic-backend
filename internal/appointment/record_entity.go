@@ -16,6 +16,10 @@ var ErrRecordIdIsNotTemporal = errors.New("id is not temporal")
 
 type RecordStatus string
 
+func (r RecordStatus) String() string {
+	return string(r)
+}
+
 const (
 	RecordAwaits    RecordStatus = "awaits"
 	RecordDone      RecordStatus = "done"
