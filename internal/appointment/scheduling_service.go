@@ -120,7 +120,7 @@ func (s *SchedulingService) MakeAppointment(
 	if err != nil {
 		return RecordEntity{}, err
 	}
-	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
+	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate)
 	if err != nil {
 		return RecordEntity{}, err
 	}
@@ -178,7 +178,7 @@ func (s *SchedulingService) Schedule(
 		return Schedule{}, err
 	}
 	appointmentDate := productionCalendar.DayOrNextWorkingDay(preferredDate)
-	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
+	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate)
 	if err != nil {
 		return Schedule{}, err
 	}
@@ -217,7 +217,7 @@ func (s *SchedulingService) SampledFreeTimeSlots(
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
-	busyPeriods, err := s.busyPeriodsLoader.BusyPeriods(ctx, appointmentDate)
+	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate)
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
@@ -266,7 +266,7 @@ func (s *SchedulingService) productionCalendar(ctx context.Context) (ProductionC
 }
 
 func (s *SchedulingService) dayWorkBreaks(ctx context.Context, day time.Time) (DayWorkBreaks, error) {
-	workBreaks, err := s.workBreaksLoader.WorkBreaks(ctx)
+	workBreaks, err := s.workBreaksLoader(ctx)
 	if err != nil {
 		return DayWorkBreaks{}, err
 	}
@@ -281,7 +281,7 @@ func (s *SchedulingService) freeTimeSlots(
 	busyPeriods BusyPeriods,
 	dayWorkBreaks DayWorkBreaks,
 ) (FreeTimeSlots, error) {
-	workingHours, err := s.workingHoursLoader.WorkingHours(ctx)
+	workingHours, err := s.workingHoursLoader(ctx)
 	if err != nil {
 		return FreeTimeSlots{}, err
 	}

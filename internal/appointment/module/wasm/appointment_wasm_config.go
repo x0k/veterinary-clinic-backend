@@ -15,4 +15,5 @@ type Config struct {
 	SchedulingService            SchedulingServiceConfig                                      `js:"schedulingService"`
 	RecordsRepository            appointment_js_repository.RecordRepositoryConfig             `js:"recordsRepository"`
 	ProductionCalendarRepository appointment_js_repository.ProductionCalendarRepositoryConfig `js:"productionCalendarRepository"`
+	WorkBreaksRepository         appointment_js_repository.WorkBreaksRepositoryConfig         `js:"workBreaksRepository"`
 }

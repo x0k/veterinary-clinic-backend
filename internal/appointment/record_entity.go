@@ -16,6 +16,10 @@ var ErrRecordIdIsNotTemporal = errors.New("id is not temporal")
 
 type RecordStatus string
 
+func NewRecordStatus(str string) RecordStatus {
+	return RecordStatus(str)
+}
+
 func (r RecordStatus) String() string {
 	return string(r)
 }

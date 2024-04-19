@@ -25,17 +25,11 @@ type ServicesLoader interface {
 
 type ProductionCalendarLoader func(context.Context) (ProductionCalendar, error)
 
-type WorkingHoursLoader interface {
-	WorkingHours(context.Context) (WorkingHours, error)
-}
+type WorkingHoursLoader func(context.Context) (WorkingHours, error)
 
-type BusyPeriodsLoader interface {
-	BusyPeriods(context.Context, time.Time) (BusyPeriods, error)
-}
+type BusyPeriodsLoader func(context.Context, time.Time) (BusyPeriods, error)
 
-type WorkBreaksLoader interface {
-	WorkBreaks(context.Context) (WorkBreaks, error)
-}
+type WorkBreaksLoader func(context.Context) (WorkBreaks, error)
 
 type CustomerActiveAppointmentLoader func(context.Context, CustomerId) (RecordEntity, error)
 

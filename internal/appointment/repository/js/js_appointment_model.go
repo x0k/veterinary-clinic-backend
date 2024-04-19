@@ -1,6 +1,8 @@
 package appointment_js_repository
 
 import (
+	"time"
+
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
@@ -17,6 +19,25 @@ func TimeToDto(time shared.Time) TimeDto {
 	}
 }
 
+func TimeFromDto(time TimeDto) shared.Time {
+	return shared.Time{
+		Minutes: time.Minutes,
+		Hours:   time.Hours,
+	}
+}
+
+type TimePeriodDto struct {
+	Start TimeDto `js:"start"`
+	End   TimeDto `js:"end"`
+}
+
+func TimePeriodFromDto(period TimePeriodDto) shared.TimePeriod {
+	return shared.TimePeriod{
+		Start: TimeFromDto(period.Start),
+		End:   TimeFromDto(period.End),
+	}
+}
+
 type DateDto struct {
 	Day   int `js:"day"`
 	Month int `js:"month"`
@@ -25,6 +46,14 @@ type DateDto struct {
 
 func DateToDto(date shared.Date) DateDto {
 	return DateDto{
+		Day:   date.Day,
+		Month: date.Month,
+		Year:  date.Year,
+	}
+}
+
+func DateFromDto(date DateDto) shared.Date {
+	return shared.Date{
 		Day:   date.Day,
 		Month: date.Month,
 		Year:  date.Year,
@@ -43,6 +72,13 @@ func DateTimeToDto(dateTime shared.DateTime) DateTimeDto {
 	}
 }
 
+func DateTimeFromDto(dateTime DateTimeDto) shared.DateTime {
+	return shared.DateTime{
+		Date: DateFromDto(dateTime.Date),
+		Time: TimeFromDto(dateTime.Time),
+	}
+}
+
 type DateTimePeriodDto struct {
 	Start DateTimeDto `js:"start"`
 	End   DateTimeDto `js:"end"`
@@ -52,6 +88,13 @@ func DateTimePeriodToDto(period shared.DateTimePeriod) DateTimePeriodDto {
 	return DateTimePeriodDto{
 		Start: DateTimeToDto(period.Start),
 		End:   DateTimeToDto(period.End),
+	}
+}
+
+func DateTimePeriodFromDto(period DateTimePeriodDto) shared.DateTimePeriod {
+	return shared.DateTimePeriod{
+		Start: DateTimeFromDto(period.Start),
+		End:   DateTimeFromDto(period.End),
 	}
 }
 
@@ -77,4 +120,37 @@ func RecordToDto(record appointment.RecordEntity) RecordDto {
 		ServiceId:      record.ServiceId.String(),
 		CreatedAt:      record.CreatedAt.String(),
 	}
+}
+
+func RecordFromDto(dto RecordDto) (appointment.RecordEntity, error) {
+	createdAt, err := time.Parse(time.RFC3339, dto.CreatedAt)
+	if err != nil {
+		return appointment.RecordEntity{}, err
+	}
+	return appointment.NewRecord(
+		appointment.RecordId(dto.Id),
+		dto.Title,
+		appointment.NewRecordStatus(dto.Status),
+		dto.IsArchived,
+		DateTimePeriodFromDto(dto.DateTimePeriod),
+		appointment.NewCustomerId(dto.CustomerId),
+		appointment.NewServiceId(dto.ServiceId),
+		createdAt,
+	)
+}
+
+type WorkBreakDto struct {
+	Id              string        `js:"id"`
+	Title           string        `js:"title"`
+	MatchExpression string        `js:"matchExpression"`
+	Period          TimePeriodDto `js:"period"`
+}
+
+func WorkBreakFromDto(dto WorkBreakDto) appointment.WorkBreak {
+	return appointment.NewWorkBreak(
+		appointment.WorkBreakId(dto.Id),
+		dto.Title,
+		dto.MatchExpression,
+		TimePeriodFromDto(dto.Period),
+	)
 }

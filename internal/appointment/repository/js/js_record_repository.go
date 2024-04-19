@@ -5,6 +5,7 @@ package appointment_js_repository
 import (
 	"context"
 	"syscall/js"
+	"time"
 
 	"github.com/norunners/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
@@ -12,7 +13,9 @@ import (
 )
 
 type RecordRepositoryConfig struct {
-	CreateRecord js.Value `js:"createRecord"`
+	CreateRecord              js.Value `js:"createRecord"`
+	BusyPeriods               js.Value `js:"loadBusyPeriods"`
+	CustomerActiveAppointment js.Value `js:"loadCustomerActiveAppointment"`
 }
 
 type RecordRepository struct {
@@ -40,4 +43,44 @@ func (r *RecordRepository) CreateRecord(
 	}
 	rec.SetId(appointment.RecordId(recordId.String()))
 	return nil
+}
+
+func (r *RecordRepository) BusyPeriods(
+	ctx context.Context,
+	now time.Time,
+) (appointment.BusyPeriods, error) {
+	promise := r.cfg.BusyPeriods.Invoke(
+		now.Format(time.RFC3339),
+	)
+	jsValue, err := js_adapters.Await(ctx, promise)
+	if err != nil {
+		return nil, err
+	}
+	busyPeriodsDto := make([]TimePeriodDto, 0)
+	if err := vert.ValueOf(jsValue).AssignTo(&busyPeriodsDto); err != nil {
+		return nil, err
+	}
+	busyPeriods := make(appointment.BusyPeriods, len(busyPeriodsDto))
+	for i, busyPeriodDto := range busyPeriodsDto {
+		busyPeriods[i] = TimePeriodFromDto(busyPeriodDto)
+	}
+	return busyPeriods, nil
+}
+
+func (r *RecordRepository) CustomerActiveAppointment(
+	ctx context.Context,
+	customerId appointment.CustomerId,
+) (appointment.RecordEntity, error) {
+	promise := r.cfg.CustomerActiveAppointment.Invoke(
+		vert.ValueOf(string(customerId)),
+	)
+	jsValue, err := js_adapters.Await(ctx, promise)
+	if err != nil {
+		return appointment.RecordEntity{}, err
+	}
+	dto := RecordDto{}
+	if err := vert.ValueOf(jsValue).AssignTo(&dto); err != nil {
+		return appointment.RecordEntity{}, err
+	}
+	return RecordFromDto(dto)
 }

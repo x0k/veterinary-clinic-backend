@@ -100,9 +100,9 @@ func New(
 		cfg.SchedulingService.SampleRateInMinutes,
 		appointmentRepository.CreateAppointment,
 		productionCalendarRepository.ProductionCalendar,
-		workingHoursRepository,
-		appointmentRepository,
-		workBreaksRepository,
+		workingHoursRepository.WorkingHours,
+		appointmentRepository.BusyPeriods,
+		workBreaksRepository.WorkBreaks,
 		appointmentRepository.CustomerActiveAppointment,
 		appointmentRepository.RemoveAppointment,
 	)
