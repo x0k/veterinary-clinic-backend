@@ -8,27 +8,31 @@ import (
 
 type ScheduleEntryType int
 
+func (t ScheduleEntryType) Int() int {
+	return int(t)
+}
+
 const (
 	FreePeriod ScheduleEntryType = iota
 	BusyPeriod
 )
 
-type scheduleEntry struct {
+type ScheduleEntry struct {
 	shared.DateTimePeriod
 	Type  ScheduleEntryType
 	Title string
 }
 
-type scheduleEntries []scheduleEntry
+type ScheduleEntries []ScheduleEntry
 
 // Performs a mutation
 //
 // Returns a modified slice
-func (periods scheduleEntries) SortAndFlat() scheduleEntries {
+func (periods ScheduleEntries) SortAndFlat() ScheduleEntries {
 	if len(periods) < 2 {
 		return periods
 	}
-	slices.SortFunc(periods, func(a, b scheduleEntry) int {
+	slices.SortFunc(periods, func(a, b ScheduleEntry) int {
 		return shared.DateTimePeriodApi.ComparePeriods(a.DateTimePeriod, b.DateTimePeriod)
 	})
 	nextIndex := 1
@@ -43,7 +47,7 @@ func (periods scheduleEntries) SortAndFlat() scheduleEntries {
 				if len(diff) == 0 {
 					continue
 				}
-				periods[nextIndex] = scheduleEntry{
+				periods[nextIndex] = ScheduleEntry{
 					DateTimePeriod: diff[0],
 					Type:           currentPeriod.Type,
 					Title:          currentPeriod.Title,
@@ -54,7 +58,7 @@ func (periods scheduleEntries) SortAndFlat() scheduleEntries {
 					periods[nextIndex-1] = currentPeriod
 					continue
 				}
-				periods[nextIndex-1] = scheduleEntry{
+				periods[nextIndex-1] = ScheduleEntry{
 					DateTimePeriod: diff[0],
 					Type:           prevPeriod.Type,
 					Title:          prevPeriod.Title,
@@ -72,7 +76,7 @@ func (periods scheduleEntries) SortAndFlat() scheduleEntries {
 // Performs a mutation
 //
 // Returns a modified slice
-func (periods scheduleEntries) OmitPast(now shared.DateTime) scheduleEntries {
+func (periods ScheduleEntries) OmitPast(now shared.DateTime) ScheduleEntries {
 	shift := 0
 	for i := 0; i < len(periods); i++ {
 		end := periods[i].End
@@ -90,10 +94,10 @@ func newScheduleEntries(
 	freeTimeSlots FreeTimeSlots,
 	busyPeriods BusyPeriods,
 	workBreaks DayWorkBreaks,
-) scheduleEntries {
-	periods := make(scheduleEntries, 0, len(freeTimeSlots)+len(busyPeriods)+len(workBreaks))
+) ScheduleEntries {
+	periods := make(ScheduleEntries, 0, len(freeTimeSlots)+len(busyPeriods)+len(workBreaks))
 	for _, p := range freeTimeSlots {
-		periods = append(periods, scheduleEntry{
+		periods = append(periods, ScheduleEntry{
 			DateTimePeriod: shared.DateTimePeriod{
 				Start: shared.DateTime{
 					Date: appointmentDate,
@@ -109,7 +113,7 @@ func newScheduleEntries(
 		})
 	}
 	for _, p := range busyPeriods {
-		periods = append(periods, scheduleEntry{
+		periods = append(periods, ScheduleEntry{
 			DateTimePeriod: shared.DateTimePeriod{
 				Start: shared.DateTime{
 					Date: appointmentDate,
@@ -125,7 +129,7 @@ func newScheduleEntries(
 		})
 	}
 	for _, p := range workBreaks {
-		periods = append(periods, scheduleEntry{
+		periods = append(periods, ScheduleEntry{
 			DateTimePeriod: shared.DateTimePeriod{
 				Start: shared.DateTime{
 					Date: appointmentDate,

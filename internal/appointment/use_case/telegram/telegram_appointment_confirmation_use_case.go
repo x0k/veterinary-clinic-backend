@@ -40,7 +40,7 @@ func (u *AppointmentConfirmationUseCase[R]) Confirmation(
 	service, err := u.serviceLoader.Service(ctx, serviceId)
 	if err != nil {
 		u.log.Error(ctx, "failed to load service", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	return u.confirmationPresenter.RenderConfirmation(service, appointmentDateTime)
 }

@@ -54,17 +54,17 @@ func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 	)
 	if err := u.customerCreator.CreateCustomer(ctx, &customer); err != nil {
 		u.log.Error(ctx, "failed to create customer", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	if customer.Id == appointment.TemporalCustomerId {
 		err := appointment.ErrInvalidCustomerId
 		u.log.Error(ctx, "failed to create customer", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	services, err := u.servicesLoader.Services(ctx)
 	if err != nil {
 		u.log.Error(ctx, "failed to load services", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	return u.successRegistrationPresenter.RenderSuccessRegistration(services)
 }

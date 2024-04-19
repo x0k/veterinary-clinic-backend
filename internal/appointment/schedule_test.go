@@ -16,7 +16,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want scheduleEntries
+		want ScheduleEntries
 	}{
 		{
 			name: "Vacation",
@@ -67,7 +67,7 @@ func TestCalculateSchedulePeriods(t *testing.T) {
 					},
 				},
 			},
-			want: scheduleEntries{
+			want: ScheduleEntries{
 				{
 					DateTimePeriod: shared.DateTimePeriod{
 						Start: shared.DateTime{

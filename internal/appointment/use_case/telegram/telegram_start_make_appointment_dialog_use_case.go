@@ -58,25 +58,25 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	}
 	if err != nil {
 		u.log.Error(ctx, "failed to find customer", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	existedAppointment, err := u.customerActiveAppointmentLoader(ctx, customer.Id)
 	if !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
 			u.log.Error(ctx, "failed to find customer active appointment", sl.Err(err))
-			return u.errorPresenter.RenderError(err)
+			return u.errorPresenter(err)
 		}
 		service, err := u.serviceLoader.Service(ctx, existedAppointment.ServiceId)
 		if err != nil {
 			u.log.Error(ctx, "failed to load service", sl.Err(err))
-			return u.errorPresenter.RenderError(err)
+			return u.errorPresenter(err)
 		}
 		return u.appointmentInfoPresenter.RenderInfo(existedAppointment, service)
 	}
 	services, err := u.servicesLoader.Services(ctx)
 	if err != nil {
 		u.log.Error(ctx, "failed to load services", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	return u.servicesPickerPresenter.RenderServicesList(services)
 }

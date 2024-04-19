@@ -6,17 +6,11 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
-type ServicesPresenter[R any] interface {
-	RenderServices(services []ServiceEntity) (R, error)
-}
+type ServicesPresenter[R any] func(services []ServiceEntity) (R, error)
 
-type SchedulePresenter[R any] interface {
-	RenderSchedule(now time.Time, schedule Schedule) (R, error)
-}
+type SchedulePresenter[R any] func(now time.Time, schedule Schedule) (R, error)
 
-type ErrorPresenter[R any] interface {
-	RenderError(err error) (R, error)
-}
+type ErrorPresenter[R any] func(err error) (R, error)
 
 type RegistrationPresenter[R any] interface {
 	RenderRegistration(telegramUserId shared.TelegramUserId) (R, error)

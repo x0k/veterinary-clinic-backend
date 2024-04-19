@@ -159,6 +159,9 @@ func (s *SchedulingService) MakeAppointment(
 		service.Id,
 		now,
 	)
+	if err != nil {
+		return RecordEntity{}, err
+	}
 	if err := s.appointmentCreator(ctx, &record); err != nil {
 		return RecordEntity{}, err
 	}

@@ -8,7 +8,7 @@ import (
 
 type Schedule struct {
 	Date     time.Time
-	Entries  scheduleEntries
+	Entries  ScheduleEntries
 	NextDate time.Time
 	PrevDate time.Time
 }

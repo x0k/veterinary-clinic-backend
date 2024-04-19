@@ -15,7 +15,7 @@ type errorSender struct {
 }
 
 func (s *errorSender) Send(c telebot.Context, err error) error {
-	res, err := s.errorPresenter.RenderError(err)
+	res, err := s.errorPresenter(err)
 	if err != nil {
 		return err
 	}

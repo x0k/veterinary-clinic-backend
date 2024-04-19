@@ -11,6 +11,7 @@ import (
 var PromiseConstructor = js.Global().Get("Promise")
 var ErrorConstructor = js.Global().Get("Error")
 var ObjectConstructor = js.Global().Get("Object")
+var Console = js.Global().Get("console")
 
 func Promise(action func() (js.Value, *js.Value)) js.Value {
 	handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {

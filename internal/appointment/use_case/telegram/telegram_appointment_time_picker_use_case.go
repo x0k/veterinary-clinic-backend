@@ -44,7 +44,7 @@ func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 	service, err := u.serviceLoader.Service(ctx, serviceId)
 	if err != nil {
 		u.log.Error(ctx, "failed to load service", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	sampledFreeTimeSlots, err := u.schedulingService.SampledFreeTimeSlots(
 		ctx,
@@ -54,7 +54,7 @@ func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 	)
 	if err != nil {
 		u.log.Error(ctx, "failed to get sampled free time slots", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
 	return u.timePickerPresenter.RenderTimePicker(serviceId, appointmentDate, sampledFreeTimeSlots)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/norunners/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 )
 
 type WorkBreaksRepositoryConfig struct {
@@ -35,13 +36,13 @@ func (r *WorkBreaksRepository) WorkBreaks(
 	if err != nil {
 		return nil, err
 	}
-	workBreaksDto := make([]WorkBreakDto, 0)
-	if err := vert.ValueOf(workBreaksJsValue).AssignTo(&workBreaksDto); err != nil {
+	workBreaksDTO := make([]appointment_js_adapters.WorkBreakDTO, 0)
+	if err := vert.ValueOf(workBreaksJsValue).AssignTo(&workBreaksDTO); err != nil {
 		return nil, err
 	}
-	workBreaks := make([]appointment.WorkBreak, len(workBreaksDto))
-	for i, workBreakDto := range workBreaksDto {
-		workBreaks[i] = WorkBreakFromDto(workBreakDto)
+	workBreaks := make([]appointment.WorkBreak, len(workBreaksDTO))
+	for i, workBreakDTO := range workBreaksDTO {
+		workBreaks[i] = appointment_js_adapters.WorkBreakFromDTO(workBreakDTO)
 	}
 	return workBreaks, nil
 }

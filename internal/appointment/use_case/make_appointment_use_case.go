@@ -52,17 +52,17 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 	customer, err := s.customerLoader(ctx, customerId)
 	if err != nil {
 		s.log.Error(ctx, "failed to load customer", sl.Err(err))
-		return s.errorPresenter.RenderError(err)
+		return s.errorPresenter(err)
 	}
 	service, err := s.serviceLoader.Service(ctx, serviceId)
 	if err != nil {
 		s.log.Error(ctx, "failed to load service", sl.Err(err))
-		return s.errorPresenter.RenderError(err)
+		return s.errorPresenter(err)
 	}
 	app, err := s.schedulingService.MakeAppointment(ctx, now, appointmentDate, customer, service)
 	if err != nil {
 		s.log.Error(ctx, "failed to make appointment", sl.Err(err))
-		return s.errorPresenter.RenderError(err)
+		return s.errorPresenter(err)
 	}
 	if err := s.publisher.Publish(appointment.NewCreated(
 		app,

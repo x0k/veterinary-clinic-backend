@@ -47,10 +47,6 @@ func New(
 	)
 	m.PostStart(greetController)
 
-	errorPresenter := appointment_telegram_presenter.NewErrorTextPresenter()
-	errorQueryPresenter := appointment_telegram_presenter.NewErrorQueryPresenter()
-	errorCallbackPresenter := appointment_telegram_presenter.NewErrorCallbackPresenter()
-
 	publisher := pubsub.New[appointment.EventType]()
 
 	appointmentRepository := appointment_notion_repository.NewAppointment(
@@ -67,8 +63,8 @@ func New(
 		appointment_use_case.NewServicesUseCase(
 			log,
 			appointmentRepository,
-			appointment_telegram_presenter.NewServices(),
-			errorPresenter,
+			appointment_telegram_presenter.ServicesPresenter,
+			appointment_telegram_presenter.TextErrorPresenter,
 		),
 	)
 	m.PostStart(servicesController)
@@ -109,16 +105,17 @@ func New(
 
 	webCalendarHandlerUrl := web_calendar_adapters.NewHandlerUrl(cfg.WebCalendar.HandlerUrlRoot)
 
+	scheduleTextPresenter := appointment_telegram_presenter.NewScheduleTextPresenter(
+		cfg.WebCalendar.AppUrl,
+		webCalendarHandlerUrl,
+	)
 	scheduleController := appointment_telegram_controller.NewSchedule(
 		bot,
 		appointment_use_case.NewScheduleUseCase(
 			log,
 			schedulingService,
-			appointment_telegram_presenter.NewScheduleTextPresenter(
-				cfg.WebCalendar.AppUrl,
-				webCalendarHandlerUrl,
-			),
-			errorPresenter,
+			scheduleTextPresenter.RenderSchedule,
+			appointment_telegram_presenter.TextErrorPresenter,
 		),
 	)
 	m.PostStart(scheduleController)
@@ -141,6 +138,10 @@ func New(
 	)
 	m.Append(expirableAppointmentStateContainer)
 
+	scheduleQueryPresenter := appointment_telegram_presenter.NewScheduleQueryPresenter(
+		cfg.WebCalendar.AppUrl,
+		webCalendarHandlerUrl,
+	)
 	webCalendarServerMux := http.NewServeMux()
 	if err := appointment_http_controller.UseWebCalendarRouter(
 		webCalendarServerMux,
@@ -151,11 +152,8 @@ func New(
 		appointment_use_case.NewScheduleUseCase(
 			log,
 			schedulingService,
-			appointment_telegram_presenter.NewScheduleQueryPresenter(
-				cfg.WebCalendar.AppUrl,
-				webCalendarHandlerUrl,
-			),
-			errorQueryPresenter,
+			scheduleQueryPresenter.RenderSchedule,
+			appointment_telegram_presenter.QueryErrorPresenter,
 		),
 	); err != nil {
 		return nil, err
@@ -174,7 +172,7 @@ func New(
 				webCalendarDatePickerUrl,
 				expirableAppointmentStateContainer,
 			),
-			errorQueryPresenter,
+			appointment_telegram_presenter.QueryErrorPresenter,
 		),
 	); err != nil {
 		return nil, err
@@ -228,10 +226,12 @@ func New(
 		appointment_telegram_presenter.NewRegistrationPresenter(
 			expirableTelegramUserIdContainer,
 		),
-		errorPresenter,
+		appointment_telegram_presenter.TextErrorPresenter,
 	)
 
-	errorSender := appointment_telegram_adapters.NewErrorSender(errorPresenter)
+	errorSender := appointment_telegram_adapters.NewErrorSender(
+		appointment_telegram_presenter.TextErrorPresenter,
+	)
 
 	startMakeAppointmentDialogController := appointment_telegram_controller.NewStartMakeAppointmentDialog(
 		bot,
@@ -244,7 +244,7 @@ func New(
 			appointment_telegram_presenter.NewSuccessRegistrationPresenter(
 				servicesPickerPresenter,
 			),
-			errorPresenter,
+			appointment_telegram_presenter.TextErrorPresenter,
 		),
 		errorSender,
 	)
@@ -261,7 +261,7 @@ func New(
 				webCalendarDatePickerUrl,
 				expirableAppointmentStateContainer,
 			),
-			errorPresenter,
+			appointment_telegram_presenter.TextErrorPresenter,
 		),
 		appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
 			log,
@@ -270,7 +270,7 @@ func New(
 			appointment_telegram_presenter.NewTimePickerPresenter(
 				expirableAppointmentStateContainer,
 			),
-			errorPresenter,
+			appointment_telegram_presenter.TextErrorPresenter,
 		),
 		appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
 			log,
@@ -278,7 +278,7 @@ func New(
 			appointment_telegram_presenter.NewConfirmationPresenter(
 				expirableAppointmentStateContainer,
 			),
-			errorPresenter,
+			appointment_telegram_presenter.TextErrorPresenter,
 		),
 		appointment_use_case.NewMakeAppointmentUseCase(
 			log,
@@ -286,7 +286,7 @@ func New(
 			customerRepository.CustomerByIdentity,
 			appointmentRepository,
 			appointmentInfoPresenter,
-			errorPresenter,
+			appointment_telegram_presenter.TextErrorPresenter,
 			publisher,
 		),
 		appointment_use_case.NewCancelAppointmentUseCase(
@@ -295,7 +295,7 @@ func New(
 			customerRepository.CustomerByIdentity,
 			appointmentRepository,
 			appointment_telegram_presenter.NewAppointmentCancelPresenter(),
-			errorCallbackPresenter,
+			appointment_telegram_presenter.CallbackErrorPresenter,
 			publisher,
 		),
 		errorSender,

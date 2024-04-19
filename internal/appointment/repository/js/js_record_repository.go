@@ -10,12 +10,14 @@ import (
 	"github.com/norunners/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 )
 
 type RecordRepositoryConfig struct {
 	CreateRecord              js.Value `js:"createRecord"`
 	BusyPeriods               js.Value `js:"loadBusyPeriods"`
 	CustomerActiveAppointment js.Value `js:"loadCustomerActiveAppointment"`
+	RemoveRecord              js.Value `js:"removeRecord"`
 }
 
 type RecordRepository struct {
@@ -35,7 +37,7 @@ func (r *RecordRepository) CreateRecord(
 	rec *appointment.RecordEntity,
 ) error {
 	promise := r.cfg.CreateRecord.Invoke(
-		vert.ValueOf(RecordToDto(*rec)),
+		vert.ValueOf(appointment_js_adapters.RecordToDTO(*rec)),
 	)
 	recordId, err := js_adapters.Await(ctx, promise)
 	if err != nil {
@@ -56,13 +58,13 @@ func (r *RecordRepository) BusyPeriods(
 	if err != nil {
 		return nil, err
 	}
-	busyPeriodsDto := make([]TimePeriodDto, 0)
-	if err := vert.ValueOf(jsValue).AssignTo(&busyPeriodsDto); err != nil {
+	busyPeriodsDTO := make([]appointment_js_adapters.TimePeriodDTO, 0)
+	if err := vert.ValueOf(jsValue).AssignTo(&busyPeriodsDTO); err != nil {
 		return nil, err
 	}
-	busyPeriods := make(appointment.BusyPeriods, len(busyPeriodsDto))
-	for i, busyPeriodDto := range busyPeriodsDto {
-		busyPeriods[i] = TimePeriodFromDto(busyPeriodDto)
+	busyPeriods := make(appointment.BusyPeriods, len(busyPeriodsDTO))
+	for i, busyPeriodDTO := range busyPeriodsDTO {
+		busyPeriods[i] = appointment_js_adapters.TimePeriodFromDTO(busyPeriodDTO)
 	}
 	return busyPeriods, nil
 }
@@ -78,9 +80,20 @@ func (r *RecordRepository) CustomerActiveAppointment(
 	if err != nil {
 		return appointment.RecordEntity{}, err
 	}
-	dto := RecordDto{}
+	dto := appointment_js_adapters.RecordDTO{}
 	if err := vert.ValueOf(jsValue).AssignTo(&dto); err != nil {
 		return appointment.RecordEntity{}, err
 	}
-	return RecordFromDto(dto)
+	return appointment_js_adapters.RecordFromDTO(dto)
+}
+
+func (r *RecordRepository) RemoveRecord(
+	ctx context.Context,
+	recordId appointment.RecordId,
+) error {
+	promise := r.cfg.RemoveRecord.Invoke(
+		vert.ValueOf(string(recordId)),
+	)
+	_, err := js_adapters.Await(ctx, promise)
+	return err
 }

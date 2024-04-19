@@ -49,13 +49,13 @@ func (s *CancelAppointmentUseCase[R]) CancelAppointment(
 	customer, err := s.customerLoader(ctx, customerIdentity)
 	if err != nil {
 		s.log.Error(ctx, "failed to load customer", sl.Err(err))
-		res, err := s.errorPresenter.RenderError(err)
+		res, err := s.errorPresenter(err)
 		return false, res, err
 	}
 	rec, err := s.schedulingService.CancelAppointmentForCustomer(ctx, customer.Id)
 	if err != nil {
 		s.log.Error(ctx, "failed to cancel appointment", sl.Err(err))
-		res, err := s.errorPresenter.RenderError(err)
+		res, err := s.errorPresenter(err)
 		return false, res, err
 	}
 	service, err := s.serviceLoader.Service(ctx, rec.ServiceId)
