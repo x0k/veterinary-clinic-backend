@@ -5,7 +5,6 @@ package appointment_wasm_module
 import (
 	"syscall/js"
 
-	"github.com/jomei/notionapi"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/js"
@@ -19,7 +18,6 @@ import (
 func New(
 	cfg *Config,
 	log *logger.Logger,
-	notion *notionapi.Client,
 ) (js.Value, error) {
 	m := js_adapters.ObjectConstructor.New()
 	// Schedule controller

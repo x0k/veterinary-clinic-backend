@@ -25,6 +25,9 @@ all:
 wasm:
     tinygo build -o out/domain.wasm -target wasm cmd/wasm/main.go
 
+wasm-fat:
+    GOOS=js GOARCH=wasm go build -o out/domain-fat.wasm cmd/wasm/main.go
+
 build:
     go build -tags migrate -o out/app cmd/app/main.go
 
