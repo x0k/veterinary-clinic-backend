@@ -74,8 +74,10 @@ func (r *RecordRepository) CustomerActiveAppointment(
 	customerId appointment.CustomerId,
 ) (appointment.RecordEntity, error) {
 	promise := r.cfg.CustomerActiveAppointment.Invoke(
-		vert.ValueOf(string(customerId)),
+		js.ValueOf(customerId.String()),
 	)
+	// JS cant produce not found error
+	// Is it required for JS use cases?
 	jsValue, err := js_adapters.Await(ctx, promise)
 	if err != nil {
 		return appointment.RecordEntity{}, err
@@ -92,7 +94,7 @@ func (r *RecordRepository) RemoveRecord(
 	recordId appointment.RecordId,
 ) error {
 	promise := r.cfg.RemoveRecord.Invoke(
-		vert.ValueOf(string(recordId)),
+		js.ValueOf(recordId.String()),
 	)
 	_, err := js_adapters.Await(ctx, promise)
 	return err

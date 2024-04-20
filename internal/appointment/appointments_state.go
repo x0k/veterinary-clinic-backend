@@ -1,6 +1,6 @@
 package appointment
 
-import "maps"
+import "github.com/x0k/veterinary-clinic-backend/internal/lib/mapx"
 
 type AppointmentsState struct {
 	appointments map[RecordId]RecordEntity
@@ -17,7 +17,7 @@ func (s *AppointmentsState) Appointments() map[RecordId]RecordEntity {
 }
 
 func (s *AppointmentsState) Reconcile(actualAppointments []RecordEntity) []ChangedEvent {
-	appsCopy := maps.Clone(s.appointments)
+	appsCopy := mapx.Clone(s.appointments)
 	changes := make([]ChangedEvent, 0, len(actualAppointments))
 	for _, actualApp := range actualAppointments {
 		s.appointments[actualApp.Id] = actualApp

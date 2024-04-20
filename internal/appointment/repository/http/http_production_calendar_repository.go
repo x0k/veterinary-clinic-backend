@@ -13,6 +13,7 @@ import (
 	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/mapx"
 )
 
 const productionCalendarRepositoryName = "appointment_http_repository.ProductionCalendarRepository"
@@ -59,7 +60,7 @@ func (s *ProductionCalendarRepository) Start(ctx context.Context) error {
 func (s *ProductionCalendarRepository) ProductionCalendar(ctx context.Context) (appointment.ProductionCalendar, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return maps.Clone(s.productionCalendar), nil
+	return mapx.Clone(s.productionCalendar), nil
 }
 
 func (s *ProductionCalendarRepository) updateProductionCalendar(calendar appointment.ProductionCalendar) {

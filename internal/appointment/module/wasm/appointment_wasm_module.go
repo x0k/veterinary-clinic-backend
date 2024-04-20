@@ -18,7 +18,7 @@ import (
 func New(
 	cfg *Config,
 	log *logger.Logger,
-) (js.Value, error) {
+) js.Value {
 	m := js_adapters.ObjectConstructor.New()
 	// Schedule controller
 	recordsRepository := appointment_js_repository.NewRecordRepository(
@@ -52,5 +52,5 @@ func New(
 			appointment_js_presenter.ErrorPresenter,
 		),
 	)
-	return m, nil
+	return m
 }

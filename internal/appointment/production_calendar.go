@@ -1,9 +1,9 @@
 package appointment
 
 import (
-	"maps"
 	"time"
 
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/mapx"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
@@ -14,7 +14,7 @@ func NewProductionCalendar() ProductionCalendar {
 }
 
 func (p ProductionCalendar) WithoutSaturdayWeekend() ProductionCalendar {
-	cloned := maps.Clone(p)
+	cloned := mapx.Clone(p)
 	for d, dt := range p {
 		if dt != Weekend {
 			continue
