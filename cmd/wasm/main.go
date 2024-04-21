@@ -33,4 +33,5 @@ func main() {
 		)
 		return app_wasm.New(&cfg, log)
 	}))
+	select {}
 }
