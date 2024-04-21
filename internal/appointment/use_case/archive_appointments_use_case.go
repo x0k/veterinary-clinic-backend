@@ -2,7 +2,6 @@ package appointment_use_case
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
@@ -42,9 +41,6 @@ func (u *ArchiveAppointmentsUseCase) ArchiveRecords(ctx context.Context, now tim
 		targetTime = targetTime.AddDate(0, 0, 1)
 	}
 	diff := targetTime.Sub(now)
-	fmt.Println("Now ", now)
-	fmt.Println("Target ", targetTime)
-	fmt.Println("Wait ", diff.Seconds())
 	timer := time.NewTimer(diff)
 	defer timer.Stop()
 	select {
