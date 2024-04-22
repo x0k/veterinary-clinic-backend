@@ -6,7 +6,7 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/norunners/vert"
+	"github.com/x0k/vert"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 )
@@ -16,5 +16,5 @@ func SchedulePresenter(
 	schedule appointment.Schedule,
 ) (js.Value, error) {
 	dto := appointment_js_adapters.ScheduleToDTO(schedule)
-	return vert.ValueOf(dto).Value, nil
+	return vert.ValueOf(dto), nil
 }

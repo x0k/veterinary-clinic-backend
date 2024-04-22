@@ -6,13 +6,13 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/norunners/vert"
+	"github.com/x0k/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 )
 
 type ProductionCalendarRepositoryConfig struct {
-	ProductionCalendar js.Value `js:"loadProductionCalendar"`
+	ProductionCalendar *js.Value `js:"loadProductionCalendar"`
 }
 
 type ProductionCalendarRepository struct {
@@ -36,7 +36,7 @@ func (r *ProductionCalendarRepository) ProductionCalendar(
 		return nil, err
 	}
 	productionCalendar := appointment.NewProductionCalendar()
-	if err := vert.ValueOf(productionCalendarJsValue).AssignTo(&productionCalendar); err != nil {
+	if err := vert.Assign(productionCalendarJsValue, &productionCalendar); err != nil {
 		return nil, err
 	}
 	return productionCalendar, nil

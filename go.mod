@@ -7,6 +7,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jomei/notionapi v1.13.0
 	github.com/telegram-mini-apps/init-data-golang v1.1.5
+	github.com/x0k/vert v0.0.0-20240422153420-ebe8c8798ed4
 )
 
 require (
@@ -17,7 +18,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/norunners/vert v0.0.0-20221203075838-106a353d42dd // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect

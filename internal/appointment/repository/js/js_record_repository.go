@@ -7,17 +7,17 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/norunners/vert"
+	"github.com/x0k/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 )
 
 type RecordRepositoryConfig struct {
-	CreateRecord              js.Value `js:"createRecord"`
-	BusyPeriods               js.Value `js:"loadBusyPeriods"`
-	CustomerActiveAppointment js.Value `js:"loadCustomerActiveAppointment"`
-	RemoveRecord              js.Value `js:"removeRecord"`
+	CreateRecord              *js.Value `js:"createRecord"`
+	BusyPeriods               *js.Value `js:"loadBusyPeriods"`
+	CustomerActiveAppointment *js.Value `js:"loadCustomerActiveAppointment"`
+	RemoveRecord              *js.Value `js:"removeRecord"`
 }
 
 type RecordRepository struct {
@@ -59,7 +59,7 @@ func (r *RecordRepository) BusyPeriods(
 		return nil, err
 	}
 	busyPeriodsDTO := make([]appointment_js_adapters.TimePeriodDTO, 0)
-	if err := vert.ValueOf(jsValue).AssignTo(&busyPeriodsDTO); err != nil {
+	if err := vert.Assign(jsValue, &busyPeriodsDTO); err != nil {
 		return nil, err
 	}
 	busyPeriods := make(appointment.BusyPeriods, len(busyPeriodsDTO))
@@ -83,7 +83,7 @@ func (r *RecordRepository) CustomerActiveAppointment(
 		return appointment.RecordEntity{}, err
 	}
 	dto := appointment_js_adapters.RecordDTO{}
-	if err := vert.ValueOf(jsValue).AssignTo(&dto); err != nil {
+	if err := vert.Assign(jsValue, &dto); err != nil {
 		return appointment.RecordEntity{}, err
 	}
 	return appointment_js_adapters.RecordFromDTO(dto)

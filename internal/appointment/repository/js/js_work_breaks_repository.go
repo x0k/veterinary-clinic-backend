@@ -6,14 +6,14 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/norunners/vert"
+	"github.com/x0k/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 )
 
 type WorkBreaksRepositoryConfig struct {
-	WorkBreaks js.Value `js:"loadWorkBreaks"`
+	WorkBreaks *js.Value `js:"loadWorkBreaks"`
 }
 
 type WorkBreaksRepository struct {
@@ -37,7 +37,7 @@ func (r *WorkBreaksRepository) WorkBreaks(
 		return nil, err
 	}
 	workBreaksDTO := make([]appointment_js_adapters.WorkBreakDTO, 0)
-	if err := vert.ValueOf(workBreaksJsValue).AssignTo(&workBreaksDTO); err != nil {
+	if err := vert.Assign(workBreaksJsValue, &workBreaksDTO); err != nil {
 		return nil, err
 	}
 	workBreaks := make([]appointment.WorkBreak, len(workBreaksDTO))

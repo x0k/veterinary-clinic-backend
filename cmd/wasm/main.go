@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"syscall/js"
 
-	"github.com/norunners/vert"
+	"github.com/x0k/vert"
 
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	app_wasm "github.com/x0k/veterinary-clinic-backend/internal/app/wasm"
@@ -23,7 +23,7 @@ func main() {
 		}
 		cfgData := args[0]
 		cfg := app_wasm.Config{}
-		if err := vert.ValueOf(cfgData).AssignTo(&cfg); err != nil {
+		if err := vert.Assign(cfgData, &cfg); err != nil {
 			return js_adapters.RejectError(err)
 		}
 		log := logger.New(
