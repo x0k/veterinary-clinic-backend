@@ -5,7 +5,6 @@ package js_adapters
 import (
 	"context"
 	"log/slog"
-	"syscall/js"
 )
 
 const Disabled slog.Level = -8
@@ -51,7 +50,7 @@ func (h *ConsoleLoggerHandler) Handle(_ context.Context, r slog.Record) error {
 
 	timeLabel := r.Time.Format("[15:04:05.000]")
 
-	Console.Get(logMethod).Invoke(timeLabel, js.ValueOf(fields))
+	Console.Get(logMethod).Invoke(timeLabel, r.Message, fields)
 	return nil
 }
 

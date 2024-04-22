@@ -14,7 +14,7 @@ var ObjectConstructor = js.Global().Get("Object")
 var Console = js.Global().Get("console")
 
 func Promise(action func() (js.Value, *js.Value)) js.Value {
-	handler := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	handler := js.FuncOf(func(this js.Value, args []js.Value) any {
 		resolve := args[0]
 		reject := args[1]
 		go func() {
@@ -51,28 +51,30 @@ func RejectError(err error) js.Value {
 func Await(ctx context.Context, promise js.Value) (js.Value, error) {
 	resChan := make(chan js.Value)
 	errChan := make(chan error)
-
 	go func() {
 		select {
 		case <-ctx.Done():
 			errChan <- ctx.Err()
 			return
 		default:
-			// Wait for the promise to resolve
-			onSuccess := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			onSuccess := js.FuncOf(func(this js.Value, args []js.Value) any {
 				resChan <- args[0]
 				return nil
 			})
-			onError := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-				errChan <- errors.New(args[0].Invoke("toString").String())
+			onError := js.FuncOf(func(this js.Value, args []js.Value) any {
+				errChan <- errors.New(args[0].Call("toString").String())
 				return nil
 			})
-			promise.Call("then", onSuccess, onError)
-			onSuccess.Release()
-			onError.Release()
+			var finally js.Func
+			finally = js.FuncOf(func(this js.Value, args []js.Value) any {
+				onSuccess.Release()
+				onError.Release()
+				finally.Release()
+				return nil
+			})
+			promise.Call("then", onSuccess, onError).Call("finally", finally)
 		}
 	}()
-
 	select {
 	case <-ctx.Done():
 		return js.Null(), ctx.Err()
