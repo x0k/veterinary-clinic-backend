@@ -9,6 +9,7 @@ import (
 	"github.com/x0k/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 )
 
 type ProductionCalendarRepositoryConfig struct {
@@ -31,13 +32,20 @@ func (r *ProductionCalendarRepository) ProductionCalendar(
 	ctx context.Context,
 ) (appointment.ProductionCalendar, error) {
 	promise := r.cfg.ProductionCalendar.Invoke()
-	productionCalendarJsValue, err := js_adapters.Await(ctx, promise)
+	productionCalendarDataJsValue, err := js_adapters.Await(ctx, promise)
 	if err != nil {
-		return nil, err
+		return appointment.ProductionCalendar{}, err
 	}
-	productionCalendar := appointment.NewProductionCalendar()
-	if err := vert.Assign(productionCalendarJsValue, &productionCalendar); err != nil {
-		return nil, err
+	productionCalendarDataDTO := make(
+		appointment_js_adapters.ProductionCalendarDataDTO,
+		js_adapters.ObjectConstructor.Call("keys", productionCalendarDataJsValue).Length(),
+	)
+	if err := vert.Assign(productionCalendarDataJsValue, &productionCalendarDataDTO); err != nil {
+		return appointment.ProductionCalendar{}, err
 	}
-	return productionCalendar, nil
+	productionCalendarData, err := appointment.NewProductionCalendarData(productionCalendarDataDTO)
+	if err != nil {
+		return appointment.ProductionCalendar{}, err
+	}
+	return appointment.NewProductionCalendar(productionCalendarData), nil
 }

@@ -11,17 +11,11 @@ type CustomerByIdentityLoader func(context.Context, CustomerIdentity) (CustomerE
 
 type CustomerByIdLoader func(context.Context, CustomerId) (CustomerEntity, error)
 
-type CustomerCreator interface {
-	CreateCustomer(context.Context, *CustomerEntity) error
-}
+type CustomerCreator func(context.Context, *CustomerEntity) error
 
-type ServiceLoader interface {
-	Service(context.Context, ServiceId) (ServiceEntity, error)
-}
+type ServiceLoader func(context.Context, ServiceId) (ServiceEntity, error)
 
-type ServicesLoader interface {
-	Services(context.Context) ([]ServiceEntity, error)
-}
+type ServicesLoader func(context.Context) ([]ServiceEntity, error)
 
 type ProductionCalendarLoader func(context.Context) (ProductionCalendar, error)
 

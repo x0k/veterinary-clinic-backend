@@ -4,16 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
-	"maps"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
 	production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/mapx"
 )
 
 const productionCalendarRepositoryName = "appointment_http_repository.ProductionCalendarRepository"
@@ -32,10 +31,12 @@ func NewProductionCalendar(
 	client *http.Client,
 ) *ProductionCalendarRepository {
 	return &ProductionCalendarRepository{
-		log:                log.With(slog.String("component", productionCalendarRepositoryName)),
-		calendarUrl:        calendarUrl,
-		client:             client,
-		productionCalendar: appointment.NewProductionCalendar(),
+		log:         log.With(slog.String("component", productionCalendarRepositoryName)),
+		calendarUrl: calendarUrl,
+		client:      client,
+		productionCalendar: appointment.NewProductionCalendar(
+			make(appointment.ProductionCalendarData),
+		),
 	}
 }
 
@@ -60,32 +61,37 @@ func (s *ProductionCalendarRepository) Start(ctx context.Context) error {
 func (s *ProductionCalendarRepository) ProductionCalendar(ctx context.Context) (appointment.ProductionCalendar, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return mapx.Clone(s.productionCalendar), nil
+	return s.productionCalendar.Clone(), nil
 }
 
-func (s *ProductionCalendarRepository) updateProductionCalendar(calendar appointment.ProductionCalendar) {
+func (s *ProductionCalendarRepository) updateProductionCalendar(data appointment.ProductionCalendarData) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	maps.Copy(s.productionCalendar, calendar)
+	s.productionCalendar.Update(data)
 }
 
 func (s *ProductionCalendarRepository) loadProductionCalendar(ctx context.Context) {
 	req, err := http.NewRequest("GET", string(s.calendarUrl), nil)
 	if err != nil {
-		s.log.Error(ctx, "failed to load production calendar", sl.Err(err))
+		s.log.Error(ctx, "failed to create production calendar data request", sl.Err(err))
 		return
 	}
 	req = req.WithContext(ctx)
 	resp, err := s.client.Do(req)
 	if err != nil {
-		s.log.Error(ctx, "failed to load production calendar", sl.Err(err))
+		s.log.Error(ctx, "failed to load production calendar data", sl.Err(err))
 		return
 	}
-	tmp := appointment.NewProductionCalendar()
+	tmp := make(appointment_production_calendar_adapters.ProductionCalendarDataDTO)
 	err = json.NewDecoder(resp.Body).Decode(&tmp)
 	if err != nil {
-		s.log.Error(ctx, "failed to decode production calendar", sl.Err(err))
+		s.log.Error(ctx, "failed to decode production calendar data", sl.Err(err))
 		return
 	}
-	s.updateProductionCalendar(tmp)
+	productionCalendarData, err := appointment.NewProductionCalendarData(tmp)
+	if err != nil {
+		s.log.Error(ctx, "failed to validate production calendar data", sl.Err(err))
+		return
+	}
+	s.updateProductionCalendar(productionCalendarData)
 }

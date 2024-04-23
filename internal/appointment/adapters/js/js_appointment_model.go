@@ -188,3 +188,5 @@ func ScheduleToDTO(schedule appointment.Schedule) ScheduleDTO {
 		PrevDate: schedule.PrevDate.String(),
 	}
 }
+
+type ProductionCalendarDataDTO map[string]int

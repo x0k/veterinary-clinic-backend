@@ -11,14 +11,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type AppointmentInfoPresenter struct {
-}
-
-func NewAppointmentInfoPresenter() *AppointmentInfoPresenter {
-	return &AppointmentInfoPresenter{}
-}
-
-func (p *AppointmentInfoPresenter) RenderInfo(
+func RenderAppointmentInfo(
 	app appointment.RecordEntity,
 	service appointment.ServiceEntity,
 ) (telegram_adapters.TextResponses, error) {

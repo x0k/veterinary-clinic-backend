@@ -263,7 +263,7 @@ func (s *SchedulingService) CancelAppointmentForCustomer(
 func (s *SchedulingService) productionCalendar(ctx context.Context) (ProductionCalendar, error) {
 	pc, err := s.productionCalendarLoader(ctx)
 	if err != nil {
-		return nil, err
+		return ProductionCalendar{}, err
 	}
 	return pc.WithoutSaturdayWeekend(), nil
 }

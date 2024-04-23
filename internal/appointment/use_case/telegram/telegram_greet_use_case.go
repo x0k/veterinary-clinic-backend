@@ -17,5 +17,5 @@ func NewGreetUseCase[R any](greetPresenter appointment.GreetPresenter[R]) *Greet
 }
 
 func (u *GreetUseCase[R]) Greet(ctx context.Context) (R, error) {
-	return u.greetPresenter.RenderGreeting()
+	return u.greetPresenter()
 }

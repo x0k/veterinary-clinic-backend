@@ -37,10 +37,10 @@ func (u *AppointmentConfirmationUseCase[R]) Confirmation(
 	serviceId appointment.ServiceId,
 	appointmentDateTime time.Time,
 ) (R, error) {
-	service, err := u.serviceLoader.Service(ctx, serviceId)
+	service, err := u.serviceLoader(ctx, serviceId)
 	if err != nil {
 		u.log.Error(ctx, "failed to load service", sl.Err(err))
 		return u.errorPresenter(err)
 	}
-	return u.confirmationPresenter.RenderConfirmation(service, appointmentDateTime)
+	return u.confirmationPresenter(service, appointmentDateTime)
 }

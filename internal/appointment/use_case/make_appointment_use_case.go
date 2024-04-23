@@ -54,7 +54,7 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 		s.log.Error(ctx, "failed to load customer", sl.Err(err))
 		return s.errorPresenter(err)
 	}
-	service, err := s.serviceLoader.Service(ctx, serviceId)
+	service, err := s.serviceLoader(ctx, serviceId)
 	if err != nil {
 		s.log.Error(ctx, "failed to load service", sl.Err(err))
 		return s.errorPresenter(err)
@@ -71,5 +71,5 @@ func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 	)); err != nil {
 		s.log.Error(ctx, "failed to publish event", sl.Err(err))
 	}
-	return s.appointmentInfoPresenter.RenderInfo(app, service)
+	return s.appointmentInfoPresenter(app, service)
 }

@@ -6,13 +6,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type GreetPresenter struct{}
-
-func NewGreet() *GreetPresenter {
-	return &GreetPresenter{}
-}
-
-func (p *GreetPresenter) RenderGreeting() (telegram_adapters.TextResponses, error) {
+func RenderGreeting() (telegram_adapters.TextResponses, error) {
 	return telegram_adapters.TextResponses{{
 		Text: telegram_adapters.EscapeMarkdownString("Привет!"),
 		Options: &telebot.SendOptions{

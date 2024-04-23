@@ -58,13 +58,13 @@ func (s *CancelAppointmentUseCase[R]) CancelAppointment(
 		res, err := s.errorPresenter(err)
 		return false, res, err
 	}
-	service, err := s.serviceLoader.Service(ctx, rec.ServiceId)
+	service, err := s.serviceLoader(ctx, rec.ServiceId)
 	if err != nil {
 		s.log.Error(ctx, "failed to load service", sl.Err(err))
 	}
 	if err = s.publisher.Publish(appointment.NewAppointmentCanceled(rec, customer, service)); err != nil {
 		s.log.Error(ctx, "failed to publish event", sl.Err(err))
 	}
-	res, err := s.appointmentCancelPresenter.RenderCancel()
+	res, err := s.appointmentCancelPresenter()
 	return true, res, err
 }

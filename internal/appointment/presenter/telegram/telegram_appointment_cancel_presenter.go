@@ -5,13 +5,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type AppointmentCancelPresenter struct{}
-
-func NewAppointmentCancelPresenter() *AppointmentCancelPresenter {
-	return &AppointmentCancelPresenter{}
-}
-
-func (p *AppointmentCancelPresenter) RenderCancel() (telegram_adapters.CallbackResponse, error) {
+func RenderAppointmentCancel() (telegram_adapters.CallbackResponse, error) {
 	return telegram_adapters.CallbackResponse{
 		Response: &telebot.CallbackResponse{
 			Text: "Ваша запись отменена",
