@@ -22,10 +22,8 @@ func NewSchedule(
 		if err != nil {
 			return js_adapters.RejectError(err)
 		}
-		schedule, err := scheduleUseCase.Schedule(ctx, time.Now(), date)
-		if err != nil {
-			return js_adapters.RejectError(err)
-		}
-		return schedule
+		return js_adapters.Promise(func() (js.Value, error) {
+			return scheduleUseCase.Schedule(ctx, time.Now(), date)
+		})
 	}))
 }

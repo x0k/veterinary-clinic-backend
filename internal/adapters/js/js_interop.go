@@ -13,7 +13,7 @@ var ErrorConstructor = js.Global().Get("Error")
 var ObjectConstructor = js.Global().Get("Object")
 var Console = js.Global().Get("console")
 
-func Promise(action func() (js.Value, *js.Value)) js.Value {
+func NewPromise(action func() (js.Value, *js.Value)) js.Value {
 	handler := js.FuncOf(func(this js.Value, args []js.Value) any {
 		resolve := args[0]
 		reject := args[1]
@@ -32,6 +32,17 @@ func Promise(action func() (js.Value, *js.Value)) js.Value {
 	return promise
 }
 
+func Promise(action func() (js.Value, error)) js.Value {
+	return NewPromise(func() (js.Value, *js.Value) {
+		res, err := action()
+		if err != nil {
+			jsErr := NewError(err)
+			return js.Undefined(), &jsErr
+		}
+		return res, nil
+	})
+}
+
 func Resolve(data js.Value) js.Value {
 	return PromiseConstructor.Invoke("resolve", data)
 }
@@ -40,12 +51,12 @@ func Reject(err js.Value) js.Value {
 	return PromiseConstructor.Invoke("reject", err)
 }
 
-func Error(err error) js.Value {
+func NewError(err error) js.Value {
 	return ErrorConstructor.New(err.Error())
 }
 
 func RejectError(err error) js.Value {
-	return Reject(Error(err))
+	return Reject(NewError(err))
 }
 
 func Await(ctx context.Context, promise js.Value) (js.Value, error) {
@@ -77,9 +88,9 @@ func Await(ctx context.Context, promise js.Value) (js.Value, error) {
 	}()
 	select {
 	case <-ctx.Done():
-		return js.Null(), ctx.Err()
+		return js.Undefined(), ctx.Err()
 	case err := <-errChan:
-		return js.Null(), err
+		return js.Undefined(), err
 	case data := <-resChan:
 		return data, nil
 	}
