@@ -17,8 +17,12 @@ func NewDateTime(
 	module.Set("timePeriodDurationInMinutes", js.FuncOf(func(this js.Value, args []js.Value) any {
 		var timePeriodDto shared_js_adapters.TimePeriodDTO
 		if err := vert.Assign(args[0], &timePeriodDto); err != nil {
-			return js_adapters.RejectError(err)
+			return js_adapters.Fail(err)
 		}
-		return shared.TimePeriodDurationInMinutes(shared_js_adapters.TimePeriodFromDTO(timePeriodDto)).Minutes()
+		return js_adapters.NewOk(
+			shared.TimePeriodDurationInMinutes(
+				shared_js_adapters.TimePeriodFromDTO(timePeriodDto),
+			).Minutes(),
+		)
 	}))
 }
