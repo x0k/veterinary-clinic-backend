@@ -10,6 +10,8 @@ type ServicesPresenter[R any] func(services []ServiceEntity) (R, error)
 
 type SchedulePresenter[R any] func(now time.Time, schedule Schedule) (R, error)
 
+type DayPresenter[R any] func(day time.Time) (R, error)
+
 type ErrorPresenter[R any] func(err error) (R, error)
 
 type RegistrationPresenter[R any] func(telegramUserId shared.TelegramUserId) (R, error)

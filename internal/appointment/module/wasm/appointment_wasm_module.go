@@ -12,6 +12,7 @@ import (
 	appointment_js_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/js"
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
+	appointment_js_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 )
 
@@ -49,6 +50,12 @@ func New(
 			log,
 			schedulingService,
 			appointment_js_presenter.SchedulePresenter,
+			appointment_js_presenter.ErrorPresenter,
+		),
+		appointment_js_use_case.NewDayOrNextWorkingDayUseCase(
+			log,
+			productionCalendarRepository.ProductionCalendar,
+			appointment_js_presenter.DayPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),
 	)

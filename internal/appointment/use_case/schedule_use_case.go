@@ -35,7 +35,7 @@ func NewScheduleUseCase[R any](
 func (u *ScheduleUseCase[R]) Schedule(ctx context.Context, now, preferredDate time.Time) (R, error) {
 	schedule, err := u.schedulingService.Schedule(ctx, now, preferredDate)
 	if err != nil {
-		u.log.Error(ctx, "failed to get a schedule", sl.Err(err))
+		u.log.Debug(ctx, "failed to get a schedule", sl.Err(err))
 		return u.errorPresenter(err)
 	}
 	return u.schedulePresenter(now, schedule)

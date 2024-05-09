@@ -14,15 +14,17 @@ import (
 func NewDateTime(
 	module js.Value,
 ) {
-	module.Set("timePeriodDurationInMinutes", js.FuncOf(func(this js.Value, args []js.Value) any {
+	module.Set("timePeriodDurationInMinutes", js_adapters.Sync(func(args []js.Value) js_adapters.Result {
 		var timePeriodDto shared_js_adapters.TimePeriodDTO
 		if err := vert.Assign(args[0], &timePeriodDto); err != nil {
 			return js_adapters.Fail(err)
 		}
-		return js_adapters.NewOk(
-			shared.TimePeriodDurationInMinutes(
-				shared_js_adapters.TimePeriodFromDTO(timePeriodDto),
-			).Minutes(),
+		return js_adapters.Ok(
+			js.ValueOf(
+				shared.TimePeriodDurationInMinutes(
+					shared_js_adapters.TimePeriodFromDTO(timePeriodDto),
+				).Minutes(),
+			),
 		)
 	}))
 }
