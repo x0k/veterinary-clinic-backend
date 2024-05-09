@@ -11,6 +11,7 @@ import (
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
+	shared_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/shared/adapters/js"
 )
 
 type RecordRepositoryConfig struct {
@@ -58,13 +59,13 @@ func (r *RecordRepository) BusyPeriods(
 	if err != nil {
 		return nil, err
 	}
-	busyPeriodsDTO := make([]appointment_js_adapters.TimePeriodDTO, 0)
+	busyPeriodsDTO := make([]shared_js_adapters.TimePeriodDTO, 0)
 	if err := vert.Assign(jsValue, &busyPeriodsDTO); err != nil {
 		return nil, err
 	}
 	busyPeriods := make(appointment.BusyPeriods, len(busyPeriodsDTO))
 	for i, busyPeriodDTO := range busyPeriodsDTO {
-		busyPeriods[i] = appointment_js_adapters.TimePeriodFromDTO(busyPeriodDTO)
+		busyPeriods[i] = shared_js_adapters.TimePeriodFromDTO(busyPeriodDTO)
 	}
 	return busyPeriods, nil
 }
