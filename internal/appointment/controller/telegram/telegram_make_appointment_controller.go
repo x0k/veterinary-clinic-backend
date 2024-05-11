@@ -117,13 +117,17 @@ func NewMakeAppointment(
 				if !ok {
 					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
 				}
+				identity, err := appointment.NewTelegramCustomerIdentity(
+					shared.NewTelegramUserId(c.Sender().ID),
+				)
+				if err != nil {
+					return err
+				}
 				app, err := makeAppointmentUseCase.CreateAppointment(
 					ctx,
 					time.Now(),
 					state.Date,
-					appointment.NewTelegramCustomerIdentity(
-						shared.NewTelegramUserId(c.Sender().ID),
-					),
+					identity,
 					state.ServiceId,
 				)
 				if err != nil {
@@ -135,10 +139,13 @@ func NewMakeAppointment(
 			bot.Handle(appointment_telegram_adapters.CancelConfirmationAppointmentBtn, appointmentTimePickerHandler)
 
 			bot.Handle(appointment_telegram_adapters.CancelAppointmentBtn, func(c telebot.Context) error {
-				customerId := appointment.NewTelegramCustomerIdentity(
+				identity, err := appointment.NewTelegramCustomerIdentity(
 					shared.NewTelegramUserId(c.Sender().ID),
 				)
-				isCanceled, res, err := cancelAppointmentUseCase.CancelAppointment(ctx, customerId)
+				if err != nil {
+					return err
+				}
+				isCanceled, res, err := cancelAppointmentUseCase.CancelAppointment(ctx, identity)
 				if err != nil {
 					return err
 				}

@@ -9,7 +9,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
-const name = "appointment_js_use_case.DayOrNextWorkingDayUseCase"
+const dayOrNextWorkingDayUseCaseName = "appointment_js_use_case.DayOrNextWorkingDayUseCase"
 
 type DayOrNextWorkingDayUseCase[R any] struct {
 	log                      *logger.Logger
@@ -25,7 +25,7 @@ func NewDayOrNextWorkingDayUseCase[R any](
 	errorPresenter appointment.ErrorPresenter[R],
 ) *DayOrNextWorkingDayUseCase[R] {
 	return &DayOrNextWorkingDayUseCase[R]{
-		log:                      log.With(sl.Component(name)),
+		log:                      log.With(sl.Component(dayOrNextWorkingDayUseCaseName)),
 		productionCalendarLoader: productionCalendarLoader,
 		dayPresenter:             dayPresenter,
 		errorPresenter:           errorPresenter,

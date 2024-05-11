@@ -36,7 +36,7 @@ func NewPromise(action func() (Result, error)) Promise {
 
 func Resolve(data Result) Promise {
 	return Promise{
-		promise: PromiseConstructor.Invoke("resolve", data.ToJS()),
+		promise: PromiseConstructor.Call("resolve", data.ToJS()),
 	}
 }
 

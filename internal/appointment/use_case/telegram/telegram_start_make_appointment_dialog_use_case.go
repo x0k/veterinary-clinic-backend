@@ -53,31 +53,35 @@ func (u *StartMakeAppointmentDialogUseCase[R]) StartMakeAppointmentDialog(
 	ctx context.Context,
 	userId shared.TelegramUserId,
 ) (R, error) {
-	customerIdentity := appointment.NewTelegramCustomerIdentity(userId)
+	customerIdentity, err := appointment.NewTelegramCustomerIdentity(userId)
+	if err != nil {
+		u.log.Debug(ctx, "failed to create customer identity", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))
+		return u.errorPresenter(err)
+	}
 	customer, err := u.customerLoader(ctx, customerIdentity)
 	if errors.Is(err, shared.ErrNotFound) {
 		return u.registrationPresenter(userId)
 	}
 	if err != nil {
-		u.log.Error(ctx, "failed to find customer", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))
+		u.log.Debug(ctx, "failed to find customer", slog.Int64("telegram_user_id", userId.Int()), sl.Err(err))
 		return u.errorPresenter(err)
 	}
 	existedAppointment, err := u.customerActiveAppointmentLoader(ctx, customer.Id)
 	if !errors.Is(err, shared.ErrNotFound) {
 		if err != nil {
-			u.log.Error(ctx, "failed to find customer active appointment", sl.Err(err))
+			u.log.Debug(ctx, "failed to find customer active appointment", sl.Err(err))
 			return u.errorPresenter(err)
 		}
 		service, err := u.serviceLoader(ctx, existedAppointment.ServiceId)
 		if err != nil {
-			u.log.Error(ctx, "failed to load service", sl.Err(err))
+			u.log.Debug(ctx, "failed to load service", sl.Err(err))
 			return u.errorPresenter(err)
 		}
 		return u.appointmentInfoPresenter(existedAppointment, service)
 	}
 	services, err := u.servicesLoader(ctx)
 	if err != nil {
-		u.log.Error(ctx, "failed to load services", sl.Err(err))
+		u.log.Debug(ctx, "failed to load services", sl.Err(err))
 		return u.errorPresenter(err)
 	}
 	return u.servicesPickerPresenter(services)

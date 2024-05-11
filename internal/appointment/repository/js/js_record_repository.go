@@ -11,6 +11,7 @@ import (
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	shared_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/shared/adapters/js"
 )
 
@@ -44,7 +45,7 @@ func (r *RecordRepository) CreateRecord(
 	if err != nil {
 		return err
 	}
-	rec.SetId(appointment.RecordId(recordId.String()))
+	rec.SetId(appointment.NewRecordId(recordId.String()))
 	return nil
 }
 
@@ -75,13 +76,14 @@ func (r *RecordRepository) CustomerActiveAppointment(
 	customerId appointment.CustomerId,
 ) (appointment.RecordEntity, error) {
 	promise := r.cfg.CustomerActiveAppointment.Invoke(
-		js.ValueOf(customerId.String()),
+		customerId.String(),
 	)
-	// JS cant produce not found error
-	// Is it required for JS use cases?
 	jsValue, err := js_adapters.Await(ctx, promise)
 	if err != nil {
 		return appointment.RecordEntity{}, err
+	}
+	if jsValue.IsNull() {
+		return appointment.RecordEntity{}, shared.ErrNotFound
 	}
 	dto := appointment_js_adapters.RecordDTO{}
 	if err := vert.Assign(jsValue, &dto); err != nil {
@@ -95,7 +97,7 @@ func (r *RecordRepository) RemoveRecord(
 	recordId appointment.RecordId,
 ) error {
 	promise := r.cfg.RemoveRecord.Invoke(
-		js.ValueOf(recordId.String()),
+		recordId.String(),
 	)
 	_, err := js_adapters.Await(ctx, promise)
 	return err

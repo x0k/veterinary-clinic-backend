@@ -33,6 +33,9 @@ func New(
 	workBreaksRepository := appointment_js_repository.NewWorkBreaksRepository(
 		cfg.WorkBreaksRepository,
 	)
+	customerRepository := appointment_js_repository.NewCustomerRepository(
+		cfg.CustomerRepository,
+	)
 	schedulingService := appointment.NewSchedulingService(
 		log,
 		cfg.SchedulingService.SampleRateInMinutes,
@@ -56,6 +59,14 @@ func New(
 			log,
 			productionCalendarRepository.ProductionCalendar,
 			appointment_js_presenter.DayPresenter,
+			appointment_js_presenter.ErrorPresenter,
+		),
+		appointment_js_use_case.NewUpsertCustomerUseCase(
+			log,
+			customerRepository.CustomerByIdentity,
+			customerRepository.CreateCustomer,
+			customerRepository.UpdateCustomer,
+			appointment_js_presenter.CustomerPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),
 	)

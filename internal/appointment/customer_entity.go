@@ -27,12 +27,20 @@ const (
 
 type CustomerIdentity string
 
-func NewCustomerIdentity(identity string) CustomerIdentity {
-	return CustomerIdentity(identity)
+func NewCustomerIdentity(identity string) (CustomerIdentity, error) {
+	if !strings.HasPrefix(identity, TelegramIdentityType.String()) ||
+		!strings.HasPrefix(identity, VkIdentityType.String()) {
+		return "", ErrUnknownCustomerIdentityType
+	}
+	return CustomerIdentity(identity), nil
 }
 
-func NewTelegramCustomerIdentity(id shared.TelegramUserId) CustomerIdentity {
-	return CustomerIdentity(fmt.Sprintf("%s-%d", TelegramIdentityType, id))
+func NewTelegramCustomerIdentity(id shared.TelegramUserId) (CustomerIdentity, error) {
+	return NewCustomerIdentity(fmt.Sprintf("%s-%d", TelegramIdentityType, id))
+}
+
+func NewVkCustomerIdentity(id shared.VkUserId) (CustomerIdentity, error) {
+	return NewCustomerIdentity(fmt.Sprintf("%s-%s", VkIdentityType, id))
 }
 
 func (identity CustomerIdentity) ToTelegramUserId() (shared.TelegramUserId, error) {
@@ -111,4 +119,25 @@ func (c *CustomerEntity) SetId(id CustomerId) error {
 
 func (c *CustomerEntity) IdentityType() (CustomerIdentityType, error) {
 	return c.Identity.Type()
+}
+
+func (c *CustomerEntity) Update(
+	name string,
+	phoneNumber string,
+	email string,
+) bool {
+	updated := false
+	if c.Name != name {
+		c.Name = name
+		updated = true
+	}
+	if c.PhoneNumber != phoneNumber {
+		c.PhoneNumber = phoneNumber
+		updated = true
+	}
+	if c.Email != email {
+		c.Email = email
+		updated = true
+	}
+	return updated
 }

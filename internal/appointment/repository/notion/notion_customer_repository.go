@@ -44,7 +44,7 @@ func (r *CustomerRepository) CustomerByIdentity(ctx context.Context, identity ap
 	if res == nil || len(res.Results) == 0 {
 		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
 	}
-	return NotionToCustomer(res.Results[0]), nil
+	return NotionToCustomer(res.Results[0])
 }
 
 func (s *CustomerRepository) CustomerById(ctx context.Context, customerId appointment.CustomerId) (appointment.CustomerEntity, error) {
@@ -56,7 +56,7 @@ func (s *CustomerRepository) CustomerById(ctx context.Context, customerId appoin
 	if res == nil {
 		return appointment.CustomerEntity{}, fmt.Errorf("%s: %w", op, shared.ErrNotFound)
 	}
-	return NotionToCustomer(*res), nil
+	return NotionToCustomer(*res)
 }
 
 func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appointment.CustomerEntity) error {

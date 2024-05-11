@@ -13,6 +13,8 @@ type CustomerByIdLoader func(context.Context, CustomerId) (CustomerEntity, error
 
 type CustomerCreator func(context.Context, *CustomerEntity) error
 
+type CustomerUpdater func(context.Context, CustomerEntity) error
+
 type ServiceLoader func(context.Context, ServiceId) (ServiceEntity, error)
 
 type ServicesLoader func(context.Context) ([]ServiceEntity, error)
