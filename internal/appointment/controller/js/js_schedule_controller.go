@@ -15,13 +15,13 @@ import (
 )
 
 func NewSchedule(
+	ctx context.Context,
 	module js.Value,
 	scheduleUseCase *appointment_use_case.ScheduleUseCase[js_adapters.Result],
 	dayOrNextWorkingDayUseCase *appointment_js_use_case.DayOrNextWorkingDayUseCase[js_adapters.Result],
 	upsertCustomerUseCase *appointment_js_use_case.UpsertCustomerUseCase[js_adapters.Result],
 ) {
 	module.Set("schedule", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
-		ctx := context.TODO()
 		preferredDate := args[0].String()
 		date, err := time.Parse(time.RFC3339, preferredDate)
 		if err != nil {
@@ -32,7 +32,6 @@ func NewSchedule(
 		})
 	}))
 	module.Set("dayOrNextWorkingDay", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
-		ctx := context.TODO()
 		now := args[0].String()
 		date, err := time.Parse(time.RFC3339, now)
 		if err != nil {
@@ -43,7 +42,6 @@ func NewSchedule(
 		})
 	}))
 	module.Set("upsertCustomer", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
-		ctx := context.TODO()
 		var createCustomerDTO appointment_js_adapters.CreateCustomerDTO
 		if err := vert.Assign(args[0], &createCustomerDTO); err != nil {
 			return js_adapters.ResolveError(err)

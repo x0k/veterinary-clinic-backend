@@ -67,7 +67,35 @@ func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appoi
 		}
 		return fmt.Errorf("%s: %w", op, shared.ErrAlreadyExists)
 	}
-	properties := notionapi.Properties{
+	res, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
+		Parent: notionapi.Parent{
+			DatabaseID: r.customersDatabaseId,
+		},
+		Properties: r.customerProperties(customer),
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return customer.SetId(appointment.NewCustomerId(res.ID.String()))
+}
+
+func (r *CustomerRepository) UpdateCustomer(ctx context.Context, customer appointment.CustomerEntity) error {
+	const op = customerRepositoryName + ".UpdateCustomer"
+	_, err := r.client.Page.Update(ctx, notionapi.PageID(customer.Id.String()), &notionapi.PageUpdateRequest{
+		Properties: r.customerProperties(
+			&customer,
+		),
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
+
+func (r *CustomerRepository) customerProperties(
+	customer *appointment.CustomerEntity,
+) notionapi.Properties {
+	return notionapi.Properties{
 		CustomerTitle: &notionapi.TitleProperty{
 			Type:  notionapi.PropertyTypeTitle,
 			Title: notion.ToRichText(customer.Name),
@@ -85,14 +113,4 @@ func (r *CustomerRepository) CreateCustomer(ctx context.Context, customer *appoi
 			RichText: notion.ToRichText(customer.Identity.String()),
 		},
 	}
-	res, err := r.client.Page.Create(ctx, &notionapi.PageCreateRequest{
-		Parent: notionapi.Parent{
-			DatabaseID: r.customersDatabaseId,
-		},
-		Properties: properties,
-	})
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	return customer.SetId(appointment.NewCustomerId(res.ID.String()))
 }
