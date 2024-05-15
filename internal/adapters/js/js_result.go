@@ -31,6 +31,6 @@ func Ok(value js.Value) Result {
 func Fail(err error) Result {
 	return Result{
 		ok:    false,
-		error: Error(err),
+		error: js.ValueOf(err.Error()),
 	}
 }
