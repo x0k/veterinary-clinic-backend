@@ -22,6 +22,7 @@ func NewSchedule(
 	dayOrNextWorkingDayUseCase *appointment_js_use_case.DayOrNextWorkingDayUseCase[js_adapters.Result],
 	upsertCustomerUseCase *appointment_js_use_case.UpsertCustomerUseCase[js_adapters.Result],
 	freeTimeSlotsUseCase *appointment_js_use_case.FreeTimeSlotsUseCase[js_adapters.Result],
+	activeAppointmentUseCase *appointment_js_use_case.ActiveAppointmentUseCase[js_adapters.Result],
 ) {
 	module.Set("schedule", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
 		preferredDate := args[0].String()
@@ -74,6 +75,22 @@ func NewSchedule(
 				serviceId,
 				time.Now(),
 				appointmentDate,
+			)
+		})
+	}))
+	module.Set("activeAppointment", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
+		if len(args) < 2 {
+			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
+		}
+		identityProvider := appointment_js_adapters.CustomerIdentityProvider(
+			args[0].String(),
+		)
+		identity := args[1].String()
+		return js_adapters.NewPromise(func() (js_adapters.Result, error) {
+			return activeAppointmentUseCase.ActiveAppointment(
+				ctx,
+				identityProvider,
+				identity,
 			)
 		})
 	}))

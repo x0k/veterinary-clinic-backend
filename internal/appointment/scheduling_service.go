@@ -97,7 +97,7 @@ func (s *SchedulingService) MakeAppointment(
 		End: shared.DateTime{
 			Date: appointmentDateTime.Date,
 			Time: shared.MakeTimeShifter(shared.Time{
-				Minutes: service.DurationInMinutes.Minutes(),
+				Minutes: service.DurationInMinutes.Int(),
 			})(appointmentDateTime.Time),
 		},
 	}

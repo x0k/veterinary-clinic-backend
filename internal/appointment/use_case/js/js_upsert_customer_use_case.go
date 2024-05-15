@@ -13,8 +13,6 @@ import (
 
 const upsertCustomerUseCaseName = "appointment_js_use_case.UpsertCustomerUseCase"
 
-var ErrInvalidIdentityProvider = errors.New("invalid identity provider")
-
 type UpsertCustomerUseCase[R any] struct {
 	log                      *logger.Logger
 	customerByIdentityLoader appointment.CustomerByIdentityLoader
@@ -50,7 +48,7 @@ func (u *UpsertCustomerUseCase[R]) Upsert(
 	userPhone string,
 	userEmail string,
 ) (R, error) {
-	identity, err := u.customerIdentity(userIdentityProvider, userIdentity)
+	identity, err := customerIdentity(userIdentityProvider, userIdentity)
 	if err != nil {
 		u.log.Debug(ctx, "failed to create customer identity", sl.Err(err))
 		return u.errorPresenter(err)
@@ -71,20 +69,6 @@ func (u *UpsertCustomerUseCase[R]) Upsert(
 		return u.errorPresenter(err)
 	}
 	return u.customerPresenter(customer)
-}
-
-func (u *UpsertCustomerUseCase[R]) customerIdentity(
-	userIdentityProvider appointment_js_adapters.CustomerIdentityProvider,
-	userIdentity string,
-) (appointment.CustomerIdentity, error) {
-	switch userIdentityProvider {
-	case appointment_js_adapters.VkIdentityProvider:
-		return appointment.NewVkCustomerIdentity(
-			shared.NewVkUserId(userIdentity),
-		)
-	default:
-		return "", ErrInvalidIdentityProvider
-	}
 }
 
 func (u *UpsertCustomerUseCase[R]) createCustomer(

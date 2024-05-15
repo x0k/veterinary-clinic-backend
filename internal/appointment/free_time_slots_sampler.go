@@ -16,7 +16,7 @@ func newFreeTimeSlotsSampler(
 	sampleRateInMinutes SampleRateInMinutes,
 ) *freeTimeSlotsSampler {
 	durationShift := shared.MakeTimeShifter(shared.Time{
-		Minutes: durationInMinutes.Minutes(),
+		Minutes: durationInMinutes.Int(),
 	})
 	sampleRateShift := shared.MakeTimeShifter(shared.Time{
 		Minutes: sampleRateInMinutes.Minutes(),

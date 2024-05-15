@@ -99,3 +99,36 @@ func ScheduleToDTO(schedule appointment.Schedule) ScheduleDTO {
 }
 
 type ProductionCalendarDataDTO map[string]int
+
+type ServiceDTO struct {
+	Id                string `js:"id"`
+	Title             string `js:"title"`
+	DurationInMinutes int    `js:"durationInMinutes"`
+	Description       string `js:"description"`
+	CostDescription   string `js:"costDescription"`
+}
+
+func ServiceToDTO(service appointment.ServiceEntity) ServiceDTO {
+	return ServiceDTO{
+		Id:                service.Id.String(),
+		Title:             service.Title,
+		DurationInMinutes: service.DurationInMinutes.Int(),
+		Description:       service.Description,
+		CostDescription:   service.CostDescription,
+	}
+}
+
+type AppointmentInfoDTO struct {
+	Record  RecordDTO  `js:"record"`
+	Service ServiceDTO `js:"service"`
+}
+
+func AppointmentInfoToDTO(
+	record appointment.RecordEntity,
+	service appointment.ServiceEntity,
+) AppointmentInfoDTO {
+	return AppointmentInfoDTO{
+		Record:  RecordToDTO(record),
+		Service: ServiceToDTO(service),
+	}
+}

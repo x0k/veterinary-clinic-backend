@@ -23,7 +23,7 @@ func NewDateTime(
 			js.ValueOf(
 				shared.TimePeriodDurationInMinutes(
 					shared_js_adapters.TimePeriodFromDTO(timePeriodDto),
-				).Minutes(),
+				).Int(),
 			),
 		)
 	}))
