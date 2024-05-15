@@ -3,8 +3,11 @@
 package js_adapters
 
 import (
+	"errors"
 	"syscall/js"
 )
+
+var ErrTooFewArguments = errors.New("too few arguments")
 
 var ErrorConstructor = js.Global().Get("Error")
 

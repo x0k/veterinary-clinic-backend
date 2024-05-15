@@ -26,6 +26,10 @@ type DatePickerPresenter[R any] func(now time.Time, serviceId ServiceId, schedul
 
 type GreetPresenter[R any] func() (R, error)
 
+type TimeSlotsPresenter[R any] func(
+	slots SampledFreeTimeSlots,
+) (R, error)
+
 type TimePickerPresenter[R any] func(
 	serviceId ServiceId,
 	appointmentDate time.Time,

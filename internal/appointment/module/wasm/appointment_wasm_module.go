@@ -92,6 +92,13 @@ func New(
 			appointment_js_presenter.CustomerPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),
+		appointment_js_use_case.NewFreeTimeSlotsUseCase(
+			log,
+			schedulingService,
+			appointmentRepository.Service,
+			appointment_js_presenter.FreeTimeSlotsPresenter,
+			appointment_js_presenter.ErrorPresenter,
+		),
 	)
 	return m
 }

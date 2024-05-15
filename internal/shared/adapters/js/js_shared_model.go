@@ -26,6 +26,13 @@ type TimePeriodDTO struct {
 	End   TimeDTO `js:"end"`
 }
 
+func TimePeriodToDTO(period shared.TimePeriod) TimePeriodDTO {
+	return TimePeriodDTO{
+		Start: TimeToDTO(period.Start),
+		End:   TimeToDTO(period.End),
+	}
+}
+
 func TimePeriodFromDTO(period TimePeriodDTO) shared.TimePeriod {
 	return shared.TimePeriod{
 		Start: TimeFromDTO(period.Start),

@@ -9,6 +9,7 @@ import (
 
 	"github.com/x0k/vert"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
+	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_js_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/js"
@@ -20,6 +21,7 @@ func NewSchedule(
 	scheduleUseCase *appointment_use_case.ScheduleUseCase[js_adapters.Result],
 	dayOrNextWorkingDayUseCase *appointment_js_use_case.DayOrNextWorkingDayUseCase[js_adapters.Result],
 	upsertCustomerUseCase *appointment_js_use_case.UpsertCustomerUseCase[js_adapters.Result],
+	freeTimeSlotsUseCase *appointment_js_use_case.FreeTimeSlotsUseCase[js_adapters.Result],
 ) {
 	module.Set("schedule", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
 		preferredDate := args[0].String()
@@ -54,6 +56,24 @@ func NewSchedule(
 				createCustomerDTO.Name,
 				createCustomerDTO.Phone,
 				createCustomerDTO.Email,
+			)
+		})
+	}))
+	module.Set("freeTimeSlots", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
+		if len(args) < 2 {
+			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
+		}
+		serviceId := appointment.NewServiceId(args[0].String())
+		appointmentDate, err := time.Parse(time.RFC3339, args[1].String())
+		if err != nil {
+			return js_adapters.ResolveError(err)
+		}
+		return js_adapters.NewPromise(func() (js_adapters.Result, error) {
+			return freeTimeSlotsUseCase.FreeTimeSlots(
+				ctx,
+				serviceId,
+				time.Now(),
+				appointmentDate,
 			)
 		})
 	}))
