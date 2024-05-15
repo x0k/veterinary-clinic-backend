@@ -17,7 +17,7 @@ import (
 var ErrConfigExpected = errors.New("config argument expected")
 
 func main() {
-	js.Global().Set("__init_wasm", js_adapters.Sync(func(args []js.Value) js_adapters.Result {
+	js.Global().Set("initRootDomain", js_adapters.Sync(func(args []js.Value) js_adapters.Result {
 		if len(args) < 1 {
 			return js_adapters.Fail(ErrConfigExpected)
 		}
