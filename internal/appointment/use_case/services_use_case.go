@@ -34,7 +34,7 @@ func NewServicesUseCase[R any](
 func (u *ServicesUseCase[R]) Services(ctx context.Context) (R, error) {
 	services, err := u.servicesLoader(ctx)
 	if err != nil {
-		u.log.Error(ctx, "failed to load services", sl.Err(err))
+		u.log.Debug(ctx, "failed to load services", sl.Err(err))
 		return u.errorPresenter(err)
 	}
 	return u.servicesPresenter(services)

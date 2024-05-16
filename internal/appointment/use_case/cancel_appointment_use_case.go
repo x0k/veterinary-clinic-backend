@@ -48,22 +48,20 @@ func (s *CancelAppointmentUseCase[R]) CancelAppointment(
 ) (bool, R, error) {
 	customer, err := s.customerLoader(ctx, customerIdentity)
 	if err != nil {
-		s.log.Error(ctx, "failed to load customer", sl.Err(err))
+		s.log.Debug(ctx, "failed to load customer", sl.Err(err))
 		res, err := s.errorPresenter(err)
 		return false, res, err
 	}
 	rec, err := s.schedulingService.CancelAppointmentForCustomer(ctx, customer.Id)
 	if err != nil {
-		s.log.Error(ctx, "failed to cancel appointment", sl.Err(err))
+		s.log.Debug(ctx, "failed to cancel appointment", sl.Err(err))
 		res, err := s.errorPresenter(err)
 		return false, res, err
 	}
-	service, err := s.serviceLoader(ctx, rec.ServiceId)
-	if err != nil {
-		s.log.Error(ctx, "failed to load service", sl.Err(err))
-	}
-	if err = s.publisher.Publish(appointment.NewAppointmentCanceled(rec, customer, service)); err != nil {
-		s.log.Error(ctx, "failed to publish event", sl.Err(err))
+	if service, err := s.serviceLoader(ctx, rec.ServiceId); err != nil {
+		s.log.Debug(ctx, "failed to load service", sl.Err(err))
+	} else if err = s.publisher.Publish(appointment.NewAppointmentCanceled(rec, customer, service)); err != nil {
+		s.log.Debug(ctx, "failed to publish event", sl.Err(err))
 	}
 	res, err := s.appointmentCancelPresenter()
 	return true, res, err

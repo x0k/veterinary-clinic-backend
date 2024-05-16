@@ -121,6 +121,21 @@ func New(
 			appointment_js_presenter.ErrorPresenter,
 			publisher,
 		),
+		appointment_use_case.NewCancelAppointmentUseCase(
+			log,
+			schedulingService,
+			customerRepository.CustomerByIdentity,
+			appointmentRepository.Service,
+			appointment_js_presenter.OkPresenter,
+			appointment_js_presenter.ErrorPresenter,
+			publisher,
+		),
+		appointment_use_case.NewServicesUseCase(
+			log,
+			appointmentRepository.Services,
+			appointment_js_presenter.ServicesPresenter,
+			appointment_js_presenter.ErrorPresenter,
+		),
 	)
 	return m
 }
