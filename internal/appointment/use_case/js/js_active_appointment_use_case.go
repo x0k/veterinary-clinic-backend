@@ -2,11 +2,12 @@ package appointment_js_use_case
 
 import (
 	"context"
+	"errors"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const activeAppointmentUseCaseName = "appointment_js_use_case.ActiveAppointmentUseCase"
@@ -17,6 +18,7 @@ type ActiveAppointmentUseCase[R any] struct {
 	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader
 	serviceLoader                   appointment.ServiceLoader
 	appointmentPresenter            appointment.AppointmentInfoPresenter[R]
+	notFoundPresenter               appointment.NotFoundPresenter[R]
 	errorPresenter                  appointment.ErrorPresenter[R]
 }
 
@@ -26,6 +28,7 @@ func NewActiveAppointmentUseCase[R any](
 	customerActiveAppointmentLoader appointment.CustomerActiveAppointmentLoader,
 	serviceLoader appointment.ServiceLoader,
 	appointmentPresenter appointment.AppointmentInfoPresenter[R],
+	notFoundPresenter appointment.NotFoundPresenter[R],
 	errorPresenter appointment.ErrorPresenter[R],
 ) *ActiveAppointmentUseCase[R] {
 	return &ActiveAppointmentUseCase[R]{
@@ -34,26 +37,27 @@ func NewActiveAppointmentUseCase[R any](
 		customerActiveAppointmentLoader: customerActiveAppointmentLoader,
 		serviceLoader:                   serviceLoader,
 		appointmentPresenter:            appointmentPresenter,
+		notFoundPresenter:               notFoundPresenter,
 		errorPresenter:                  errorPresenter,
 	}
 }
 
 func (u *ActiveAppointmentUseCase[R]) ActiveAppointment(
 	ctx context.Context,
-	userIdentityProvider appointment_js_adapters.CustomerIdentityProvider,
-	userIdentity string,
+	customerIdentity appointment.CustomerIdentity,
 ) (R, error) {
-	identity, err := customerIdentity(userIdentityProvider, userIdentity)
-	if err != nil {
-		u.log.Debug(ctx, "failed to create customer identity", sl.Err(err))
-		return u.errorPresenter(err)
+	customer, err := u.customerLoader(ctx, customerIdentity)
+	if errors.Is(err, shared.ErrNotFound) {
+		return u.notFoundPresenter()
 	}
-	customer, err := u.customerLoader(ctx, identity)
 	if err != nil {
 		u.log.Debug(ctx, "failed to load customer", sl.Err(err))
 		return u.errorPresenter(err)
 	}
 	existedAppointment, err := u.customerActiveAppointmentLoader(ctx, customer.Id)
+	if errors.Is(err, shared.ErrNotFound) {
+		return u.notFoundPresenter()
+	}
 	if err != nil {
 		u.log.Debug(ctx, "failed to load active appointment", sl.Err(err))
 		return u.errorPresenter(err)

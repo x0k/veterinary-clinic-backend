@@ -9,6 +9,7 @@ import (
 
 	"github.com/jomei/notionapi"
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
+	pubsub_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/pubsub"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_js_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/js"
 	appointment_js_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/js"
@@ -27,6 +28,9 @@ func New(
 	notion *notionapi.Client,
 ) js.Value {
 	m := js_adapters.ObjectConstructor.New()
+
+	publisher := pubsub_adapters.NewNullPublisher[appointment.EventType]()
+
 	// Schedule controller
 	appointmentRepository := appointment_notion_repository.NewAppointment(
 		log,
@@ -105,7 +109,17 @@ func New(
 			appointmentRepository.CustomerActiveAppointment,
 			appointmentRepository.Service,
 			appointment_js_presenter.AppointmentInfoPresenter,
+			appointment_js_presenter.NotFoundPresenter,
 			appointment_js_presenter.ErrorPresenter,
+		),
+		appointment_use_case.NewMakeAppointmentUseCase(
+			log,
+			schedulingService,
+			customerRepository.CustomerByIdentity,
+			appointmentRepository.Service,
+			appointment_js_presenter.AppointmentInfoPresenter,
+			appointment_js_presenter.ErrorPresenter,
+			publisher,
 		),
 	)
 	return m

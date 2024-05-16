@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
@@ -42,20 +41,14 @@ func NewUpsertCustomerUseCase[R any](
 
 func (u *UpsertCustomerUseCase[R]) Upsert(
 	ctx context.Context,
-	userIdentityProvider appointment_js_adapters.CustomerIdentityProvider,
-	userIdentity string,
+	customerIdentity appointment.CustomerIdentity,
 	userName string,
 	userPhone string,
 	userEmail string,
 ) (R, error) {
-	identity, err := customerIdentity(userIdentityProvider, userIdentity)
-	if err != nil {
-		u.log.Debug(ctx, "failed to create customer identity", sl.Err(err))
-		return u.errorPresenter(err)
-	}
-	customer, err := u.customerByIdentityLoader(ctx, identity)
+	customer, err := u.customerByIdentityLoader(ctx, customerIdentity)
 	if errors.Is(err, shared.ErrNotFound) {
-		return u.createCustomer(ctx, identity, userName, userPhone, userEmail)
+		return u.createCustomer(ctx, customerIdentity, userName, userPhone, userEmail)
 	}
 	if err != nil {
 		u.log.Debug(ctx, "failed to load customer", sl.Err(err))

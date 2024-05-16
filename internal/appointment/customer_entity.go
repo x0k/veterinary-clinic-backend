@@ -27,12 +27,15 @@ const (
 
 type CustomerIdentity string
 
+var identityTypes = []CustomerIdentityType{TelegramIdentityType, VkIdentityType}
+
 func NewCustomerIdentity(identity string) (CustomerIdentity, error) {
-	if !strings.HasPrefix(identity, TelegramIdentityType.String()) ||
-		!strings.HasPrefix(identity, VkIdentityType.String()) {
-		return "", ErrUnknownCustomerIdentityType
+	for _, it := range identityTypes {
+		if strings.HasPrefix(identity, it.String()) {
+			return CustomerIdentity(identity), nil
+		}
 	}
-	return CustomerIdentity(identity), nil
+	return "", ErrUnknownCustomerIdentityType
 }
 
 func NewTelegramCustomerIdentity(id shared.TelegramUserId) (CustomerIdentity, error) {

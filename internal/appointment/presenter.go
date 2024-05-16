@@ -46,6 +46,8 @@ type AppointmentInfoPresenter[R any] func(
 	service ServiceEntity,
 ) (R, error)
 
+type NotFoundPresenter[R any] func() (R, error)
+
 type AppointmentCancelPresenter[R any] func() (R, error)
 
 type EventPresenter[E Event, R any] func(E) (R, error)

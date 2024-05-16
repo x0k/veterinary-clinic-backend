@@ -23,10 +23,13 @@ func NewSchedule(
 	upsertCustomerUseCase *appointment_js_use_case.UpsertCustomerUseCase[js_adapters.Result],
 	freeTimeSlotsUseCase *appointment_js_use_case.FreeTimeSlotsUseCase[js_adapters.Result],
 	activeAppointmentUseCase *appointment_js_use_case.ActiveAppointmentUseCase[js_adapters.Result],
+	createAppointmentUseCase *appointment_use_case.MakeAppointmentUseCase[js_adapters.Result],
 ) {
 	module.Set("schedule", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
-		preferredDate := args[0].String()
-		date, err := time.Parse(time.RFC3339, preferredDate)
+		if len(args) < 1 {
+			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
+		}
+		date, err := time.Parse(time.RFC3339, args[0].String())
 		if err != nil {
 			return js_adapters.ResolveError(err)
 		}
@@ -35,8 +38,10 @@ func NewSchedule(
 		})
 	}))
 	module.Set("dayOrNextWorkingDay", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
-		now := args[0].String()
-		date, err := time.Parse(time.RFC3339, now)
+		if len(args) < 1 {
+			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
+		}
+		date, err := time.Parse(time.RFC3339, args[0].String())
 		if err != nil {
 			return js_adapters.ResolveError(err)
 		}
@@ -45,15 +50,21 @@ func NewSchedule(
 		})
 	}))
 	module.Set("upsertCustomer", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
+		if len(args) < 1 {
+			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
+		}
 		var createCustomerDTO appointment_js_adapters.CreateCustomerDTO
 		if err := vert.Assign(args[0], &createCustomerDTO); err != nil {
+			return js_adapters.ResolveError(err)
+		}
+		identity, err := appointment.NewCustomerIdentity(createCustomerDTO.Identity)
+		if err != nil {
 			return js_adapters.ResolveError(err)
 		}
 		return js_adapters.NewPromise(func() (js_adapters.Result, error) {
 			return upsertCustomerUseCase.Upsert(
 				ctx,
-				createCustomerDTO.IdentityProvider,
-				createCustomerDTO.Identity,
+				identity,
 				createCustomerDTO.Name,
 				createCustomerDTO.Phone,
 				createCustomerDTO.Email,
@@ -79,18 +90,40 @@ func NewSchedule(
 		})
 	}))
 	module.Set("activeAppointment", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
-		if len(args) < 2 {
+		if len(args) < 1 {
 			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
 		}
-		identityProvider := appointment_js_adapters.CustomerIdentityProvider(
-			args[0].String(),
-		)
-		identity := args[1].String()
+		identity, err := appointment.NewCustomerIdentity(args[0].String())
+		if err != nil {
+			return js_adapters.ResolveError(err)
+		}
 		return js_adapters.NewPromise(func() (js_adapters.Result, error) {
 			return activeAppointmentUseCase.ActiveAppointment(
 				ctx,
-				identityProvider,
 				identity,
+			)
+		})
+	}))
+	module.Set("createAppointment", js_adapters.Async(func(args []js.Value) js_adapters.Promise {
+		if len(args) < 3 {
+			return js_adapters.ResolveError(js_adapters.ErrTooFewArguments)
+		}
+		appointmentDate, err := time.Parse(time.RFC3339, args[0].String())
+		if err != nil {
+			return js_adapters.ResolveError(err)
+		}
+		customerIdentity, err := appointment.NewCustomerIdentity(args[1].String())
+		if err != nil {
+			return js_adapters.ResolveError(err)
+		}
+		serviceId := appointment.NewServiceId(args[2].String())
+		return js_adapters.NewPromise(func() (js_adapters.Result, error) {
+			return createAppointmentUseCase.CreateAppointment(
+				ctx,
+				time.Now(),
+				appointmentDate,
+				customerIdentity,
+				serviceId,
 			)
 		})
 	}))

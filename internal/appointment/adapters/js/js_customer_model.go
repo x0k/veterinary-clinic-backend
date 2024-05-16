@@ -2,18 +2,11 @@ package appointment_js_adapters
 
 import "github.com/x0k/veterinary-clinic-backend/internal/appointment"
 
-type CustomerIdentityProvider string
-
-const (
-	VkIdentityProvider CustomerIdentityProvider = "vk"
-)
-
 type CreateCustomerDTO struct {
-	IdentityProvider CustomerIdentityProvider `js:"identityProvider"`
-	Identity         string                   `js:"identity"`
-	Name             string                   `js:"name"`
-	Phone            string                   `js:"phone"`
-	Email            string                   `js:"email"`
+	Name     string `js:"name"`
+	Identity string `js:"identity"`
+	Phone    string `js:"phone"`
+	Email    string `js:"email"`
 }
 
 type CustomerDTO struct {
