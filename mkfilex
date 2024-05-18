@@ -23,7 +23,7 @@ all:
     air -- --config config/config.yml
 
 wasm:
-    GOOS=js GOARCH=wasm go build -o out/domain-fat.wasm cmd/wasm/main.go
+    GOOS=js GOARCH=wasm go build -o out/domain.wasm cmd/wasm/main.go
 
 build:
     go build -tags migrate -o out/app cmd/app/main.go
