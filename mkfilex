@@ -23,9 +23,6 @@ all:
     air -- --config config/config.yml
 
 wasm:
-    tinygo build -o out/domain.wasm -target wasm cmd/wasm/main.go
-
-wasm-fat:
     GOOS=js GOARCH=wasm go build -o out/domain-fat.wasm cmd/wasm/main.go
 
 build:
