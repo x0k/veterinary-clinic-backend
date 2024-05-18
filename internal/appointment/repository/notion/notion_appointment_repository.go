@@ -69,15 +69,6 @@ func (s *AppointmentRepository) Services(ctx context.Context) ([]appointment.Ser
 
 func (s *AppointmentRepository) Service(ctx context.Context, serviceId appointment.ServiceId) (appointment.ServiceEntity, error) {
 	const op = appointmentRepositoryName + ".Service"
-	// Cached
-	services, err := s.Services(ctx)
-	if err != nil {
-		for _, s := range services {
-			if s.Id == serviceId {
-				return s, nil
-			}
-		}
-	}
 	res, err := s.client.Page.Get(ctx, notionapi.PageID(serviceId))
 	if err != nil {
 		return appointment.ServiceEntity{}, fmt.Errorf("%s: %w", op, err)
@@ -123,10 +114,6 @@ func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appo
 				},
 			},
 		},
-		// RecordCreatedAt: notionapi.CreatedTimeProperty{
-		// 	Type:        notionapi.PropertyTypeCreatedTime,
-		// 	CreatedTime: app.CreatedAt(),
-		// },
 		RecordService: notionapi.RelationProperty{
 			Type: notionapi.PropertyTypeRelation,
 			Relation: []notionapi.Relation{
