@@ -14,6 +14,7 @@ import (
 	appointment_js_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/js"
 	appointment_js_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/js"
 	appointment_http_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/http"
+	appointment_in_memory_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/memory"
 	appointment_notion_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/notion"
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
@@ -57,9 +58,13 @@ func New(
 	)
 	go workBreaksRepository.Start(ctx)
 
+	dateTimerPeriodLockRepository := appointment_in_memory_repository.NewDateTimePeriodLocksRepository()
+
 	schedulingService := appointment.NewSchedulingService(
 		log,
 		cfg.SchedulingService.SampleRateInMinutes,
+		dateTimerPeriodLockRepository.Lock,
+		dateTimerPeriodLockRepository.UnLock,
 		appointmentRepository.CreateAppointment,
 		productionCalendarRepository.ProductionCalendar,
 		workingHoursRepository.WorkingHours,

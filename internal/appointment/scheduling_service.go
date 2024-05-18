@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
-	"sync"
 	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
@@ -15,15 +13,14 @@ import (
 )
 
 var ErrInvalidRecordId = errors.New("invalid record id")
-var ErrPeriodIsLocked = errors.New("periods is locked")
 var ErrDateTimePeriodIsOccupied = errors.New("date time period is occupied")
 var ErrAnotherAppointmentIsAlreadyScheduled = errors.New("another appointment is already scheduled")
 var ErrInvalidAppointmentStatusForCancel = errors.New("invalid appointment status")
 
 type SchedulingService struct {
-	log       *logger.Logger
-	periodsMu sync.Mutex
-	periods   []shared.DateTimePeriod
+	log            *logger.Logger
+	periodLocker   DateTimePeriodLocker
+	periodUnLocker DateTimePeriodUnLocker
 
 	sampleRateInMinutes             SampleRateInMinutes
 	appointmentCreator              AppointmentCreator
@@ -38,6 +35,8 @@ type SchedulingService struct {
 func NewSchedulingService(
 	log *logger.Logger,
 	sampleRateInMinutes SampleRateInMinutes,
+	periodLocker DateTimePeriodLocker,
+	periodUnLocker DateTimePeriodUnLocker,
 	appointmentCreator AppointmentCreator,
 	productionCalendarLoader ProductionCalendarLoader,
 	workingHoursLoader WorkingHoursLoader,
@@ -48,6 +47,8 @@ func NewSchedulingService(
 ) *SchedulingService {
 	return &SchedulingService{
 		log:                             log.With(slog.String("component", "SchedulingService")),
+		periodLocker:                    periodLocker,
+		periodUnLocker:                  periodUnLocker,
 		sampleRateInMinutes:             sampleRateInMinutes,
 		appointmentCreator:              appointmentCreator,
 		productionCalendarLoader:        productionCalendarLoader,
@@ -57,31 +58,6 @@ func NewSchedulingService(
 		customerActiveAppointmentLoader: customerActiveAppointmentLoader,
 		appointmentRemover:              appointmentRemover,
 	}
-}
-
-func (s *SchedulingService) lockPeriod(period shared.DateTimePeriod) error {
-	s.periodsMu.Lock()
-	defer s.periodsMu.Unlock()
-	for _, p := range s.periods {
-		if shared.DateTimePeriodApi.IsValidPeriod(
-			shared.DateTimePeriodApi.IntersectPeriods(p, period),
-		) {
-			return fmt.Errorf("%w: %s", ErrPeriodIsLocked, period)
-		}
-	}
-	s.periods = append(s.periods, period)
-	return nil
-}
-
-func (s *SchedulingService) unLockPeriod(period shared.DateTimePeriod) error {
-	s.periodsMu.Lock()
-	defer s.periodsMu.Unlock()
-	index := slices.Index(s.periods, period)
-	if index == -1 {
-		return nil
-	}
-	s.periods = slices.Delete(s.periods, index, index+1)
-	return nil
 }
 
 func (s *SchedulingService) MakeAppointment(
@@ -101,11 +77,11 @@ func (s *SchedulingService) MakeAppointment(
 			})(appointmentDateTime.Time),
 		},
 	}
-	if err := s.lockPeriod(dateTimePeriod); err != nil {
+	if err := s.periodLocker(ctx, dateTimePeriod); err != nil {
 		return RecordEntity{}, err
 	}
 	defer func() {
-		if err := s.unLockPeriod(dateTimePeriod); err != nil {
+		if err := s.periodUnLocker(ctx, dateTimePeriod); err != nil {
 			s.log.Error(ctx, "failed to unlock period", sl.Err(err))
 		}
 	}()

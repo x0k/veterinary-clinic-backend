@@ -3,6 +3,8 @@ package appointment
 import (
 	"context"
 	"time"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 type AppointmentCreator func(context.Context, *RecordEntity) error
@@ -38,3 +40,7 @@ type ActualAppointmentsLoader func(context.Context, time.Time) ([]RecordEntity, 
 type AppointmentsStateLoader func(context.Context) (AppointmentsState, error)
 
 type AppointmentsStateSaver func(context.Context, AppointmentsState) error
+
+type DateTimePeriodLocker func(context.Context, shared.DateTimePeriod) error
+
+type DateTimePeriodUnLocker func(context.Context, shared.DateTimePeriod) error
