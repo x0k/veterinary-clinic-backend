@@ -31,7 +31,7 @@ func (p *TimePickerPresenter) RenderTimePicker(
 		buttons = append(buttons, []telebot.InlineButton{{
 			Text:   fmt.Sprintf("%s - %s", slot.Start.String(), slot.End.String()),
 			Unique: appointment_telegram_adapters.MakeAppointmentTime,
-			Data: string(p.stateSaver.Save(appointment_telegram_adapters.AppointmentSate{
+			Data: string(p.stateSaver(appointment_telegram_adapters.AppointmentSate{
 				ServiceId: serviceId,
 				Date: time.Date(
 					appointmentDate.Year(),
@@ -48,7 +48,7 @@ func (p *TimePickerPresenter) RenderTimePicker(
 	}
 	buttons = append(buttons, []telebot.InlineButton{
 		*appointment_telegram_adapters.CancelMakeAppointmentTimeBtn.With(string(
-			p.stateSaver.Save(appointment_telegram_adapters.AppointmentSate{
+			p.stateSaver(appointment_telegram_adapters.AppointmentSate{
 				ServiceId: serviceId,
 				Date:      appointmentDate,
 			}),

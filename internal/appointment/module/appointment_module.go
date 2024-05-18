@@ -161,7 +161,7 @@ func New(
 	datePickerQueryPresenter := appointment_telegram_presenter.NewDatePickerQueryPresenter(
 		cfg.WebCalendar.AppUrl,
 		webCalendarDatePickerUrl,
-		expirableAppointmentStateContainer,
+		expirableAppointmentStateContainer.Save,
 	)
 	if err := appointment_http_controller.UseDatePickerRouter(
 		webCalendarServerMux,
@@ -212,11 +212,11 @@ func New(
 	m.Append(expirableTelegramUserIdContainer)
 
 	servicesPickerPresenter := appointment_telegram_presenter.NewServicesPickerPresenter(
-		expirableServiceIdContainer,
+		expirableServiceIdContainer.Save,
 	)
 
 	registrationPresenter := appointment_telegram_presenter.NewRegistrationPresenter(
-		expirableTelegramUserIdContainer,
+		expirableTelegramUserIdContainer.SaveByKey,
 	)
 	startMakeAppointmentDialogUseCase := appointment_telegram_use_case.NewStartMakeAppointmentDialogUseCase(
 		log,
@@ -239,7 +239,7 @@ func New(
 	)
 	startMakeAppointmentDialogController := appointment_telegram_controller.NewStartMakeAppointmentDialog(
 		bot,
-		expirableTelegramUserIdContainer,
+		expirableTelegramUserIdContainer.Pop,
 		startMakeAppointmentDialogUseCase,
 		appointment_telegram_use_case.NewRegisterCustomerUseCase(
 			log,
@@ -255,13 +255,13 @@ func New(
 	textDatePickerPresenter := appointment_telegram_presenter.NewDatePickerTextPresenter(
 		cfg.WebCalendar.AppUrl,
 		webCalendarDatePickerUrl,
-		expirableAppointmentStateContainer,
+		expirableAppointmentStateContainer.Save,
 	)
 	timePickerPresenter := appointment_telegram_presenter.NewTimePickerPresenter(
-		expirableAppointmentStateContainer,
+		expirableAppointmentStateContainer.Save,
 	)
 	confirmationPresenter := appointment_telegram_presenter.NewConfirmationPresenter(
-		expirableAppointmentStateContainer,
+		expirableAppointmentStateContainer.Save,
 	)
 	makeAppointmentController := appointment_telegram_controller.NewMakeAppointment(
 		bot,
@@ -304,8 +304,8 @@ func New(
 			publisher,
 		),
 		errorSender,
-		expirableServiceIdContainer,
-		expirableAppointmentStateContainer,
+		expirableServiceIdContainer.Load,
+		expirableAppointmentStateContainer.Load,
 	)
 	m.PostStart(makeAppointmentController)
 

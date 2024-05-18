@@ -40,7 +40,7 @@ func NewStartMakeAppointmentDialog(
 				if cnt == nil {
 					return nil
 				}
-				tgUserId, ok := tgUserIdLoader.Pop(adapters.StateId(strconv.FormatInt(cnt.UserID, 10)))
+				tgUserId, ok := tgUserIdLoader(adapters.StateId(strconv.FormatInt(cnt.UserID, 10)))
 				if !ok {
 					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
 				}
