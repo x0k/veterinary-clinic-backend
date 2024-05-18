@@ -74,7 +74,7 @@ func New(
 		cfg.Notion.CustomersDatabaseId,
 	)
 
-	appointment_js_controller.NewSchedule(
+	appointment_js_controller.NewAppointment(
 		ctx, m,
 		appointment_use_case.NewScheduleUseCase(
 			log,

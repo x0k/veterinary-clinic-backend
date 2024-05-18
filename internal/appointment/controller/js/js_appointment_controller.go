@@ -15,7 +15,7 @@ import (
 	appointment_js_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/js"
 )
 
-func NewSchedule(
+func NewAppointment(
 	ctx context.Context,
 	module js.Value,
 	scheduleUseCase *appointment_use_case.ScheduleUseCase[js_adapters.Result],
