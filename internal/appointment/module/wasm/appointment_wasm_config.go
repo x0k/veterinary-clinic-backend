@@ -6,6 +6,7 @@ import (
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
+	appointment_js_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/js"
 )
 
 type SchedulingServiceConfig struct {
@@ -24,7 +25,8 @@ type NotionConfig struct {
 }
 
 type Config struct {
-	SchedulingService  SchedulingServiceConfig  `js:"schedulingService"`
-	Notion             NotionConfig             `js:"notion"`
-	ProductionCalendar ProductionCalendarConfig `js:"productionCalendar"`
+	SchedulingService       SchedulingServiceConfig                                       `js:"schedulingService"`
+	Notion                  NotionConfig                                                  `js:"notion"`
+	ProductionCalendar      ProductionCalendarConfig                                      `js:"productionCalendar"`
+	DateTimeLocksRepository appointment_js_repository.DateTimePeriodLocksRepositoryConfig `js:"dateTimeLocksRepository"`
 }
