@@ -26,6 +26,7 @@ func New(
 	ctx context.Context,
 	cfg *Config,
 	log *logger.Logger,
+	httpClient *http.Client,
 	notion *notionapi.Client,
 ) js.Value {
 	m := js_adapters.ObjectConstructor.New()
@@ -45,7 +46,7 @@ func New(
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
 		log,
 		cfg.ProductionCalendar.Url,
-		&http.Client{},
+		httpClient,
 	)
 	go productionCalendarRepository.Start(ctx)
 

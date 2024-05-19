@@ -4,6 +4,7 @@ package app_wasm
 
 import (
 	"context"
+	"net/http"
 	"syscall/js"
 
 	"github.com/jomei/notionapi"
@@ -22,12 +23,18 @@ func New(
 	sharedModule := shared_wasm_module.New()
 	root.Set("shared", sharedModule)
 
-	notion := notionapi.NewClient(cfg.Notion.Token)
+	httpClient := &http.Client{}
+
+	notion := notionapi.NewClient(
+		cfg.Notion.Token,
+		notionapi.WithHTTPClient(httpClient),
+	)
 
 	appointmentModule := appointment_wasm_module.New(
 		ctx,
 		&cfg.Appointment,
 		log,
+		httpClient,
 		notion,
 	)
 	root.Set("appointment", appointmentModule)
