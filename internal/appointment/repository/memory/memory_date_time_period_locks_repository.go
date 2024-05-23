@@ -3,10 +3,10 @@ package appointment_in_memory_repository
 import (
 	"context"
 	"fmt"
-	"slices"
 	"sync"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/slicex"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
@@ -36,10 +36,10 @@ func (r *DateTimePeriodLocksRepository) Lock(ctx context.Context, period shared.
 func (r *DateTimePeriodLocksRepository) UnLock(ctx context.Context, period shared.DateTimePeriod) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	index := slices.Index(r.periods, period)
+	index := slicex.Index(r.periods, period)
 	if index == -1 {
 		return nil
 	}
-	r.periods = slices.Delete(r.periods, index, index+1)
+	r.periods = slicex.Delete(r.periods, index, index+1)
 	return nil
 }

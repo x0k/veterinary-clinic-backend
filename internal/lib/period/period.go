@@ -2,7 +2,8 @@ package period
 
 import (
 	"fmt"
-	"slices"
+
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/slicex"
 )
 
 type Period[T fmt.Stringer] struct {
@@ -73,8 +74,8 @@ func (p *Api[T]) SortAndUnitePeriods(periods []Period[T]) []Period[T] {
 	if len(periods) < 2 {
 		return periods
 	}
-	cloned := slices.Clone(periods)
-	slices.SortFunc(cloned, p.ComparePeriods)
+	cloned := slicex.Clone(periods)
+	slicex.SortFunc(cloned, p.ComparePeriods)
 	lastPeriodIndex := 0
 	for i := 1; i < len(cloned); i++ {
 		lastPeriod := cloned[lastPeriodIndex]
@@ -137,7 +138,7 @@ func (p *Api[T]) SubtractPeriodsFromPeriods(
 	periods []Period[T],
 	periodsToSubtract []Period[T],
 ) []Period[T] {
-	oldPeriods := slices.Clone(periods)
+	oldPeriods := slicex.Clone(periods)
 	newPeriods := make([]Period[T], 0, len(periods))
 	for _, breakPeriod := range periodsToSubtract {
 		for _, period := range oldPeriods {

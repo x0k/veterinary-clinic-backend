@@ -1,8 +1,9 @@
 package http_adapters
 
 import (
-	"log/slog"
 	"net/http"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 )

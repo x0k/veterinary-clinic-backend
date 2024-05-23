@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	stdLog "log"
-	"log/slog"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/fatih/color"
 )

@@ -4,7 +4,8 @@ package js_adapters
 
 import (
 	"context"
-	"log/slog"
+
+	"golang.org/x/exp/slog"
 )
 
 const Disabled slog.Level = -8

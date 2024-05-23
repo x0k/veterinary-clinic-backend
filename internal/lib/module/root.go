@@ -2,10 +2,11 @@ package module
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"golang.org/x/exp/slog"
 )
 
 type Root struct {

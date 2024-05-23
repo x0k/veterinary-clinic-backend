@@ -1,13 +1,13 @@
 module github.com/x0k/veterinary-clinic-backend
 
-go 1.22.0
+go 1.20
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jomei/notionapi v1.13.0
 	github.com/telegram-mini-apps/init-data-golang v1.1.5
-	github.com/x0k/vert v0.0.0-20240422153420-ebe8c8798ed4
+	github.com/x0k/vert v0.0.0-20240519105809-532dac6d76e0
 )
 
 require (
@@ -20,6 +20,7 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.49.3 // indirect

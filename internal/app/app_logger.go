@@ -2,8 +2,9 @@ package app
 
 import (
 	"log"
-	"log/slog"
 	"os"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/handlers/slogpretty"

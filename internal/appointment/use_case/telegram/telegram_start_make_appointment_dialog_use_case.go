@@ -3,7 +3,8 @@ package appointment_telegram_use_case
 import (
 	"context"
 	"errors"
-	"log/slog"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"

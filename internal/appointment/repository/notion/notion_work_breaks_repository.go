@@ -2,8 +2,9 @@ package appointment_notion_repository
 
 import (
 	"context"
-	"log/slog"
 	"time"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"

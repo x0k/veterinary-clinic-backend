@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
 	"os"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/app"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"

@@ -1,6 +1,6 @@
 package sl
 
-import "log/slog"
+import "golang.org/x/exp/slog"
 
 func Err(err error) slog.Attr {
 	if err == nil {

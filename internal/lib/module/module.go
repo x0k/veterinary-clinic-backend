@@ -2,9 +2,10 @@ package module
 
 import (
 	"context"
-	"log/slog"
 	"sync"
 	"sync/atomic"
+
+	"golang.org/x/exp/slog"
 )
 
 type Module struct {

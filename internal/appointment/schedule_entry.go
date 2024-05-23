@@ -1,8 +1,7 @@
 package appointment
 
 import (
-	"slices"
-
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/slicex"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
@@ -32,7 +31,7 @@ func (periods ScheduleEntries) SortAndFlat() ScheduleEntries {
 	if len(periods) < 2 {
 		return periods
 	}
-	slices.SortFunc(periods, func(a, b ScheduleEntry) int {
+	slicex.SortFunc(periods, func(a, b ScheduleEntry) int {
 		return shared.DateTimePeriodApi.ComparePeriods(a.DateTimePeriod, b.DateTimePeriod)
 	})
 	nextIndex := 1

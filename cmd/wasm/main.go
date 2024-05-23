@@ -1,11 +1,12 @@
-//go:build js && wasm
+//go:build js && wasm && go1.20
 
 package main
 
 import (
 	"errors"
-	"log/slog"
 	"syscall/js"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/x0k/vert"
 
