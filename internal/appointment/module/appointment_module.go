@@ -7,6 +7,7 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/adapters"
+	cache_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/cache"
 	adapters_cron "github.com/x0k/veterinary-clinic-backend/internal/adapters/cron"
 	http_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/http"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"
@@ -24,6 +25,7 @@ import (
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/cache"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
@@ -57,13 +59,20 @@ func New(
 		cfg.Notion.ServicesDatabaseId,
 		cfg.Notion.CustomersDatabaseId,
 	)
-	m.Append(appointmentRepository)
+
+	cachedServices := appointment.ServicesLoader(
+		cache_adapters.WithSimpleCache(
+			m, "appointment_module.cached_services",
+			cache.NewSimpleExpirable[[]appointment.ServiceEntity](time.Hour),
+			appointmentRepository.Services,
+		),
+	)
 
 	servicesController := appointment_telegram_controller.NewServices(
 		bot,
 		appointment_use_case.NewServicesUseCase(
 			log,
-			appointmentRepository.Services,
+			cachedServices,
 			appointment_telegram_presenter.ServicesPresenter,
 			appointment_telegram_presenter.TextErrorPresenter,
 		),
@@ -90,7 +99,13 @@ func New(
 		notion,
 		cfg.Notion.BreaksDatabaseId,
 	)
-	m.Append(workBreaksRepository)
+	cachedWorkBreaks := appointment.WorkBreaksLoader(
+		cache_adapters.WithSimpleCache(
+			m, "appointment_module.cached_work_breaks",
+			cache.NewSimpleExpirable[appointment.WorkBreaks](time.Hour),
+			workBreaksRepository.WorkBreaks,
+		),
+	)
 
 	dateTimerPeriodLockRepository := appointment_in_memory_repository.NewDateTimePeriodLocksRepository()
 
@@ -103,7 +118,7 @@ func New(
 		productionCalendarRepository.ProductionCalendar,
 		workingHoursRepository.WorkingHours,
 		appointmentRepository.BusyPeriods,
-		workBreaksRepository.WorkBreaks,
+		cachedWorkBreaks,
 		appointmentRepository.CustomerActiveAppointment,
 		appointmentRepository.RemoveAppointment,
 	)
@@ -227,7 +242,7 @@ func New(
 		log,
 		customerRepository.CustomerByIdentity,
 		appointmentRepository.CustomerActiveAppointment,
-		appointmentRepository.Services,
+		cachedServices,
 		appointmentRepository.Service,
 		appointment_telegram_presenter.RenderAppointmentInfo,
 		servicesPickerPresenter.RenderServicesList,
@@ -249,7 +264,7 @@ func New(
 		appointment_telegram_use_case.NewRegisterCustomerUseCase(
 			log,
 			customerRepository.CreateCustomer,
-			appointmentRepository.Services,
+			cachedServices,
 			successRegistrationPresenter.RenderSuccessRegistration,
 			appointment_telegram_presenter.TextErrorPresenter,
 		),

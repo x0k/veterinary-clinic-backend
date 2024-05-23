@@ -8,7 +8,6 @@ import (
 
 	"github.com/jomei/notionapi"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/containers"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/notion"
@@ -23,7 +22,6 @@ type AppointmentRepository struct {
 	recordsDatabaseId   notionapi.DatabaseID
 	servicesDatabaseId  notionapi.DatabaseID
 	customersDatabaseId notionapi.DatabaseID
-	servicesCache       *containers.Expiable[[]appointment.ServiceEntity]
 }
 
 func NewAppointment(
@@ -34,37 +32,25 @@ func NewAppointment(
 	customersDatabaseId notionapi.DatabaseID,
 ) *AppointmentRepository {
 	return &AppointmentRepository{
-		log:                 log.With(sl.Component(appointmentRepositoryName)),
+		log:                 log,
 		client:              client,
 		recordsDatabaseId:   recordsDatabaseId,
 		servicesDatabaseId:  servicesDatabaseId,
 		customersDatabaseId: customersDatabaseId,
-		servicesCache:       containers.NewExpiable[[]appointment.ServiceEntity](time.Hour),
 	}
-}
-
-func (r *AppointmentRepository) Name() string {
-	return appointmentRepositoryName
-}
-
-func (r *AppointmentRepository) Start(ctx context.Context) error {
-	r.servicesCache.Start(ctx)
-	return nil
 }
 
 func (s *AppointmentRepository) Services(ctx context.Context) ([]appointment.ServiceEntity, error) {
 	const op = appointmentRepositoryName + ".Services"
-	return s.servicesCache.Load(func() ([]appointment.ServiceEntity, error) {
-		r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", op, err)
-		}
-		services := make([]appointment.ServiceEntity, 0, len(r.Results))
-		for _, result := range r.Results {
-			services = append(services, NotionToService(result))
-		}
-		return services, nil
-	})
+	r, err := s.client.Database.Query(ctx, s.servicesDatabaseId, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	services := make([]appointment.ServiceEntity, 0, len(r.Results))
+	for _, result := range r.Results {
+		services = append(services, NotionToService(result))
+	}
+	return services, nil
 }
 
 func (s *AppointmentRepository) Service(ctx context.Context, serviceId appointment.ServiceId) (appointment.ServiceEntity, error) {
@@ -178,7 +164,7 @@ func (s *AppointmentRepository) BusyPeriods(ctx context.Context, t time.Time) (a
 	for _, page := range r.Results {
 		period, err := notion.DatePeriod(page.Properties, RecordDateTimePeriod)
 		if err != nil {
-			s.log.Error(ctx, "failed to parse record period", sl.Err(err))
+			s.log.Error(ctx, "failed to parse record period", sl.Op(op), sl.Err(err))
 			continue
 		}
 		periods = append(periods, shared.TimePeriod{
@@ -297,7 +283,7 @@ func (s *AppointmentRepository) ActualAppointments(
 	for _, result := range recordsRes.Results {
 		record, err := NotionToRecord(result)
 		if err != nil {
-			s.log.Error(ctx, "failed to convert record", sl.Err(err))
+			s.log.Error(ctx, "failed to convert record", sl.Op(op), sl.Err(err))
 			continue
 		}
 		records = append(records, record)

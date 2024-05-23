@@ -41,7 +41,6 @@ func New(
 		cfg.Notion.ServicesDatabaseId,
 		cfg.Notion.CustomersDatabaseId,
 	)
-	go appointmentRepository.Start(ctx)
 
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
 		log,
@@ -57,7 +56,6 @@ func New(
 		notion,
 		cfg.Notion.BreaksDatabaseId,
 	)
-	go workBreaksRepository.Start(ctx)
 
 	dateTimerPeriodLockRepository := appointment_js_repository.NewDateTimePeriodLocksRepository(
 		cfg.DateTimeLocksRepository,
