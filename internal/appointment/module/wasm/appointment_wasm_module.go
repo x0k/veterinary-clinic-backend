@@ -43,11 +43,9 @@ func New(
 	)
 
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
-		log,
 		cfg.ProductionCalendar.Url,
 		httpClient,
 	)
-	go productionCalendarRepository.Start(ctx)
 
 	workingHoursRepository := appointment_static_repository.NewWorkingHoursRepository()
 

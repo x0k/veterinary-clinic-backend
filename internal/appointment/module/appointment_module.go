@@ -80,7 +80,6 @@ func New(
 	m.PostStart(servicesController)
 
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
-		log,
 		cfg.ProductionCalendar.Url,
 		&http.Client{
 			Transport: &http.Transport{
@@ -90,7 +89,14 @@ func New(
 			},
 		},
 	)
-	m.Append(productionCalendarRepository)
+
+	cachedProductionCalendar := appointment.ProductionCalendarLoader(
+		cache_adapters.WithSimpleCache(
+			m, "appointment_module.cached_production_calendar",
+			cache.NewSimpleExpirable[appointment.ProductionCalendar](time.Hour*24),
+			productionCalendarRepository.ProductionCalendar,
+		),
+	)
 
 	workingHoursRepository := appointment_static_repository.NewWorkingHoursRepository()
 
@@ -99,6 +105,7 @@ func New(
 		notion,
 		cfg.Notion.BreaksDatabaseId,
 	)
+
 	cachedWorkBreaks := appointment.WorkBreaksLoader(
 		cache_adapters.WithSimpleCache(
 			m, "appointment_module.cached_work_breaks",
@@ -115,7 +122,7 @@ func New(
 		dateTimerPeriodLockRepository.Lock,
 		dateTimerPeriodLockRepository.UnLock,
 		appointmentRepository.CreateAppointment,
-		productionCalendarRepository.ProductionCalendar,
+		cachedProductionCalendar,
 		workingHoursRepository.WorkingHours,
 		appointmentRepository.BusyPeriods,
 		cachedWorkBreaks,

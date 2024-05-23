@@ -7,42 +7,28 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
-type ProductionCalendarData map[shared.JsonDate]DayType
+type ProductionCalendar struct {
+	days map[shared.JsonDate]DayType
+}
 
-func NewProductionCalendarData(data map[string]int) (ProductionCalendarData, error) {
-	days := make(ProductionCalendarData, len(data))
+func NewProductionCalendar(
+	data map[string]int,
+) (ProductionCalendar, error) {
+	days := make(map[shared.JsonDate]DayType, len(data))
 	for k, v := range data {
 		jsonDate, err := shared.NewJsonDate(k)
 		if err != nil {
-			return nil, err
+			return ProductionCalendar{}, err
 		}
 		dayType, err := NewDayType(v)
 		if err != nil {
-			return nil, err
+			return ProductionCalendar{}, err
 		}
 		days[jsonDate] = dayType
 	}
-	return days, nil
-}
-
-type ProductionCalendar struct {
-	days ProductionCalendarData
-}
-
-func NewProductionCalendar(days ProductionCalendarData) ProductionCalendar {
 	return ProductionCalendar{
 		days: days,
-	}
-}
-
-func (p ProductionCalendar) Clone() ProductionCalendar {
-	return NewProductionCalendar(
-		maps.Clone(p.days),
-	)
-}
-
-func (p ProductionCalendar) Update(data ProductionCalendarData) {
-	maps.Copy(p.days, data)
+	}, nil
 }
 
 func (p ProductionCalendar) DayType(date shared.JsonDate) (DayType, bool) {
@@ -61,7 +47,9 @@ func (p ProductionCalendar) WithoutSaturdayWeekend() ProductionCalendar {
 			delete(cloned, d)
 		}
 	}
-	return NewProductionCalendar(cloned)
+	return ProductionCalendar{
+		days: cloned,
+	}
 }
 
 func (p ProductionCalendar) WorkingDay(today time.Time, shift time.Duration) time.Time {
