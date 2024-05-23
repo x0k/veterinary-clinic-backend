@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type Root struct {

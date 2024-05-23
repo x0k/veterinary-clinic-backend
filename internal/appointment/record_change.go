@@ -1,7 +1,8 @@
 package appointment
 
 import (
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/mapx"
+	"maps"
+
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
@@ -34,7 +35,7 @@ func (r ActualRecordsState) Records() map[RecordId]RecordEntity {
 }
 
 func (r *ActualRecordsState) Update(actualRecords []RecordEntity) []RecordChange {
-	stateCopy := mapx.Clone(r.records)
+	stateCopy := maps.Clone(r.records)
 	changes := make([]RecordChange, 0, len(actualRecords))
 	for _, actualRecord := range actualRecords {
 		r.records[actualRecord.Id] = actualRecord

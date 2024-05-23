@@ -1,7 +1,7 @@
 package app
 
 import (
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/jomei/notionapi"
 	telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/telegram"

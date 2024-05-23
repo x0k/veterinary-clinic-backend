@@ -5,7 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type Module struct {

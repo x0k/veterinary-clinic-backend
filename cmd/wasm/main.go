@@ -6,7 +6,7 @@ import (
 	"errors"
 	"syscall/js"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/x0k/vert"
 

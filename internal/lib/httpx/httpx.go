@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body

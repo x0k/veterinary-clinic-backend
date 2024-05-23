@@ -1,9 +1,9 @@
 package appointment
 
 import (
+	"maps"
 	"time"
 
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/mapx"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
@@ -37,12 +37,12 @@ func NewProductionCalendar(days ProductionCalendarData) ProductionCalendar {
 
 func (p ProductionCalendar) Clone() ProductionCalendar {
 	return NewProductionCalendar(
-		mapx.Clone(p.days),
+		maps.Clone(p.days),
 	)
 }
 
 func (p ProductionCalendar) Update(data ProductionCalendarData) {
-	mapx.Copy(p.days, data)
+	maps.Copy(p.days, data)
 }
 
 func (p ProductionCalendar) DayType(date shared.JsonDate) (DayType, bool) {
@@ -51,7 +51,7 @@ func (p ProductionCalendar) DayType(date shared.JsonDate) (DayType, bool) {
 }
 
 func (p ProductionCalendar) WithoutSaturdayWeekend() ProductionCalendar {
-	cloned := mapx.Clone(p.days)
+	cloned := maps.Clone(p.days)
 	for d, dt := range p.days {
 		if dt != Weekend {
 			continue

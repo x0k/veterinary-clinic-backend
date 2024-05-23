@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/handlers/slogpretty"

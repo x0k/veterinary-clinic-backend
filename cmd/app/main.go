@@ -5,7 +5,7 @@ import (
 	"flag"
 	"os"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/app"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"

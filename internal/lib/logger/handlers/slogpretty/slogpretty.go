@@ -6,7 +6,7 @@ import (
 	"io"
 	stdLog "log"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/fatih/color"
 )
