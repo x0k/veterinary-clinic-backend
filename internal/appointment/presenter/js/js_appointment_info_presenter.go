@@ -13,12 +13,16 @@ func AppointmentInfoPresenter(
 	app appointment.RecordEntity,
 	service appointment.ServiceEntity,
 ) (js_adapters.Result, error) {
+	dto, err := appointment_js_adapters.AppointmentInfoToDTO(
+		app,
+		service,
+	)
+	if err != nil {
+		return js_adapters.Result{}, err
+	}
 	return js_adapters.Ok(
 		vert.ValueOf(
-			appointment_js_adapters.AppointmentInfoToDTO(
-				app,
-				service,
-			),
+			dto,
 		),
 	), nil
 }

@@ -19,6 +19,10 @@ func NewDayType(dayType int) (DayType, error) {
 	return DayType(dayType), nil
 }
 
+func (d DayType) Int() int {
+	return int(d)
+}
+
 func IsNonWorkingDayType(dayType DayType) bool {
 	return dayType == Holiday || dayType == Weekend
 }

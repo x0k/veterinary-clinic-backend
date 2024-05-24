@@ -13,6 +13,10 @@ var ErrFailedToCompileMatchExpression = errors.New("failed to compile match expr
 
 type WorkBreakId string
 
+func (id WorkBreakId) String() string {
+	return string(id)
+}
+
 func NewWorkBreakId(id string) WorkBreakId {
 	return WorkBreakId(id)
 }

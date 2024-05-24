@@ -4,6 +4,7 @@ package appointment_wasm_module
 
 import (
 	"github.com/jomei/notionapi"
+	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	appointment_production_calendar_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/production_calendar"
 	appointment_js_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/js"
@@ -13,8 +14,17 @@ type SchedulingServiceConfig struct {
 	SampleRateInMinutes appointment.SampleRateInMinutes `js:"sampleRateInMinutes"`
 }
 
-type ProductionCalendarConfig struct {
-	Url appointment_production_calendar_adapters.Url `js:"url"`
+type ProductionCalendarRepositoryConfig struct {
+	Url   appointment_production_calendar_adapters.Url `js:"url"`
+	Cache js_adapters.SimpleCacheConfig                `js:"cache"`
+}
+
+type ServicesRepositoryConfig struct {
+	Cache js_adapters.SimpleCacheConfig `js:"cache"`
+}
+
+type WorkBreaksRepositoryConfig struct {
+	Cache js_adapters.SimpleCacheConfig `js:"cache"`
 }
 
 type NotionConfig struct {
@@ -25,8 +35,10 @@ type NotionConfig struct {
 }
 
 type Config struct {
-	SchedulingService       SchedulingServiceConfig                                       `js:"schedulingService"`
-	Notion                  NotionConfig                                                  `js:"notion"`
-	ProductionCalendar      ProductionCalendarConfig                                      `js:"productionCalendar"`
-	DateTimeLocksRepository appointment_js_repository.DateTimePeriodLocksRepositoryConfig `js:"dateTimeLocksRepository"`
+	Notion                       NotionConfig                                                  `js:"notion"`
+	ServicesRepository           ServicesRepositoryConfig                                      `js:"servicesRepository"`
+	WorkBreaksRepository         WorkBreaksRepositoryConfig                                    `js:"workBreaksRepository"`
+	ProductionCalendarRepository ProductionCalendarRepositoryConfig                            `js:"productionCalendar"`
+	SchedulingService            SchedulingServiceConfig                                       `js:"schedulingService"`
+	DateTimeLocksRepository      appointment_js_repository.DateTimePeriodLocksRepositoryConfig `js:"dateTimeLocksRepository"`
 }

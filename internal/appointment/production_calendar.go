@@ -31,6 +31,14 @@ func NewProductionCalendar(
 	}, nil
 }
 
+func (p ProductionCalendar) ToDTO() map[string]int {
+	dto := make(map[string]int, len(p.days))
+	for k, v := range p.days {
+		dto[k.String()] = v.Int()
+	}
+	return dto
+}
+
 func (p ProductionCalendar) DayType(date shared.JsonDate) (DayType, bool) {
 	dayType, ok := p.days[date]
 	return dayType, ok

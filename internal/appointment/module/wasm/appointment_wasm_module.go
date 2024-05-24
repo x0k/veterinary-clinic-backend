@@ -11,6 +11,7 @@ import (
 	js_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/js"
 	pubsub_adapters "github.com/x0k/veterinary-clinic-backend/internal/adapters/pubsub"
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
+	appointment_js_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/js"
 	appointment_js_controller "github.com/x0k/veterinary-clinic-backend/internal/appointment/controller/js"
 	appointment_js_presenter "github.com/x0k/veterinary-clinic-backend/internal/appointment/presenter/js"
 	appointment_http_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/http"
@@ -19,7 +20,9 @@ import (
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_js_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/js"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/loader"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/slicex"
 )
 
 func New(
@@ -41,10 +44,32 @@ func New(
 		cfg.Notion.ServicesDatabaseId,
 		cfg.Notion.CustomersDatabaseId,
 	)
+	cachedServices := appointment.ServicesLoader(
+		loader.WithCache(
+			log, appointmentRepository.Services,
+			js_adapters.NewSimpleCache(
+				log, "appointment_wasm_module.services_cache",
+				cfg.ServicesRepository.Cache,
+				js_adapters.To(slicex.MapE(appointment_js_adapters.ServiceToDTO)),
+				js_adapters.From(slicex.MapE(appointment_js_adapters.ServiceFromDTO)),
+			),
+		),
+	)
 
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
-		cfg.ProductionCalendar.Url,
+		cfg.ProductionCalendarRepository.Url,
 		httpClient,
+	)
+	cachedProductionCalendar := appointment.ProductionCalendarLoader(
+		loader.WithCache(
+			log, productionCalendarRepository.ProductionCalendar,
+			js_adapters.NewSimpleCache(
+				log, "appointment_wasm_module.production_calendar_cache",
+				cfg.ProductionCalendarRepository.Cache,
+				js_adapters.To(appointment_js_adapters.ProductionCalendarToDTO),
+				js_adapters.From(appointment_js_adapters.ProductionCalendarFromDTO),
+			),
+		),
 	)
 
 	workingHoursRepository := appointment_static_repository.NewWorkingHoursRepository()
@@ -53,6 +78,25 @@ func New(
 		log,
 		notion,
 		cfg.Notion.BreaksDatabaseId,
+	)
+	cachedWorkBreaks := appointment.WorkBreaksLoader(
+		loader.WithCache(
+			log, workBreaksRepository.WorkBreaks,
+			js_adapters.NewSimpleCache(
+				log, "appointment_wasm_module.work_breaks_cache",
+				cfg.WorkBreaksRepository.Cache,
+				js_adapters.To(
+					slicex.MapEx[appointment.WorkBreaks, []appointment_js_adapters.WorkBreakDTO](
+						appointment_js_adapters.WorkBreakToDTO,
+					),
+				),
+				js_adapters.From(
+					slicex.MapEx[[]appointment_js_adapters.WorkBreakDTO, appointment.WorkBreaks](
+						appointment_js_adapters.WorkBreakFromDTO,
+					),
+				),
+			),
+		),
 	)
 
 	dateTimerPeriodLockRepository := appointment_js_repository.NewDateTimePeriodLocksRepository(
@@ -65,10 +109,10 @@ func New(
 		dateTimerPeriodLockRepository.Lock,
 		dateTimerPeriodLockRepository.UnLock,
 		appointmentRepository.CreateAppointment,
-		productionCalendarRepository.ProductionCalendar,
+		cachedProductionCalendar,
 		workingHoursRepository.WorkingHours,
 		appointmentRepository.BusyPeriods,
-		workBreaksRepository.WorkBreaks,
+		cachedWorkBreaks,
 		appointmentRepository.CustomerActiveAppointment,
 		appointmentRepository.RemoveAppointment,
 	)
@@ -88,7 +132,7 @@ func New(
 		),
 		appointment_js_use_case.NewDayOrNextWorkingDayUseCase(
 			log,
-			productionCalendarRepository.ProductionCalendar,
+			cachedProductionCalendar,
 			appointment_js_presenter.DayPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),
@@ -136,7 +180,7 @@ func New(
 		),
 		appointment_use_case.NewServicesUseCase(
 			log,
-			appointmentRepository.Services,
+			cachedServices,
 			appointment_js_presenter.ServicesPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),

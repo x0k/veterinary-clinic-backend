@@ -25,6 +25,7 @@ func (c *SimpleExpirableCache[T]) Get(ctx context.Context) (T, bool) {
 	return c.cache.Get()
 }
 
-func (c *SimpleExpirableCache[T]) Add(ctx context.Context, value T) {
+func (c *SimpleExpirableCache[T]) Add(ctx context.Context, value T) error {
 	c.cache.Set(value)
+	return nil
 }

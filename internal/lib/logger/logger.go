@@ -14,8 +14,8 @@ func New(log *slog.Logger) *Logger {
 	return &Logger{log}
 }
 
-func (l *Logger) With(attrs ...any) *Logger {
-	return New(l.Logger.With(attrs...))
+func (l *Logger) With(attrs ...slog.Attr) *Logger {
+	return New(slog.New(l.Handler().WithAttrs(attrs)))
 }
 
 func (l *Logger) Debug(ctx context.Context, msg string, attrs ...slog.Attr) {

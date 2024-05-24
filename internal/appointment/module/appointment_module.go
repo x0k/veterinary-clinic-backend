@@ -26,6 +26,7 @@ import (
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/cache"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/loader"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
@@ -61,10 +62,12 @@ func New(
 	)
 
 	cachedServices := appointment.ServicesLoader(
-		cache_adapters.WithSimpleCache(
-			m, "appointment_module.cached_services",
-			cache.NewSimpleExpirable[[]appointment.ServiceEntity](time.Hour),
-			appointmentRepository.Services,
+		loader.WithCache(
+			log, appointmentRepository.Services,
+			cache_adapters.StartSimpleExpirableCache(
+				m, "appointment_module.services_cache",
+				cache.NewSimpleExpirable[[]appointment.ServiceEntity](time.Hour),
+			),
 		),
 	)
 
@@ -91,10 +94,12 @@ func New(
 	)
 
 	cachedProductionCalendar := appointment.ProductionCalendarLoader(
-		cache_adapters.WithSimpleCache(
-			m, "appointment_module.cached_production_calendar",
-			cache.NewSimpleExpirable[appointment.ProductionCalendar](time.Hour*24),
-			productionCalendarRepository.ProductionCalendar,
+		loader.WithCache(
+			log, productionCalendarRepository.ProductionCalendar,
+			cache_adapters.StartSimpleExpirableCache(
+				m, "appointment_module.production_calendar_cache",
+				cache.NewSimpleExpirable[appointment.ProductionCalendar](time.Hour*24),
+			),
 		),
 	)
 
@@ -107,10 +112,12 @@ func New(
 	)
 
 	cachedWorkBreaks := appointment.WorkBreaksLoader(
-		cache_adapters.WithSimpleCache(
-			m, "appointment_module.cached_work_breaks",
-			cache.NewSimpleExpirable[appointment.WorkBreaks](time.Hour),
-			workBreaksRepository.WorkBreaks,
+		loader.WithCache(
+			log, workBreaksRepository.WorkBreaks,
+			cache_adapters.StartSimpleExpirableCache(
+				m, "appointment_module.work_breaks_cache",
+				cache.NewSimpleExpirable[appointment.WorkBreaks](time.Hour),
+			),
 		),
 	)
 

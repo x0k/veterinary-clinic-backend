@@ -8,6 +8,10 @@ type JsonTime string
 // yyyy-mm-dd
 type JsonDate string
 
+func (d JsonDate) String() string {
+	return string(d)
+}
+
 func NewJsonDate(date string) (JsonDate, error) {
 	_, err := time.Parse(time.DateOnly, date)
 	if err != nil {

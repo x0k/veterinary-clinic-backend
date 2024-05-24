@@ -10,9 +10,13 @@ import (
 )
 
 func ServicesPresenter(services []appointment.ServiceEntity) (js_adapters.Result, error) {
-	dtos := make([]appointment_js_adapters.ServiceDTO, len(services))
+	servicesDto := make([]appointment_js_adapters.ServiceDTO, len(services))
+	var err error
 	for i, service := range services {
-		dtos[i] = appointment_js_adapters.ServiceToDTO(service)
+		servicesDto[i], err = appointment_js_adapters.ServiceToDTO(service)
+		if err != nil {
+			return js_adapters.Result{}, err
+		}
 	}
-	return js_adapters.Ok(vert.ValueOf(dtos)), nil
+	return js_adapters.Ok(vert.ValueOf(servicesDto)), nil
 }

@@ -6,7 +6,7 @@ import (
 
 type Simple[T any] interface {
 	Get(ctx context.Context) (T, bool)
-	Add(ctx context.Context, value T)
+	Add(ctx context.Context, value T) error
 }
 
 type Queried[K any, T any] interface {
