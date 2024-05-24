@@ -57,13 +57,16 @@ func New(
 		log,
 		notion,
 		cfg.Notion.RecordsDatabaseId,
+	)
+
+	servicesRepository := appointment_notion_repository.NewServices(
+		notion,
 		cfg.Notion.ServicesDatabaseId,
-		cfg.Notion.CustomersDatabaseId,
 	)
 
 	cachedServices := appointment.ServicesLoader(
 		loader.WithCache(
-			log, appointmentRepository.Services,
+			log, servicesRepository.Services,
 			cache_adapters.StartSimpleExpirableCache(
 				m, "appointment_module.services_cache",
 				cache.NewSimpleExpirable[[]appointment.ServiceEntity](time.Hour),
@@ -257,7 +260,7 @@ func New(
 		customerRepository.CustomerByIdentity,
 		appointmentRepository.CustomerActiveAppointment,
 		cachedServices,
-		appointmentRepository.Service,
+		servicesRepository.Service,
 		appointment_telegram_presenter.RenderAppointmentInfo,
 		servicesPickerPresenter.RenderServicesList,
 		registrationPresenter.RenderRegistration,
@@ -309,13 +312,13 @@ func New(
 		appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
 			log,
 			schedulingService,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			timePickerPresenter.RenderTimePicker,
 			appointment_telegram_presenter.TextErrorPresenter,
 		),
 		appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
 			log,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			confirmationPresenter.RenderConfirmation,
 			appointment_telegram_presenter.TextErrorPresenter,
 		),
@@ -323,7 +326,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			appointment_telegram_presenter.RenderAppointmentInfo,
 			appointment_telegram_presenter.TextErrorPresenter,
 			publisher,
@@ -332,7 +335,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			appointment_telegram_presenter.RenderAppointmentCancel,
 			appointment_telegram_presenter.CallbackErrorPresenter,
 			publisher,
@@ -378,7 +381,7 @@ func New(
 		appointment_use_case.NewSendCustomerNotificationUseCase(
 			log,
 			customerRepository.CustomerById,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			telegramSender.Send,
 			appointment_telegram_presenter.AppointmentChangedEventPresenter,
 		),

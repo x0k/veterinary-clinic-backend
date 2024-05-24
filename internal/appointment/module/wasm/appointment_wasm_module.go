@@ -41,12 +41,15 @@ func New(
 		log,
 		notion,
 		cfg.Notion.RecordsDatabaseId,
+	)
+
+	servicesRepository := appointment_notion_repository.NewServices(
+		notion,
 		cfg.Notion.ServicesDatabaseId,
-		cfg.Notion.CustomersDatabaseId,
 	)
 	cachedServices := appointment.ServicesLoader(
 		loader.WithCache(
-			log, appointmentRepository.Services,
+			log, servicesRepository.Services,
 			js_adapters.NewSimpleCache(
 				log, "appointment_wasm_module.services_cache",
 				cfg.ServicesRepository.Cache,
@@ -147,7 +150,7 @@ func New(
 		appointment_js_use_case.NewFreeTimeSlotsUseCase(
 			log,
 			schedulingService,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			appointment_js_presenter.FreeTimeSlotsPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),
@@ -155,7 +158,7 @@ func New(
 			log,
 			customerRepository.CustomerByIdentity,
 			appointmentRepository.CustomerActiveAppointment,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			appointment_js_presenter.AppointmentInfoPresenter,
 			appointment_js_presenter.NotFoundPresenter,
 			appointment_js_presenter.ErrorPresenter,
@@ -164,7 +167,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			appointment_js_presenter.AppointmentInfoPresenter,
 			appointment_js_presenter.ErrorPresenter,
 			publisher,
@@ -173,7 +176,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			appointmentRepository.Service,
+			servicesRepository.Service,
 			appointment_js_presenter.OkPresenter,
 			appointment_js_presenter.ErrorPresenter,
 			publisher,
