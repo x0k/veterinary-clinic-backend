@@ -25,7 +25,7 @@ import (
 	appointment_static_repository "github.com/x0k/veterinary-clinic-backend/internal/appointment/repository/static"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
-	"github.com/x0k/veterinary-clinic-backend/internal/lib/cache"
+	"github.com/x0k/veterinary-clinic-backend/internal/lib/cache/memory"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/loader"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
@@ -69,7 +69,17 @@ func New(
 			log, servicesRepository.Services,
 			cache_adapters.StartSimpleExpirableCache(
 				m, "appointment_module.services_cache",
-				cache.NewSimpleExpirable[[]appointment.ServiceEntity](time.Hour),
+				memory.NewSimpleExpirable[[]appointment.ServiceEntity](time.Hour),
+			),
+		),
+	)
+
+	cachedService := appointment.ServiceLoader(
+		loader.WithQueriedCache(
+			log, servicesRepository.Service,
+			memory.NewKeyedExpirableCache[appointment.ServiceId, appointment.ServiceEntity](
+				100,
+				time.Hour,
 			),
 		),
 	)
@@ -101,7 +111,7 @@ func New(
 			log, productionCalendarRepository.ProductionCalendar,
 			cache_adapters.StartSimpleExpirableCache(
 				m, "appointment_module.production_calendar_cache",
-				cache.NewSimpleExpirable[appointment.ProductionCalendar](time.Hour*24),
+				memory.NewSimpleExpirable[appointment.ProductionCalendar](time.Hour*24),
 			),
 		),
 	)
@@ -119,7 +129,7 @@ func New(
 			log, workBreaksRepository.WorkBreaks,
 			cache_adapters.StartSimpleExpirableCache(
 				m, "appointment_module.work_breaks_cache",
-				cache.NewSimpleExpirable[appointment.WorkBreaks](time.Hour),
+				memory.NewSimpleExpirable[appointment.WorkBreaks](time.Hour),
 			),
 		),
 	)
@@ -260,7 +270,7 @@ func New(
 		customerRepository.CustomerByIdentity,
 		appointmentRepository.CustomerActiveAppointment,
 		cachedServices,
-		servicesRepository.Service,
+		cachedService,
 		appointment_telegram_presenter.RenderAppointmentInfo,
 		servicesPickerPresenter.RenderServicesList,
 		registrationPresenter.RenderRegistration,
@@ -312,13 +322,13 @@ func New(
 		appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
 			log,
 			schedulingService,
-			servicesRepository.Service,
+			cachedService,
 			timePickerPresenter.RenderTimePicker,
 			appointment_telegram_presenter.TextErrorPresenter,
 		),
 		appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
 			log,
-			servicesRepository.Service,
+			cachedService,
 			confirmationPresenter.RenderConfirmation,
 			appointment_telegram_presenter.TextErrorPresenter,
 		),
@@ -326,7 +336,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			servicesRepository.Service,
+			cachedService,
 			appointment_telegram_presenter.RenderAppointmentInfo,
 			appointment_telegram_presenter.TextErrorPresenter,
 			publisher,
@@ -335,7 +345,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			servicesRepository.Service,
+			cachedService,
 			appointment_telegram_presenter.RenderAppointmentCancel,
 			appointment_telegram_presenter.CallbackErrorPresenter,
 			publisher,
@@ -381,7 +391,7 @@ func New(
 		appointment_use_case.NewSendCustomerNotificationUseCase(
 			log,
 			customerRepository.CustomerById,
-			servicesRepository.Service,
+			cachedService,
 			telegramSender.Send,
 			appointment_telegram_presenter.AppointmentChangedEventPresenter,
 		),

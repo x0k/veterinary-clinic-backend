@@ -11,7 +11,7 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
-const name = "js_adapters.SimpleCache[T]"
+const simpleCacheConfigName = "js_adapters.SimpleCache[T]"
 
 type SimpleCacheConfig struct {
 	Enabled bool      `js:"enabled"`
@@ -42,7 +42,7 @@ func NewSimpleCache[T any](
 }
 
 func (c *SimpleCache[T]) Get(ctx context.Context) (T, bool) {
-	const op = name + ".Get"
+	const op = simpleCacheConfigName + ".Get"
 	if !c.cfg.Enabled {
 		return *new(T), false
 	}
@@ -63,7 +63,7 @@ func (c *SimpleCache[T]) Get(ctx context.Context) (T, bool) {
 }
 
 func (c *SimpleCache[T]) Add(ctx context.Context, value T) error {
-	const op = name + ".Add"
+	const op = simpleCacheConfigName + ".Add"
 	if !c.cfg.Enabled {
 		return nil
 	}
