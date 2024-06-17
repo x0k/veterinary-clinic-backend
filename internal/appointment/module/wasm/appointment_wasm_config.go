@@ -16,15 +16,16 @@ type SchedulingServiceConfig struct {
 
 type ProductionCalendarRepositoryConfig struct {
 	Url   appointment_production_calendar_adapters.Url `js:"url"`
-	Cache js_adapters.SimpleCacheConfig                `js:"cache"`
+	Cache *js_adapters.SimpleCacheConfig               `js:"cache"`
 }
 
 type ServicesRepositoryConfig struct {
-	Cache js_adapters.SimpleCacheConfig `js:"cache"`
+	ServicesCache *js_adapters.SimpleCacheConfig `js:"servicesCache"`
+	ServiceCache  *js_adapters.KeyedCacheConfig  `js:"serviceCache"`
 }
 
 type WorkBreaksRepositoryConfig struct {
-	Cache js_adapters.SimpleCacheConfig `js:"cache"`
+	Cache *js_adapters.SimpleCacheConfig `js:"cache"`
 }
 
 type NotionConfig struct {

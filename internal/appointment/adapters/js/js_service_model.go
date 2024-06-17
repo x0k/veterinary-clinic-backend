@@ -13,6 +13,10 @@ type ServiceDTO struct {
 	CostDescription   string `js:"costDescription"`
 }
 
+func ServiceIdToDTO(id appointment.ServiceId) (string, error) {
+	return id.String(), nil
+}
+
 func ServiceToDTO(service appointment.ServiceEntity) (ServiceDTO, error) {
 	return ServiceDTO{
 		Id:                service.Id.String(),

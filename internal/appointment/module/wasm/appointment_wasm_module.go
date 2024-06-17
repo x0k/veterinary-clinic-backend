@@ -47,33 +47,50 @@ func New(
 		notion,
 		cfg.Notion.ServicesDatabaseId,
 	)
-	cachedServices := appointment.ServicesLoader(
-		loader.WithCache(
+
+	cachedServices := servicesRepository.Services
+	if cfg.ServicesRepository.ServicesCache != nil {
+		cachedServices = loader.WithCache(
 			log, servicesRepository.Services,
 			js_adapters.NewSimpleCache(
 				log, "appointment_wasm_module.services_cache",
-				cfg.ServicesRepository.Cache,
+				*cfg.ServicesRepository.ServicesCache,
 				js_adapters.To(slicex.MapE(appointment_js_adapters.ServiceToDTO)),
 				js_adapters.From(slicex.MapE(appointment_js_adapters.ServiceFromDTO)),
 			),
-		),
-	)
+		)
+	}
+
+	cachedService := servicesRepository.Service
+	if cfg.ServicesRepository.ServiceCache != nil {
+		cachedService = loader.WithQueriedCache(
+			log, servicesRepository.Service,
+			js_adapters.NewKeyedCache(
+				log, "appointment_wasm_module.service_cache",
+				*cfg.ServicesRepository.ServiceCache,
+				js_adapters.To(appointment_js_adapters.ServiceIdToDTO),
+				js_adapters.To(appointment_js_adapters.ServiceToDTO),
+				js_adapters.From(appointment_js_adapters.ServiceFromDTO),
+			),
+		)
+	}
 
 	productionCalendarRepository := appointment_http_repository.NewProductionCalendar(
 		cfg.ProductionCalendarRepository.Url,
 		httpClient,
 	)
-	cachedProductionCalendar := appointment.ProductionCalendarLoader(
-		loader.WithCache(
+	cachedProductionCalendar := productionCalendarRepository.ProductionCalendar
+	if cfg.ProductionCalendarRepository.Cache != nil {
+		cachedProductionCalendar = loader.WithCache(
 			log, productionCalendarRepository.ProductionCalendar,
 			js_adapters.NewSimpleCache(
 				log, "appointment_wasm_module.production_calendar_cache",
-				cfg.ProductionCalendarRepository.Cache,
+				*cfg.ProductionCalendarRepository.Cache,
 				js_adapters.To(appointment_js_adapters.ProductionCalendarToDTO),
 				js_adapters.From(appointment_js_adapters.ProductionCalendarFromDTO),
 			),
-		),
-	)
+		)
+	}
 
 	workingHoursRepository := appointment_static_repository.NewWorkingHoursRepository()
 
@@ -82,12 +99,14 @@ func New(
 		notion,
 		cfg.Notion.BreaksDatabaseId,
 	)
-	cachedWorkBreaks := appointment.WorkBreaksLoader(
-		loader.WithCache(
+
+	cachedWorkBreaks := workBreaksRepository.WorkBreaks
+	if cfg.WorkBreaksRepository.Cache != nil {
+		cachedWorkBreaks = loader.WithCache(
 			log, workBreaksRepository.WorkBreaks,
 			js_adapters.NewSimpleCache(
 				log, "appointment_wasm_module.work_breaks_cache",
-				cfg.WorkBreaksRepository.Cache,
+				*cfg.WorkBreaksRepository.Cache,
 				js_adapters.To(
 					slicex.MapEx[appointment.WorkBreaks, []appointment_js_adapters.WorkBreakDTO](
 						appointment_js_adapters.WorkBreakToDTO,
@@ -99,8 +118,8 @@ func New(
 					),
 				),
 			),
-		),
-	)
+		)
+	}
 
 	dateTimerPeriodLockRepository := appointment_js_repository.NewDateTimePeriodLocksRepository(
 		cfg.DateTimeLocksRepository,
@@ -150,7 +169,7 @@ func New(
 		appointment_js_use_case.NewFreeTimeSlotsUseCase(
 			log,
 			schedulingService,
-			servicesRepository.Service,
+			cachedService,
 			appointment_js_presenter.FreeTimeSlotsPresenter,
 			appointment_js_presenter.ErrorPresenter,
 		),
@@ -158,7 +177,7 @@ func New(
 			log,
 			customerRepository.CustomerByIdentity,
 			appointmentRepository.CustomerActiveAppointment,
-			servicesRepository.Service,
+			cachedService,
 			appointment_js_presenter.AppointmentInfoPresenter,
 			appointment_js_presenter.NotFoundPresenter,
 			appointment_js_presenter.ErrorPresenter,
@@ -167,7 +186,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			servicesRepository.Service,
+			cachedService,
 			appointment_js_presenter.AppointmentInfoPresenter,
 			appointment_js_presenter.ErrorPresenter,
 			publisher,
@@ -176,7 +195,7 @@ func New(
 			log,
 			schedulingService,
 			customerRepository.CustomerByIdentity,
-			servicesRepository.Service,
+			cachedService,
 			appointment_js_presenter.OkPresenter,
 			appointment_js_presenter.ErrorPresenter,
 			publisher,

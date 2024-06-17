@@ -11,12 +11,11 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 )
 
-const simpleCacheConfigName = "js_adapters.SimpleCache[T]"
+const simpleCacheName = "js_adapters.SimpleCache[T]"
 
 type SimpleCacheConfig struct {
-	Enabled bool      `js:"enabled"`
-	Get     *js.Value `js:"get"`
-	Add     *js.Value `js:"add"`
+	Get *js.Value `js:"get"`
+	Add *js.Value `js:"add"`
 }
 
 type SimpleCache[T any] struct {
@@ -42,10 +41,7 @@ func NewSimpleCache[T any](
 }
 
 func (c *SimpleCache[T]) Get(ctx context.Context) (T, bool) {
-	const op = simpleCacheConfigName + ".Get"
-	if !c.cfg.Enabled {
-		return *new(T), false
-	}
+	const op = simpleCacheName + ".Get"
 	res, err := Await(ctx, c.cfg.Get.Invoke())
 	if err != nil {
 		c.log.Error(ctx, "failed to get from cache", sl.Op(op), sl.Err(err))
@@ -63,16 +59,12 @@ func (c *SimpleCache[T]) Get(ctx context.Context) (T, bool) {
 }
 
 func (c *SimpleCache[T]) Add(ctx context.Context, value T) error {
-	const op = simpleCacheConfigName + ".Add"
-	if !c.cfg.Enabled {
-		return nil
-	}
+	const op = simpleCacheName + ".Add"
 	jsValue, err := c.toJs(value)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
-	_, err = Await(ctx, c.cfg.Add.Invoke(jsValue))
-	if err != nil {
+	if _, err := Await(ctx, c.cfg.Add.Invoke(jsValue)); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
