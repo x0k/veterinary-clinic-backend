@@ -18,13 +18,13 @@ func NewWorkingHours(days WorkingHoursData) WorkingHours {
 	}
 }
 
-func (w WorkingHours) ForDay(t time.Time) DayTimePeriods {
+func (w WorkingHours) ForDay(t shared.UTCTime) DayTimePeriods {
 	periods := make([]shared.TimePeriod, 0, 1)
 	if period, ok := w.days[t.Weekday()]; ok {
 		periods = append(periods, period)
 	}
 	return NewDayTimePeriods(
-		shared.GoTimeToDate(t),
+		shared.UTCTimeToDate(t),
 		periods,
 	)
 }

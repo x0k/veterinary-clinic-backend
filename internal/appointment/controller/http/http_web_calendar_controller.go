@@ -10,6 +10,7 @@ import (
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -37,7 +38,9 @@ func UseWebCalendarRouter(
 				)
 				return telegram_adapters.QueryResponse{}, err
 			}
-			schedule, err := scheduleUseCase.Schedule(ctx, time.Now(), selectedDate)
+			now := shared.NewUTCTime(time.Now())
+			utcDate := shared.NewUTCTime(selectedDate)
+			schedule, err := scheduleUseCase.Schedule(ctx, now, utcDate)
 			if err != nil {
 				log.Error(
 					ctx,

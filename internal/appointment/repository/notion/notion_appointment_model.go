@@ -127,8 +127,8 @@ func NotionToRecord(page notionapi.Page) (appointment.RecordEntity, error) {
 		status,
 		isArchived,
 		shared.DateTimePeriod{
-			Start: shared.GoTimeToDateTime(period.Start),
-			End:   shared.GoTimeToDateTime(period.End),
+			Start: shared.UTCTimeToDateTime(shared.NewUTCTime(period.Start)),
+			End:   shared.UTCTimeToDateTime(shared.NewUTCTime(period.End)),
 		},
 		appointment.NewCustomerId(
 			notion.Relations(page.Properties, RecordCustomer)[0].ID.String(),
@@ -171,8 +171,8 @@ func NotionToWorkBreak(page notionapi.Page) (appointment.WorkBreak, error) {
 		notion.Title(page.Properties, BreakTitle),
 		sb.String(),
 		shared.TimePeriod{
-			Start: shared.GoTimeToTime(period.Start),
-			End:   shared.GoTimeToTime(period.End),
+			Start: shared.UTCTimeToTime(shared.NewUTCTime(period.Start)),
+			End:   shared.UTCTimeToTime(shared.NewUTCTime(period.End)),
 		},
 	), nil
 }

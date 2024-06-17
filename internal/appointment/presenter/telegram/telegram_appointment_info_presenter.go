@@ -23,7 +23,7 @@ func RenderAppointmentInfo(
 	sb.WriteString("Статус: ")
 	sb.WriteString(telegram_adapters.EscapeMarkdownString(status))
 	sb.WriteString("\n\n")
-	writeAppointment(&sb, service, shared.DateTimeToGoTime(app.DateTimePeriod.Start))
+	writeAppointment(&sb, service, shared.DateTimeToUTCTime(app.DateTimePeriod.Start).Time)
 	var markup *telebot.ReplyMarkup
 	if app.Status == appointment.RecordAwaits {
 		markup = &telebot.ReplyMarkup{

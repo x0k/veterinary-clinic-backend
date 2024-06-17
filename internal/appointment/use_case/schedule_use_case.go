@@ -2,11 +2,11 @@ package appointment_use_case
 
 import (
 	"context"
-	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const scheduleUseCaseName = "appointment_use_case.ScheduleUseCase"
@@ -32,11 +32,11 @@ func NewScheduleUseCase[R any](
 	}
 }
 
-func (u *ScheduleUseCase[R]) Schedule(ctx context.Context, now, preferredDate time.Time) (R, error) {
+func (u *ScheduleUseCase[R]) Schedule(ctx context.Context, now, preferredDate shared.UTCTime) (R, error) {
 	schedule, err := u.schedulingService.Schedule(ctx, now, preferredDate)
 	if err != nil {
 		u.log.Debug(ctx, "failed to get a schedule", sl.Err(err))
 		return u.errorPresenter(err)
 	}
-	return u.schedulePresenter(now, schedule)
+	return u.schedulePresenter(now.Time, schedule)
 }

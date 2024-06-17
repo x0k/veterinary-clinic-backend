@@ -2,11 +2,11 @@ package appointment_telegram_use_case
 
 import (
 	"context"
-	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const appointmentDatePickerUseCaseName = "appointment_telegram_use_case.AppointmentDatePickerUseCase"
@@ -35,13 +35,12 @@ func NewAppointmentDatePickerUseCase[R any](
 func (u *AppointmentDatePickerUseCase[R]) DatePicker(
 	ctx context.Context,
 	serviceId appointment.ServiceId,
-	now time.Time,
-	preferredDate time.Time,
+	now, preferredDate shared.UTCTime,
 ) (R, error) {
 	schedule, err := u.schedulingService.Schedule(ctx, now, preferredDate)
 	if err != nil {
 		u.log.Error(ctx, "failed to get a schedule", sl.Err(err))
 		return u.errorPresenter(err)
 	}
-	return u.datePickerPresenter(now, serviceId, schedule)
+	return u.datePickerPresenter(now.Time, serviceId, schedule)
 }

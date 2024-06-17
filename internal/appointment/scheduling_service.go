@@ -63,12 +63,12 @@ func NewSchedulingService(
 
 func (s *SchedulingService) MakeAppointment(
 	ctx context.Context,
-	now time.Time,
-	appointmentDate time.Time,
+	now shared.UTCTime,
+	appointmentDate shared.UTCTime,
 	customer CustomerEntity,
 	service ServiceEntity,
 ) (RecordEntity, error) {
-	appointmentDateTime := shared.GoTimeToDateTime(appointmentDate)
+	appointmentDateTime := shared.UTCTimeToDateTime(appointmentDate)
 	dateTimePeriod := shared.DateTimePeriod{
 		Start: appointmentDateTime,
 		End: shared.DateTime{
@@ -97,11 +97,11 @@ func (s *SchedulingService) MakeAppointment(
 	if err != nil {
 		return RecordEntity{}, err
 	}
-	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate)
+	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate.Time)
 	if err != nil {
 		return RecordEntity{}, err
 	}
-	datWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
+	datWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate.Time)
 	if err != nil {
 		return RecordEntity{}, err
 	}
@@ -122,7 +122,7 @@ func (s *SchedulingService) MakeAppointment(
 	}) {
 		return RecordEntity{}, fmt.Errorf("%w: %s", ErrDateTimePeriodIsOccupied, dateTimePeriod)
 	}
-	title, err := RecordTitle(customer, service, now)
+	title, err := RecordTitle(customer, service, now.Time)
 	if err != nil {
 		return RecordEntity{}, err
 	}
@@ -134,7 +134,7 @@ func (s *SchedulingService) MakeAppointment(
 		dateTimePeriod,
 		customer.Id,
 		service.Id,
-		now,
+		now.Time,
 	)
 	if err != nil {
 		return RecordEntity{}, err
@@ -150,19 +150,19 @@ func (s *SchedulingService) MakeAppointment(
 
 func (s *SchedulingService) Schedule(
 	ctx context.Context,
-	now time.Time,
-	preferredDate time.Time,
+	now shared.UTCTime,
+	preferredDate shared.UTCTime,
 ) (Schedule, error) {
 	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
 		return Schedule{}, err
 	}
-	appointmentDate := productionCalendar.DayOrNextWorkingDay(preferredDate)
-	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate)
+	appointmentDate := shared.NewUTCTime(productionCalendar.DayOrNextWorkingDay(preferredDate.Time))
+	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate.Time)
 	if err != nil {
 		return Schedule{}, err
 	}
-	dayWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
+	dayWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate.Time)
 	if err != nil {
 		return Schedule{}, err
 	}
@@ -189,19 +189,19 @@ func (s *SchedulingService) Schedule(
 
 func (s *SchedulingService) SampledFreeTimeSlots(
 	ctx context.Context,
-	now time.Time,
-	appointmentDate time.Time,
+	now shared.UTCTime,
+	appointmentDate shared.UTCTime,
 	durationInMinutes shared.DurationInMinutes,
 ) (SampledFreeTimeSlots, error) {
 	productionCalendar, err := s.productionCalendar(ctx)
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
-	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate)
+	busyPeriods, err := s.busyPeriodsLoader(ctx, appointmentDate.Time)
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
-	dayWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate)
+	dayWorkBreaks, err := s.dayWorkBreaks(ctx, appointmentDate.Time)
 	if err != nil {
 		return SampledFreeTimeSlots{}, err
 	}
@@ -255,8 +255,8 @@ func (s *SchedulingService) dayWorkBreaks(ctx context.Context, day time.Time) (D
 
 func (s *SchedulingService) freeTimeSlots(
 	ctx context.Context,
-	now time.Time,
-	appointmentDate time.Time,
+	now shared.UTCTime,
+	appointmentDate shared.UTCTime,
 	productionCalendar ProductionCalendar,
 	busyPeriods BusyPeriods,
 	dayWorkBreaks DayWorkBreaks,
@@ -266,7 +266,7 @@ func (s *SchedulingService) freeTimeSlots(
 		return FreeTimeSlots{}, err
 	}
 	datTimePeriods, err := workingHours.ForDay(appointmentDate).
-		OmitPast(shared.GoTimeToDateTime(now)).
+		OmitPast(shared.UTCTimeToDateTime(now)).
 		ConsiderProductionCalendar(productionCalendar)
 	if err != nil {
 		return FreeTimeSlots{}, err

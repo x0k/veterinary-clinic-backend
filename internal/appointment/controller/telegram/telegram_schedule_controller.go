@@ -8,6 +8,7 @@ import (
 	appointment_telegram_adapters "github.com/x0k/veterinary-clinic-backend/internal/appointment/adapters/telegram"
 	appointment_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/module"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -19,7 +20,7 @@ func NewSchedule(
 		"appointment_telegram_controller.NewSchedule",
 		func(ctx context.Context) error {
 			scheduleHandler := func(c telebot.Context) error {
-				now := time.Now()
+				now := shared.NewUTCTime(time.Now())
 				res, err := scheduleUseCase.Schedule(ctx, now, now)
 				if err != nil {
 					return err
@@ -35,7 +36,9 @@ func NewSchedule(
 				if err != nil {
 					return err
 				}
-				res, err := scheduleUseCase.Schedule(ctx, time.Now(), date)
+				now := shared.NewUTCTime(time.Now())
+				utcDate := shared.NewUTCTime(date)
+				res, err := scheduleUseCase.Schedule(ctx, now, utcDate)
 				if err != nil {
 					return err
 				}

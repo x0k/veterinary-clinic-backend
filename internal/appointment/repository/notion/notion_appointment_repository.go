@@ -37,8 +37,8 @@ func NewAppointment(
 func (r *AppointmentRepository) CreateAppointment(ctx context.Context, app *appointment.RecordEntity) error {
 	const op = appointmentRepositoryName + ".CreateAppointment"
 	period := app.DateTimePeriod
-	start := notionapi.Date(shared.DateTimeToGoTime(period.Start))
-	end := notionapi.Date(shared.DateTimeToGoTime(period.End))
+	start := notionapi.Date(shared.DateTimeToUTCTime(period.Start).Time)
+	end := notionapi.Date(shared.DateTimeToUTCTime(period.End).Time)
 	status, err := RecordStatusToNotion(app.Status, app.IsArchived)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -137,8 +137,8 @@ func (s *AppointmentRepository) BusyPeriods(ctx context.Context, t time.Time) (a
 			continue
 		}
 		periods = append(periods, shared.TimePeriod{
-			Start: shared.GoTimeToTime(period.Start),
-			End:   shared.GoTimeToTime(period.End),
+			Start: shared.UTCTimeToTime(shared.NewUTCTime(period.Start)),
+			End:   shared.UTCTimeToTime(shared.NewUTCTime(period.End)),
 		})
 	}
 	return periods, nil

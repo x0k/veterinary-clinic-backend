@@ -14,8 +14,8 @@ type Schedule struct {
 }
 
 func NewSchedule(
-	now time.Time,
-	scheduleDate time.Time,
+	now shared.UTCTime,
+	scheduleDate shared.UTCTime,
 	productionCalendar ProductionCalendar,
 	freeTimeSlots FreeTimeSlots,
 	busyPeriods BusyPeriods,
@@ -24,13 +24,13 @@ func NewSchedule(
 	next := productionCalendar.DayOrNextWorkingDay(scheduleDate.AddDate(0, 0, 1))
 	prev := productionCalendar.DayOrPrevWorkingDay(scheduleDate.AddDate(0, 0, -1))
 	entries := newScheduleEntries(
-		shared.GoTimeToDate(scheduleDate),
+		shared.UTCTimeToDate(scheduleDate),
 		freeTimeSlots,
 		busyPeriods,
 		dayWorkBreaks,
-	).OmitPast(shared.GoTimeToDateTime(now))
+	).OmitPast(shared.UTCTimeToDateTime(now))
 	return Schedule{
-		Date:     scheduleDate,
+		Date:     scheduleDate.Time,
 		Entries:  entries,
 		NextDate: next,
 		PrevDate: prev,

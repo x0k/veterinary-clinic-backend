@@ -11,6 +11,7 @@ import (
 	appointment_telegram_use_case "github.com/x0k/veterinary-clinic-backend/internal/appointment/use_case/telegram"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 	"gopkg.in/telebot.v3"
 )
 
@@ -37,11 +38,13 @@ func UseDatePickerRouter(
 				)
 				return telegram_adapters.QueryResponse{}, err
 			}
+			now := shared.NewUTCTime(time.Now())
+			utcDate := shared.NewUTCTime(selectedDate)
 			datePicker, err := appointmentDatePickerUseCase.DatePicker(
 				ctx,
 				appointment.NewServiceId(res.State),
-				time.Now(),
-				selectedDate,
+				now,
+				utcDate,
 			)
 			if err != nil {
 				log.Error(

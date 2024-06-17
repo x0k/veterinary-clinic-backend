@@ -2,12 +2,12 @@ package appointment_use_case
 
 import (
 	"context"
-	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/pubsub"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const makeAppointmentUseCaseName = "appointment_use_case.MakeAppointmentUseCase"
@@ -44,8 +44,8 @@ func NewMakeAppointmentUseCase[R any](
 
 func (s *MakeAppointmentUseCase[R]) CreateAppointment(
 	ctx context.Context,
-	now time.Time,
-	appointmentDate time.Time,
+	now shared.UTCTime,
+	appointmentDate shared.UTCTime,
 	customerId appointment.CustomerIdentity,
 	serviceId appointment.ServiceId,
 ) (R, error) {

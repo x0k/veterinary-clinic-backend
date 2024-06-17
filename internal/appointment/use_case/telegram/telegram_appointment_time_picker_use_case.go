@@ -2,11 +2,11 @@ package appointment_telegram_use_case
 
 import (
 	"context"
-	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const appointmentTimePickerUseCaseName = "appointment_telegram_use_case.AppointmentTimePickerUseCase"
@@ -38,8 +38,7 @@ func NewAppointmentTimePickerUseCase[R any](
 func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 	ctx context.Context,
 	serviceId appointment.ServiceId,
-	now time.Time,
-	appointmentDate time.Time,
+	now, appointmentDate shared.UTCTime,
 ) (R, error) {
 	service, err := u.serviceLoader(ctx, serviceId)
 	if err != nil {
@@ -56,5 +55,5 @@ func (u *AppointmentTimePickerUseCase[R]) TimePicker(
 		u.log.Debug(ctx, "failed to get sampled free time slots", sl.Err(err))
 		return u.errorPresenter(err)
 	}
-	return u.timePickerPresenter(serviceId, appointmentDate, sampledFreeTimeSlots)
+	return u.timePickerPresenter(serviceId, appointmentDate.Time, sampledFreeTimeSlots)
 }

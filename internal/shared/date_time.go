@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+type UTCTime struct {
+	time.Time
+}
+
+func NewUTCTime(t time.Time) UTCTime {
+	return UTCTime{t.UTC()}
+}
+
 type Time struct {
 	Minutes int
 	Hours   int
@@ -74,14 +82,14 @@ func MakeTimeShifter(shift Time) func(Time) Time {
 	}
 }
 
-func GoTimeToTime(t time.Time) Time {
+func UTCTimeToTime(t UTCTime) Time {
 	return Time{
 		Hours:   t.Hour(),
 		Minutes: t.Minute(),
 	}
 }
 
-func GoTimeToDate(t time.Time) Date {
+func UTCTimeToDate(t UTCTime) Date {
 	return Date{
 		Day:   t.Day(),
 		Month: int(t.Month()),
@@ -89,27 +97,26 @@ func GoTimeToDate(t time.Time) Date {
 	}
 }
 
-func GoTimeToDateTime(t time.Time) DateTime {
+func UTCTimeToDateTime(t UTCTime) DateTime {
 	return DateTime{
-		Time: GoTimeToTime(t),
-		Date: GoTimeToDate(t),
+		Time: UTCTimeToTime(t),
+		Date: UTCTimeToDate(t),
 	}
 }
 
-func DateToGoTime(d Date) time.Time {
-	return time.Date(d.Year, time.Month(d.Month), d.Day, 0, 0, 0, 0, time.Local)
+func DateToUTCTime(d Date) UTCTime {
+	return NewUTCTime(time.Date(d.Year, time.Month(d.Month), d.Day, 0, 0, 0, 0, time.UTC))
 }
 
-func DateTimeToGoTime(dt DateTime) time.Time {
-	return time.Date(dt.Year, time.Month(dt.Month), dt.Day, dt.Hours, dt.Minutes, 0, 0, time.Local)
+func DateTimeToUTCTime(dt DateTime) UTCTime {
+	return NewUTCTime(time.Date(dt.Year, time.Month(dt.Month), dt.Day, dt.Hours, dt.Minutes, 0, 0, time.UTC))
 }
 
 func MakeDateTimeShifter(shift DateTime) func(DateTime) DateTime {
 	return func(dt DateTime) DateTime {
-		t := DateTimeToGoTime(dt).
+		t := DateTimeToUTCTime(dt).
 			AddDate(shift.Year, shift.Month, shift.Day).
-			Add(time.Duration(shift.Hours) * time.Hour).
-			Add(time.Duration(shift.Minutes) * time.Minute)
-		return GoTimeToDateTime(t)
+			Add(time.Duration(shift.Hours)*time.Hour + time.Duration(shift.Minutes)*time.Minute)
+		return UTCTimeToDateTime(NewUTCTime(t))
 	}
 }

@@ -2,11 +2,11 @@ package appointment_js_use_case
 
 import (
 	"context"
-	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger"
 	"github.com/x0k/veterinary-clinic-backend/internal/lib/logger/sl"
+	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
 const freeTimeSlotsUseCaseName = "appointment_js_use_case.FreeTimeSlotsUseCase"
@@ -38,8 +38,7 @@ func NewFreeTimeSlotsUseCase[R any](
 func (u *FreeTimeSlotsUseCase[R]) FreeTimeSlots(
 	ctx context.Context,
 	serviceId appointment.ServiceId,
-	now time.Time,
-	appointmentDate time.Time,
+	now, appointmentDate shared.UTCTime,
 ) (R, error) {
 	service, err := u.serviceLoader(ctx, serviceId)
 	if err != nil {

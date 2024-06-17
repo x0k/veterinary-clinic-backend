@@ -14,8 +14,8 @@ func writeAppointmentSummary(
 	customer appointment.CustomerEntity,
 	service appointment.ServiceEntity,
 ) {
-	start := shared.DateTimeToGoTime(app.DateTimePeriod.Start)
-	end := shared.DateTimeToGoTime(app.DateTimePeriod.End)
+	start := shared.DateTimeToUTCTime(app.DateTimePeriod.Start)
+	end := shared.DateTimeToUTCTime(app.DateTimePeriod.End)
 	sb.WriteString(
 		telegram_adapters.EscapeMarkdownString(
 			start.Format("02.01.2006 15:04"),

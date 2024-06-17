@@ -35,7 +35,7 @@ func NewMakeAppointment(
 				if !ok {
 					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
 				}
-				now := time.Now()
+				now := shared.NewUTCTime(time.Now())
 				datePicker, err := appointmentDatePickerUseCase.DatePicker(ctx, serviceId, now, now)
 				if err != nil {
 					return err
@@ -50,11 +50,13 @@ func NewMakeAppointment(
 				if !ok {
 					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
 				}
+				now := shared.NewUTCTime(time.Now())
+				utcDate := shared.NewUTCTime(state.Date)
 				datePicker, err := appointmentDatePickerUseCase.DatePicker(
 					ctx,
 					state.ServiceId,
-					time.Now(),
-					state.Date,
+					now,
+					utcDate,
 				)
 				if err != nil {
 					return err
@@ -81,11 +83,13 @@ func NewMakeAppointment(
 				if !ok {
 					return errorSender.Send(c, appointment_telegram_adapters.ErrUnknownState)
 				}
+				now := shared.NewUTCTime(time.Now())
+				utcDate := shared.NewUTCTime(state.Date)
 				timePicker, err := appointmentTimePickerUseCase.TimePicker(
 					ctx,
 					state.ServiceId,
-					time.Now(),
-					state.Date,
+					now,
+					utcDate,
 				)
 				if err != nil {
 					return err
@@ -123,10 +127,12 @@ func NewMakeAppointment(
 				if err != nil {
 					return err
 				}
+				now := shared.NewUTCTime(time.Now())
+				utcDate := shared.NewUTCTime(state.Date)
 				app, err := makeAppointmentUseCase.CreateAppointment(
 					ctx,
-					time.Now(),
-					state.Date,
+					now,
+					utcDate,
 					identity,
 					state.ServiceId,
 				)

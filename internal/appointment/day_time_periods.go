@@ -55,7 +55,7 @@ func (data DayTimePeriods) OmitPast(now shared.DateTime) DayTimePeriods {
 
 func (data DayTimePeriods) ConsiderProductionCalendar(cal ProductionCalendar) (DayTimePeriods, error) {
 	dayType, ok := cal.DayType(shared.GoTimeToJsonDate(
-		shared.DateToGoTime(data.Date),
+		shared.DateToUTCTime(data.Date).Time,
 	))
 	if !ok {
 		return data, nil
