@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-env: all run prof migrate debug-env query
+env: mk run prof migrate debug-env query
     if [ -f .env.local ]
     then
         export $(cat .env.local | xargs)
