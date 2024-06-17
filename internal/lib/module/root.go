@@ -2,10 +2,11 @@ package module
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"log/slog"
 )
 
 type Root struct {

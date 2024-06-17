@@ -41,7 +41,7 @@ func (u *AppointmentDatePickerUseCase[R]) DatePicker(
 	schedule, err := u.schedulingService.Schedule(ctx, now, preferredDate)
 	if err != nil {
 		u.log.Error(ctx, "failed to get a schedule", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		return u.errorPresenter(err)
 	}
-	return u.datePickerPresenter.RenderDatePicker(now, serviceId, schedule)
+	return u.datePickerPresenter(now, serviceId, schedule)
 }

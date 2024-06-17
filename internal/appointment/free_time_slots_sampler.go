@@ -16,10 +16,10 @@ func newFreeTimeSlotsSampler(
 	sampleRateInMinutes SampleRateInMinutes,
 ) *freeTimeSlotsSampler {
 	durationShift := shared.MakeTimeShifter(shared.Time{
-		Minutes: int(durationInMinutes),
+		Minutes: durationInMinutes.Int(),
 	})
 	sampleRateShift := shared.MakeTimeShifter(shared.Time{
-		Minutes: int(sampleRateInMinutes),
+		Minutes: sampleRateInMinutes.Minutes(),
 	})
 	return &freeTimeSlotsSampler{
 		durationInMinutes:   durationInMinutes,
@@ -30,11 +30,11 @@ func newFreeTimeSlotsSampler(
 }
 
 func (c *freeTimeSlotsSampler) Sample(period shared.TimePeriod) SampledFreeTimeSlots {
-	rest := period.Start.Minutes % int(c.sampleRateInMinutes)
+	rest := period.Start.Minutes % c.sampleRateInMinutes.Minutes()
 	if rest != 0 {
 		return c.Sample(shared.TimePeriod{
 			Start: shared.MakeTimeShifter(shared.Time{
-				Minutes: int(c.sampleRateInMinutes) - rest,
+				Minutes: c.sampleRateInMinutes.Minutes() - rest,
 			})(period.Start),
 			End: period.End,
 		})

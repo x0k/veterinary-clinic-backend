@@ -72,14 +72,18 @@ const (
 	CustomerRecords     = "Записи"
 )
 
-func NotionToCustomer(page notionapi.Page) appointment.CustomerEntity {
+func NotionToCustomer(page notionapi.Page) (appointment.CustomerEntity, error) {
+	identity, err := appointment.NewCustomerIdentity(notion.Text(page.Properties, CustomerUserId))
+	if err != nil {
+		return appointment.CustomerEntity{}, err
+	}
 	return appointment.NewCustomer(
 		appointment.NewCustomerId(string(page.ID)),
-		appointment.NewCustomerIdentity(notion.Text(page.Properties, CustomerUserId)),
+		identity,
 		notion.Title(page.Properties, CustomerTitle),
 		notion.Phone(page.Properties, CustomerPhoneNumber),
 		notion.Email(page.Properties, CustomerEmail),
-	)
+	), nil
 }
 
 const (

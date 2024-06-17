@@ -23,7 +23,7 @@ func NewRegistrationPresenter(
 }
 
 func (p *RegistrationPresenter) RenderRegistration(telegramUserId shared.TelegramUserId) (telegram_adapters.TextResponses, error) {
-	p.stateSaver.SaveByKey(
+	p.stateSaver(
 		adapters.NewStateId(strconv.FormatInt(telegramUserId.Int(), 10)),
 		telegramUserId,
 	)

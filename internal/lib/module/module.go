@@ -2,9 +2,10 @@ package module
 
 import (
 	"context"
-	"log/slog"
 	"sync"
 	"sync/atomic"
+
+	"log/slog"
 )
 
 type Module struct {

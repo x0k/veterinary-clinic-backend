@@ -30,7 +30,7 @@ func (p *ConfirmationPresenter) RenderConfirmation(
 	sb := strings.Builder{}
 	sb.WriteString("Подтвердите запись:\n\n")
 	writeAppointment(&sb, service, appointmentDateTime)
-	stateId := string(p.stateSaver.Save(appointment_telegram_adapters.AppointmentSate{
+	stateId := string(p.stateSaver(appointment_telegram_adapters.AppointmentSate{
 		ServiceId: service.Id,
 		Date:      appointmentDateTime,
 	}))

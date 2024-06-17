@@ -36,7 +36,7 @@ func (p *datePickerPresenter) buttons(now time.Time, serviceId appointment.Servi
 	buttons := make([]telebot.InlineButton, 0, 3)
 	if now.Add(-24 * time.Hour).Before(schedule.PrevDate) {
 		buttons = append(buttons, *appointment_telegram_adapters.PrevMakeAppointmentDateBtn.With(string(
-			p.stateSaver.Save(appointment_telegram_adapters.AppointmentSate{
+			p.stateSaver(appointment_telegram_adapters.AppointmentSate{
 				ServiceId: serviceId,
 				Date:      schedule.PrevDate,
 			}),
@@ -59,7 +59,7 @@ func (p *datePickerPresenter) buttons(now time.Time, serviceId appointment.Servi
 		},
 	})
 	buttons = append(buttons, *appointment_telegram_adapters.NextMakeAppointmentDateBtn.With(string(
-		p.stateSaver.Save(appointment_telegram_adapters.AppointmentSate{
+		p.stateSaver(appointment_telegram_adapters.AppointmentSate{
 			ServiceId: serviceId,
 			Date:      schedule.NextDate,
 		}),
@@ -69,7 +69,7 @@ func (p *datePickerPresenter) buttons(now time.Time, serviceId appointment.Servi
 		{
 			*appointment_telegram_adapters.CancelMakeAppointmentDateBtn,
 			*appointment_telegram_adapters.SelectMakeAppointmentDateBtn.With(string(
-				p.stateSaver.Save(appointment_telegram_adapters.AppointmentSate{
+				p.stateSaver(appointment_telegram_adapters.AppointmentSate{
 					ServiceId: serviceId,
 					Date:      schedule.Date,
 				}),

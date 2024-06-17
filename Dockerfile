@@ -18,7 +18,7 @@ COPY . .
 
 # Build the Go application
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
-    go build -tags migrate -o app ./cmd/app/
+    go build -tags "modern,migrate" -o app ./cmd/app/
 
 # Create a minimal runtime image
 FROM alpine:3.19.0

@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"strings"
+
+	"log/slog"
 )
 
 // https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body

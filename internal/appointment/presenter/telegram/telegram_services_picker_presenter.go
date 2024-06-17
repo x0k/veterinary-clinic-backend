@@ -26,7 +26,7 @@ func (p *ServicesPickerPresenter) RenderServicesList(services []appointment.Serv
 		buttons = append(buttons, []telebot.InlineButton{{
 			Text:   service.Title,
 			Unique: appointment_telegram_adapters.MakeAppointmentService,
-			Data:   p.stateSaver.Save(service.Id).String(),
+			Data:   p.stateSaver(service.Id).String(),
 		}})
 	}
 	return telegram_adapters.TextResponses{{

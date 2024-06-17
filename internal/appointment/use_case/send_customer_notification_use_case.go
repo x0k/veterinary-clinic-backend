@@ -44,7 +44,7 @@ func (u *SendCustomerNotificationUseCase[R]) SendCustomerNotification(
 		u.log.Error(ctx, "failed to load customer", sl.Err(err))
 		return
 	}
-	service, err := u.serviceLoader.Service(ctx, event.Record.ServiceId)
+	service, err := u.serviceLoader(ctx, event.Record.ServiceId)
 	if err != nil {
 		u.log.Error(ctx, "failed to load service", sl.Err(err))
 		return

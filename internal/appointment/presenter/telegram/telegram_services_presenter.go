@@ -8,13 +8,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type ServicesPresenter struct{}
-
-func NewServices() *ServicesPresenter {
-	return &ServicesPresenter{}
-}
-
-func (s *ServicesPresenter) RenderServices(services []appointment.ServiceEntity) (telegram_adapters.TextResponses, error) {
+func ServicesPresenter(services []appointment.ServiceEntity) (telegram_adapters.TextResponses, error) {
 	sb := strings.Builder{}
 	sb.WriteString("Услуги: \n\n")
 	for _, service := range services {

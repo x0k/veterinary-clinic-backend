@@ -6,56 +6,49 @@ import (
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
 )
 
-type ServicesPresenter[R any] interface {
-	RenderServices(services []ServiceEntity) (R, error)
-}
+type ServicesPresenter[R any] func(services []ServiceEntity) (R, error)
 
-type SchedulePresenter[R any] interface {
-	RenderSchedule(now time.Time, schedule Schedule) (R, error)
-}
+type SchedulePresenter[R any] func(now time.Time, schedule Schedule) (R, error)
 
-type ErrorPresenter[R any] interface {
-	RenderError(err error) (R, error)
-}
+type DayPresenter[R any] func(day time.Time) (R, error)
 
-type RegistrationPresenter[R any] interface {
-	RenderRegistration(telegramUserId shared.TelegramUserId) (R, error)
-}
+type CustomerPresenter[R any] func(customer CustomerEntity) (R, error)
 
-type SuccessRegistrationPresenter[R any] interface {
-	RenderSuccessRegistration(services []ServiceEntity) (R, error)
-}
+type ErrorPresenter[R any] func(err error) (R, error)
 
-type ServicesPickerPresenter[R any] interface {
-	RenderServicesList(services []ServiceEntity) (R, error)
-}
+type RegistrationPresenter[R any] func(telegramUserId shared.TelegramUserId) (R, error)
 
-type DatePickerPresenter[R any] interface {
-	RenderDatePicker(now time.Time, serviceId ServiceId, schedule Schedule) (R, error)
-}
+type SuccessRegistrationPresenter[R any] func(services []ServiceEntity) (R, error)
 
-type GreetPresenter[R any] interface {
-	RenderGreeting() (R, error)
-}
+type ServicesPickerPresenter[R any] func(services []ServiceEntity) (R, error)
 
-type TimePickerPresenter[R any] interface {
-	RenderTimePicker(serviceId ServiceId, appointmentDate time.Time, slots SampledFreeTimeSlots) (R, error)
-}
+type DatePickerPresenter[R any] func(now time.Time, serviceId ServiceId, schedule Schedule) (R, error)
 
-type AppointmentConfirmationPresenter[R any] interface {
-	RenderConfirmation(service ServiceEntity, appointmentDateTime time.Time) (R, error)
-}
+type GreetPresenter[R any] func() (R, error)
 
-type AppointmentInfoPresenter[R any] interface {
-	RenderInfo(
-		appointment RecordEntity,
-		service ServiceEntity,
-	) (R, error)
-}
+type TimeSlotsPresenter[R any] func(
+	slots SampledFreeTimeSlots,
+) (R, error)
 
-type AppointmentCancelPresenter[R any] interface {
-	RenderCancel() (R, error)
-}
+type TimePickerPresenter[R any] func(
+	serviceId ServiceId,
+	appointmentDate time.Time,
+	slots SampledFreeTimeSlots,
+) (R, error)
+
+type AppointmentConfirmationPresenter[R any] func(
+	service ServiceEntity,
+	appointmentDateTime time.Time,
+) (R, error)
+
+type AppointmentInfoPresenter[R any] func(
+	appointment RecordEntity,
+	service ServiceEntity,
+) (R, error)
+
+type NotFoundPresenter[R any] func() (R, error)
+
+type AppointmentCancelPresenter[R any] func() (R, error)
 
 type EventPresenter[E Event, R any] func(E) (R, error)
 

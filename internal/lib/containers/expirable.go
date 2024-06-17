@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Expiable[T any] struct {
+type Expirable[T any] struct {
 	mu     sync.RWMutex
 	actual bool
 	val    T
@@ -14,19 +14,19 @@ type Expiable[T any] struct {
 	timer  *time.Timer
 }
 
-func NewExpiable[T any](ttl time.Duration) *Expiable[T] {
-	return &Expiable[T]{
+func NewExpirable[T any](ttl time.Duration) *Expirable[T] {
+	return &Expirable[T]{
 		ttl: ttl,
 	}
 }
 
-func (e *Expiable[T]) markAsExpired() {
+func (e *Expirable[T]) markAsExpired() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.actual = false
 }
 
-func (e *Expiable[T]) Start(ctx context.Context) {
+func (e *Expirable[T]) Start(ctx context.Context) {
 	e.timer = time.NewTimer(e.ttl)
 	defer e.timer.Stop()
 	for {
@@ -39,13 +39,13 @@ func (e *Expiable[T]) Start(ctx context.Context) {
 	}
 }
 
-func (e *Expiable[T]) Get() (T, bool) {
+func (e *Expirable[T]) Get() (T, bool) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.val, e.actual
 }
 
-func (e *Expiable[T]) Set(val T) {
+func (e *Expirable[T]) Set(val T) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.val = val
@@ -57,17 +57,4 @@ func (e *Expiable[T]) Set(val T) {
 		}
 	}
 	e.timer.Reset(e.ttl)
-}
-
-func (e *Expiable[T]) Load(loader func() (T, error)) (T, error) {
-	cached, ok := e.Get()
-	if ok {
-		return cached, nil
-	}
-	loaded, err := loader()
-	if err != nil {
-		return cached, err
-	}
-	e.Set(loaded)
-	return loaded, nil
 }

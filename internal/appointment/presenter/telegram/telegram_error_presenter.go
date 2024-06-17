@@ -12,13 +12,7 @@ import (
 
 const errorText = "Что-то пошло не так."
 
-type ErrorTextPresenter struct{}
-
-func NewErrorTextPresenter() *ErrorTextPresenter {
-	return &ErrorTextPresenter{}
-}
-
-func (p *ErrorTextPresenter) RenderError(err error) (telegram_adapters.TextResponses, error) {
+func TextErrorPresenter(err error) (telegram_adapters.TextResponses, error) {
 	if errors.Is(err, appointment_telegram_adapters.ErrUnknownState) {
 		return telegram_adapters.TextResponses{{
 			Text: "Выбранное действие устарело\\.\nНачните весь процесс заново\\.",
@@ -34,13 +28,7 @@ func (p *ErrorTextPresenter) RenderError(err error) (telegram_adapters.TextRespo
 	}}, nil
 }
 
-type ErrorQueryPresenter struct{}
-
-func NewErrorQueryPresenter() *ErrorQueryPresenter {
-	return &ErrorQueryPresenter{}
-}
-
-func (p *ErrorQueryPresenter) RenderError(err error) (telegram_adapters.QueryResponse, error) {
+func QueryErrorPresenter(err error) (telegram_adapters.QueryResponse, error) {
 	// TODO: Handle domain errors
 	return telegram_adapters.QueryResponse{
 		Result: &telebot.ArticleResult{
@@ -54,13 +42,7 @@ func (p *ErrorQueryPresenter) RenderError(err error) (telegram_adapters.QueryRes
 	}, nil
 }
 
-type ErrorCallbackPresenter struct{}
-
-func NewErrorCallbackPresenter() *ErrorCallbackPresenter {
-	return &ErrorCallbackPresenter{}
-}
-
-func (p *ErrorCallbackPresenter) RenderError(err error) (telegram_adapters.CallbackResponse, error) {
+func CallbackErrorPresenter(err error) (telegram_adapters.CallbackResponse, error) {
 	if errors.Is(err, appointment.ErrInvalidAppointmentStatusForCancel) {
 		return telegram_adapters.CallbackResponse{
 			Response: &telebot.CallbackResponse{

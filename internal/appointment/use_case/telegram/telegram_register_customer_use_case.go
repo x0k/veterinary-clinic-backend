@@ -44,7 +44,11 @@ func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 	telegramUserLastName string,
 	telegramUserPhoneNumber string,
 ) (R, error) {
-	customerIdentity := appointment.NewTelegramCustomerIdentity(telegramUserId)
+	customerIdentity, err := appointment.NewTelegramCustomerIdentity(telegramUserId)
+	if err != nil {
+		u.log.Debug(ctx, "failed to create customer identity", sl.Err(err))
+		return u.errorPresenter(err)
+	}
 	customer := appointment.NewCustomer(
 		appointment.TemporalCustomerId,
 		customerIdentity,
@@ -52,19 +56,19 @@ func (u *RegisterCustomerUseCase[R]) RegisterCustomer(
 		telegramUserPhoneNumber,
 		fmt.Sprintf("https://t.me/%s", telegramUserName),
 	)
-	if err := u.customerCreator.CreateCustomer(ctx, &customer); err != nil {
-		u.log.Error(ctx, "failed to create customer", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+	if err := u.customerCreator(ctx, &customer); err != nil {
+		u.log.Debug(ctx, "failed to create customer", sl.Err(err))
+		return u.errorPresenter(err)
 	}
 	if customer.Id == appointment.TemporalCustomerId {
 		err := appointment.ErrInvalidCustomerId
-		u.log.Error(ctx, "failed to create customer", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		u.log.Debug(ctx, "failed to create customer", sl.Err(err))
+		return u.errorPresenter(err)
 	}
-	services, err := u.servicesLoader.Services(ctx)
+	services, err := u.servicesLoader(ctx)
 	if err != nil {
-		u.log.Error(ctx, "failed to load services", sl.Err(err))
-		return u.errorPresenter.RenderError(err)
+		u.log.Debug(ctx, "failed to load services", sl.Err(err))
+		return u.errorPresenter(err)
 	}
-	return u.successRegistrationPresenter.RenderSuccessRegistration(services)
+	return u.successRegistrationPresenter(services)
 }

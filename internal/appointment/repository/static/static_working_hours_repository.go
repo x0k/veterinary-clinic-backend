@@ -2,6 +2,7 @@ package appointment_static_repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/x0k/veterinary-clinic-backend/internal/appointment"
 	"github.com/x0k/veterinary-clinic-backend/internal/shared"
@@ -24,14 +25,14 @@ var saturdayTimePeriod = shared.TimePeriod{
 		Minutes: 0,
 	},
 }
-var workingHours = appointment.WorkingHours{
-	1: weekdayTimePeriod,
-	2: weekdayTimePeriod,
-	3: weekdayTimePeriod,
-	4: weekdayTimePeriod,
-	5: weekdayTimePeriod,
-	6: saturdayTimePeriod,
-}
+var workingHours = appointment.NewWorkingHours(appointment.WorkingHoursData{
+	time.Monday:    weekdayTimePeriod,
+	time.Tuesday:   weekdayTimePeriod,
+	time.Wednesday: weekdayTimePeriod,
+	time.Thursday:  weekdayTimePeriod,
+	time.Friday:    weekdayTimePeriod,
+	time.Saturday:  saturdayTimePeriod,
+})
 
 type WorkingHoursRepository struct{}
 

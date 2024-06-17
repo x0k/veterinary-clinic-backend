@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	// migrate tools
-	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
@@ -42,7 +42,7 @@ func init() {
 	for attempts > 0 {
 		m, err = migrate.New(
 			fmt.Sprintf("file://%s", migrationsPath),
-			fmt.Sprintf("sqlite3://%s", databasePath),
+			fmt.Sprintf("sqlite://%s", databasePath),
 		)
 		if err == nil {
 			break
