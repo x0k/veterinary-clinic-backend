@@ -75,14 +75,14 @@ func (m *Module) start(ctx context.Context, awaiter func(context.Context) error)
 
 	for _, service := range m.services {
 		m.wg.Add(1)
-		go func() {
+		go func(service Service) {
 			defer m.wg.Done()
 			m.log.LogAttrs(ctx, slog.LevelInfo, "starting", slog.String("service", service.Name()))
 			if err := service.Start(ctx); err != nil {
 				m.Fatal(ctx, err)
 			}
 			m.log.LogAttrs(ctx, slog.LevelInfo, "stopped", slog.String("service", service.Name()))
-		}()
+		}(service)
 	}
 
 	for _, hook := range m.postStart {
