@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-env: mk run prof migrate debug-env query
+env:
     if [ -f .env.local ]
     then
         export $(cat .env.local | xargs)
@@ -19,7 +19,7 @@ env: mk run prof migrate debug-env query
     export STORAGE_PATH=storage/storage.db
     export STORAGE_MIGRATIONS_PATH=db/migrations
 
-mk:
+d: env
     air -- --config config/config.yml
 
 wasm:
@@ -28,13 +28,13 @@ wasm:
 build:
     go build -tags "migrate" -o out/app cmd/app/main.go
 
-run:
+run: env
     out/app --config config/config.yml
 
-debug-env:
+debug-env: env
     env > .env.debug.local
 
-prof:
+prof: env
     go tool pprof -http :8081 "${PROFILER_REMOTE_ADDRESS}/debug/pprof/$1"
 
 test:
@@ -56,5 +56,5 @@ qlint:
 mc:
     migrate create -ext sql -dir $STORAGE_MIGRATIONS_PATH -seq $1
 
-migrate:
+migrate: env
     go run -tags migrate cmd/migrate/main.go
