@@ -46,6 +46,10 @@ type ArchivingServiceConfig struct {
 	ArchivingMinute   int           `yaml:"archiving_minute" env:"APPOINTMENT_ARCHIVING_SERVICE_ARCHIVING_MINUTE" env-default:"0"`
 }
 
+type TelegramBotConfig struct {
+	CreateAppointment bool `yaml:"create_appointment" env:"APPOINTMENT_TELEGRAM_BOT_CREATE_APPOINTMENT"`
+}
+
 type Config struct {
 	Notion             NotionConfig             `yaml:"notion"`
 	ProductionCalendar ProductionCalendarConfig `yaml:"production_calendar"`
@@ -54,4 +58,5 @@ type Config struct {
 	Notifications      NotificationsConfig      `yaml:"notifications"`
 	TrackingService    TrackingServiceConfig    `yaml:"tracking_service"`
 	ArchivingService   ArchivingServiceConfig   `yaml:"archiving_service"`
+	TelegramBot        TelegramBotConfig        `yaml:"telegram_bot"`
 }

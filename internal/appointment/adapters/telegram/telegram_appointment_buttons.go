@@ -23,13 +23,6 @@ var (
 		Text:   "Запись на прием",
 		Unique: "appointment",
 	}
-	BotMenu = &telebot.ReplyMarkup{
-		InlineKeyboard: [][]telebot.InlineButton{
-			{*ScheduleBtn},
-			{*ServicesBtn},
-			{*StartMakeAppointmentDialogBtn},
-		},
-	}
 	NextMakeAppointmentDateBtn = &telebot.InlineButton{
 		Text:   "➡",
 		Unique: "nx-mk-app-dt",

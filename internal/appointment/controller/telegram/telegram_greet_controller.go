@@ -12,6 +12,7 @@ import (
 func NewGreet(
 	bot *telebot.Bot,
 	greetUseCase *appointment_telegram_use_case.GreetUseCase[telegram_adapters.TextResponses],
+	createAppointment bool,
 ) module.Hook {
 	return module.NewHook(
 		"appointment_telegram_controller.NewGreet",
@@ -23,7 +24,7 @@ func NewGreet(
 				}
 				return res.Send(c)
 			})
-			return bot.SetCommands([]telebot.Command{
+			commands := []telebot.Command{
 				{
 					Text:        "/start",
 					Description: "Приветствие",
@@ -36,11 +37,14 @@ func NewGreet(
 					Text:        "/schedule",
 					Description: "График работы",
 				},
-				{
+			}
+			if createAppointment {
+				commands = append(commands, telebot.Command{
 					Text:        "/appointment",
 					Description: "Запись на прием",
-				},
-			})
+				})
+			}
+			return bot.SetCommands(commands)
 		},
 	)
 }

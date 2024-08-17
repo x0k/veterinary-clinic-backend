@@ -43,11 +43,16 @@ func New(
 ) (*module.Module, error) {
 	m := module.New(log.Logger, "appointment")
 
+	greetPresenter := appointment_telegram_presenter.NewGreetingPresenter(
+		cfg.TelegramBot.CreateAppointment,
+	)
+
 	greetController := appointment_telegram_controller.NewGreet(
 		bot,
 		appointment_telegram_use_case.NewGreetUseCase(
-			appointment_telegram_presenter.RenderGreeting,
+			greetPresenter.RenderGreeting,
 		),
+		cfg.TelegramBot.CreateAppointment,
 	)
 	m.PostStart(greetController)
 
@@ -281,80 +286,82 @@ func New(
 		appointment_telegram_presenter.TextErrorPresenter,
 	)
 
-	successRegistrationPresenter := appointment_telegram_presenter.NewSuccessRegistrationPresenter(
-		servicesPickerPresenter,
-	)
-	startMakeAppointmentDialogController := appointment_telegram_controller.NewStartMakeAppointmentDialog(
-		bot,
-		expirableTelegramUserIdContainer.Pop,
-		startMakeAppointmentDialogUseCase,
-		appointment_telegram_use_case.NewRegisterCustomerUseCase(
-			log,
-			customerRepository.CreateCustomer,
-			cachedServices,
-			successRegistrationPresenter.RenderSuccessRegistration,
-			appointment_telegram_presenter.TextErrorPresenter,
-		),
-		errorSender,
-	)
-	m.PostStart(startMakeAppointmentDialogController)
+	if cfg.TelegramBot.CreateAppointment {
+		successRegistrationPresenter := appointment_telegram_presenter.NewSuccessRegistrationPresenter(
+			servicesPickerPresenter,
+		)
+		startMakeAppointmentDialogController := appointment_telegram_controller.NewStartMakeAppointmentDialog(
+			bot,
+			expirableTelegramUserIdContainer.Pop,
+			startMakeAppointmentDialogUseCase,
+			appointment_telegram_use_case.NewRegisterCustomerUseCase(
+				log,
+				customerRepository.CreateCustomer,
+				cachedServices,
+				successRegistrationPresenter.RenderSuccessRegistration,
+				appointment_telegram_presenter.TextErrorPresenter,
+			),
+			errorSender,
+		)
+		m.PostStart(startMakeAppointmentDialogController)
 
-	textDatePickerPresenter := appointment_telegram_presenter.NewDatePickerTextPresenter(
-		cfg.WebCalendar.AppUrl,
-		webCalendarDatePickerUrl,
-		expirableAppointmentStateContainer.Save,
-	)
-	timePickerPresenter := appointment_telegram_presenter.NewTimePickerPresenter(
-		expirableAppointmentStateContainer.Save,
-	)
-	confirmationPresenter := appointment_telegram_presenter.NewConfirmationPresenter(
-		expirableAppointmentStateContainer.Save,
-	)
-	makeAppointmentController := appointment_telegram_controller.NewMakeAppointment(
-		bot,
-		startMakeAppointmentDialogUseCase,
-		appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
-			log,
-			schedulingService,
-			textDatePickerPresenter.RenderDatePicker,
-			appointment_telegram_presenter.TextErrorPresenter,
-		),
-		appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
-			log,
-			schedulingService,
-			cachedService,
-			timePickerPresenter.RenderTimePicker,
-			appointment_telegram_presenter.TextErrorPresenter,
-		),
-		appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
-			log,
-			cachedService,
-			confirmationPresenter.RenderConfirmation,
-			appointment_telegram_presenter.TextErrorPresenter,
-		),
-		appointment_use_case.NewMakeAppointmentUseCase(
-			log,
-			schedulingService,
-			customerRepository.CustomerByIdentity,
-			cachedService,
-			appointment_telegram_presenter.RenderAppointmentInfo,
-			appointment_telegram_presenter.TextErrorPresenter,
-			publisher,
-		),
-		appointment_use_case.NewCancelAppointmentUseCase(
-			log,
-			schedulingService,
-			customerRepository.CustomerByIdentity,
-			cachedService,
-			appointment_telegram_presenter.RenderAppointmentCancel,
-			appointment_telegram_presenter.CallbackErrorPresenter,
-			publisher,
-		),
-		errorSender,
-		expirableServiceIdContainer.Load,
-		expirableAppointmentStateContainer.Load,
-	)
-	m.PostStart(makeAppointmentController)
+		textDatePickerPresenter := appointment_telegram_presenter.NewDatePickerTextPresenter(
+			cfg.WebCalendar.AppUrl,
+			webCalendarDatePickerUrl,
+			expirableAppointmentStateContainer.Save,
+		)
+		timePickerPresenter := appointment_telegram_presenter.NewTimePickerPresenter(
+			expirableAppointmentStateContainer.Save,
+		)
+		confirmationPresenter := appointment_telegram_presenter.NewConfirmationPresenter(
+			expirableAppointmentStateContainer.Save,
+		)
+		makeAppointmentController := appointment_telegram_controller.NewMakeAppointment(
+			bot,
+			startMakeAppointmentDialogUseCase,
+			appointment_telegram_use_case.NewAppointmentDatePickerUseCase(
+				log,
+				schedulingService,
+				textDatePickerPresenter.RenderDatePicker,
+				appointment_telegram_presenter.TextErrorPresenter,
+			),
+			appointment_telegram_use_case.NewAppointmentTimePickerUseCase(
+				log,
+				schedulingService,
+				cachedService,
+				timePickerPresenter.RenderTimePicker,
+				appointment_telegram_presenter.TextErrorPresenter,
+			),
+			appointment_telegram_use_case.NewAppointmentConfirmationUseCase(
+				log,
+				cachedService,
+				confirmationPresenter.RenderConfirmation,
+				appointment_telegram_presenter.TextErrorPresenter,
+			),
+			appointment_use_case.NewMakeAppointmentUseCase(
+				log,
+				schedulingService,
+				customerRepository.CustomerByIdentity,
+				cachedService,
+				appointment_telegram_presenter.RenderAppointmentInfo,
+				appointment_telegram_presenter.TextErrorPresenter,
+				publisher,
+			),
+			appointment_use_case.NewCancelAppointmentUseCase(
+				log,
+				schedulingService,
+				customerRepository.CustomerByIdentity,
+				cachedService,
+				appointment_telegram_presenter.RenderAppointmentCancel,
+				appointment_telegram_presenter.CallbackErrorPresenter,
+				publisher,
+			),
+			errorSender,
+			expirableServiceIdContainer.Load,
+			expirableAppointmentStateContainer.Load,
+		)
+		m.PostStart(makeAppointmentController)
+	}
 
 	adminTgId, err := cfg.Notifications.AdminIdentity.ToTelegramUserId()
 	if err != nil {

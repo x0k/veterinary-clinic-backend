@@ -37,3 +37,5 @@ appointment:
     archiving_interval: 24h
     archiving_hour: 23
     archiving_minute: 0
+  telegram_bot:
+    create_appointment: false
