@@ -18,7 +18,7 @@
         default = pkgs.mkShell {
           buildInputs = [
             mk.packages.${system}.default
-            pkgs.go
+            pkgs.go_1_23
             pkgs.air
             pkgs.go-migrate
             pkgs.golangci-lint

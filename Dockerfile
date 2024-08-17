@@ -1,5 +1,5 @@
 # Start from a small base image
-FROM golang:1.22.1-alpine3.19 as builder
+FROM golang:1.23.0-alpine3.20 as builder
 
 # Install build dependencies
 RUN apk add --no-cache build-base
@@ -17,11 +17,11 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
+RUN GOOS=linux GOARCH=amd64 \
     go build -tags "modern,migrate" -o app ./cmd/app/
 
 # Create a minimal runtime image
-FROM alpine:3.19.0
+FROM alpine:3.20.2
 
 # Install runtime dependencies
 RUN apk add --no-cache tzdata
