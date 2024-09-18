@@ -19,6 +19,7 @@
           buildInputs = [
             mk.packages.${system}.default
             pkgs.go_1_23
+            pkgs.tinygo
             pkgs.air
             pkgs.go-migrate
             pkgs.golangci-lint

@@ -25,6 +25,9 @@ d: env
 wasm:
     GOOS=js GOARCH=wasm go build -o out/domain.wasm cmd/wasm/main.go
 
+twasm:
+    GOOS=js GOARCH=wasm tinygo build -o out/domain.wasm cmd/wasm/main.go
+
 build:
     go build -tags "migrate" -o out/app cmd/app/main.go
 
